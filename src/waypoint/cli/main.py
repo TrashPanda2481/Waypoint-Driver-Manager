@@ -15,7 +15,7 @@ import json
 import sys
 
 from waypoint.core.models import SignatureType
-from waypoint.engine.factory import build_default_engine
+from waypoint.engine.factory import build_default_engine, build_oem_sources
 from waypoint.engine.session import WaypointEngine
 
 EXIT_CLEAN = 0
@@ -24,11 +24,25 @@ EXIT_ERROR = 2
 
 
 def _build_engine(args: argparse.Namespace) -> WaypointEngine:
-    return build_default_engine(
+    engine = build_default_engine(
         cache_dir=args.cache_dir,
         audit_log_path=args.audit_log,
         min_signature=SignatureType(args.min_signature),
     )
+    if args.oem:
+        oem_sources = build_oem_sources(args.cache_dir)
+        for source in oem_sources:
+            # force=False: download only if this cache_dir has never been
+            # refreshed before; a second `--oem` run against the same
+            # cache_dir reuses the on-disk catalog instead of
+            # re-downloading it, consistent with the user instruction to
+            # limit credit/network cost to what's actually needed. There
+            # is no CLI flag yet to force a re-download — delete the
+            # cached catalog file under cache_dir, or call
+            # `source.refresh(force=True)` directly from Python, to do so.
+            source.refresh(force=False)
+        engine.sources.extend(oem_sources)
+    return engine
 
 
 def cmd_scan(args: argparse.Namespace) -> int:
@@ -106,6 +120,21 @@ def build_parser() -> argparse.ArgumentParser:
         default=SignatureType.ATTESTATION.value,
         choices=[s.value for s in SignatureType],
         help="Minimum driver signature tier to allow (default: attestation)",
+    )
+    parser.add_argument(
+        "--oem",
+        action="store_true",
+        help=(
+            "Opt in to OEM per-device catalog sources in addition to the "
+            "default sources (currently: Dell's CatalogPC.cab, via "
+            "engine.factory.build_oem_sources()). Off by default because "
+            "the first use downloads a ~57MB catalog over the network; "
+            "subsequent runs against the same --cache-dir reuse the "
+            "on-disk copy instead of re-downloading it. See "
+            "docs/Architecture.md section 3.2 for what's covered and "
+            "what isn't (Lenovo/HP model-keyed catalogs are not yet "
+            "wired into this flag)."
+        ),
     )
     sub = parser.add_subparsers(dest="command", required=True)
 

@@ -112,7 +112,20 @@ Planned sources (each independently toggle-able):
     real, sizeable network I/O (Dell's `CatalogPC.xml` alone is ~57MB
     uncompressed) that shouldn't fire on every default scan. Exposed
     instead through an explicit opt-in, `engine/factory.py`'s
-    `build_oem_sources()`, that a CLI flag or GUI settings toggle can call.
+    `build_oem_sources()`.
+  - **CLI wiring (2026-08-30):** `waypoint --oem scan`/`plan` now calls
+    `build_oem_sources()` and adds the result to the engine's source list.
+    Only wires in `DellCatalogSource` (the only OEM source that
+    implements the `DriverSource` shape today — see the model-keyed note
+    above for why Lenovo/Dell-driverpack/HP aren't included here). The
+    CLI calls `.refresh(force=False)` once per invocation, so the first
+    `--oem` run against a given `--cache-dir` pays the ~57MB download but
+    every subsequent run against the same `--cache-dir` reuses the
+    on-disk `CatalogPC.xml` instead of re-downloading it — no separate
+    `--oem-refresh`/force flag exists yet; forcing a re-download today
+    means deleting the cached file or calling `refresh(force=True)`
+    directly from Python. GUI settings-toggle wiring is still open (see
+    section 6).
   - **Live-network validation (2026-08-30, manual, not part of the
     automated suite):** `DellCatalogSource.refresh(force=True)` run against
     the real `https://downloads.dell.com/catalog/CatalogPC.cab` —
@@ -285,6 +298,12 @@ waypoint/
   evaluator is judged worth building — not attempted this pass.
 - Whether to add a scheduled/background catalog refresh for the OEM
   sources (currently caller-triggered only via `.refresh()`).
+- GUI settings toggle for `build_oem_sources()` — the CLI equivalent
+  (`--oem`) was added 2026-08-30 (see section 3.2), but nothing in
+  `gui/app.py` calls `build_oem_sources()` yet.
+- Whether a `--force-oem-refresh` (or similar) CLI flag is worth adding,
+  vs. leaving forced re-download as a delete-the-cache-file / direct-
+  Python-call operation as it is today.
 - Whether `platform/linux_devices.py` targets kernel-module/firmware
   matching (closer to a different problem domain) or stays scoped to
   Linux-side testing/parity for the core engine only.

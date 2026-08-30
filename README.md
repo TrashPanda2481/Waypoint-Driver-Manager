@@ -15,7 +15,7 @@ Waypoint design decisions.
 The device-matching core (`waypoint.core`), engine orchestration
 (`waypoint.engine`), local driver cache (`waypoint.sources.local_cache`),
 and the GUI's scan wiring (`waypoint.gui`) are implemented and covered by
-automated tests (23 passing, including a headless Qt test of the actual
+automated tests (28 passing, including a headless Qt test of the actual
 scan button -> background thread -> engine -> tree-view path). The GUI and
 CLI now share one backend/source construction path via
 `waypoint.engine.factory.build_default_engine()`, so they can't silently
@@ -101,6 +101,11 @@ QT_QPA_PLATFORM=offscreen pytest    # offscreen avoids needing a real display fo
 ```bash
 pip install -e ".[linux]"   # or ".[windows]" on Windows
 waypoint scan --json
+
+# Opt-in: also query Dell's real per-device catalog (CatalogPC.cab).
+# First run downloads ~57MB; later runs against the same --cache-dir
+# reuse the on-disk copy instead of re-downloading it. Off by default.
+waypoint --oem scan --json
 ```
 
 ## Trying the GUI
