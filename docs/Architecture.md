@@ -147,6 +147,26 @@ Planned sources (each independently toggle-able):
     from the real 2.48MB `platformList.xml`. Spot-checked SystemID `1909`
     -> `HP ZBook 15 Mobile Workstation`, exactly matching the offline
     fixture; an unknown SystemID (`ZZZZ`) correctly returned no match.
+  - **Live-network validation, Dell driver-pack catalog (2026-08-30):**
+    `DellDriverPackSource.refresh(force=True)` run against the real
+    `https://downloads.dell.com/catalog/DriverPackCatalog.cab` —
+    downloaded, `cabextract`-ed, and parsed in ~0.4s, indexing 744 distinct
+    systemIDs / 1,580 total driver-pack entries from the real 3.29MB
+    `DriverPackCatalog.xml`. Spot-checked systemID `092F` (OptiPlex 5070,
+    the same one used in the offline fixture) -> 2 real packs (Windows 10
+    and Windows 11 variants), both with real 64-hex-char SHA-256 values;
+    an unknown systemID (`ZZZZ`) correctly returned none. Unlike the
+    Lenovo case above, this catalog's real SHA-256 claim *was* verified
+    end-to-end: the two full-size driver packs for `092F` were each
+    ~2.5GB (too large to download for a spot-check), so a different,
+    much smaller real pack from the same live catalog (an 11.74MB Dell
+    Latitude/OptiPlex Windows XP driver CAB) was downloaded and hashed
+    with `sha256sum` independently of the code path — matched the
+    catalog's published hash
+    (`a64454085239c0a032292b83192ff8826ac23bf5756a6692d8433a875f11d6f2`)
+    exactly. All four OEM source implementations (Dell per-device, Dell
+    driver-pack, Lenovo, HP) have now had their `refresh()` pipelines run
+    against live data.
 - **Local signed cache** — a technician-built, content-addressed local
   store (drivers keyed by SHA-256, not filename/folder convention) — opt-in,
   incremental, no forced 20–60 GB blob.

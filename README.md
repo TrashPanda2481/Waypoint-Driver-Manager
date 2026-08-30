@@ -33,7 +33,7 @@ doesn't depend on Dell's/Lenovo's/HP's servers or spend network/credit
 cost on every run. Not included in the default source list — opt in via
 `waypoint.engine.factory.build_oem_sources()`.
 
-All three OEM `refresh()` pipelines have now been manually run once
+All four OEM `refresh()` pipelines have now been manually run once
 against the live network (2026-08-30, one-off validation runs, not added
 to the automated suite — CI still uses the offline fixtures deliberately):
 - **Dell** (`CatalogPC.cab`): real download -> `cabextract` -> XML parse ->
@@ -51,6 +51,18 @@ to the automated suite — CI still uses the offline fixtures deliberately):
 - **HP** (`platformList.cab`): real download -> `cabextract` -> XML parse
   -> 603 real SystemIDs in ~0.1s. Spot-check on SystemID `1909` matched
   the offline fixture exactly (`HP ZBook 15 Mobile Workstation`).
+- **Dell driver-pack** (`DriverPackCatalog.cab`, the model-keyed one):
+  real download -> `cabextract` -> XML parse -> 744 systemIDs / 1,580
+  driver-pack entries in ~0.4s. Spot-check on systemID `092F` matched the
+  offline fixture exactly. The real SHA-256 claim for this catalog *was*
+  verified end-to-end this time: the fixture's own packs were ~2.5GB each
+  (too large to download), so a different, much smaller real pack from
+  the same live catalog (11.74MB) was downloaded and independently hashed
+  with `sha256sum` -- matched the catalog's published value exactly.
+
+All four OEM source implementations (Dell per-device, Dell driver-pack,
+Lenovo, HP) have now had their `refresh()` pipelines validated against
+live data.
 
 The Windows device backend (`waypoint.platform.windows`) and Windows Update
 Catalog source are written against documented APIs but not yet validated
