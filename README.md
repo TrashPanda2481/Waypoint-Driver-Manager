@@ -26,11 +26,23 @@ OEM catalog sourcing (`waypoint.sources.oem`) is implemented for Dell
 `DriverPackCatalog.cab`), Lenovo (model-keyed `catalogv2.xml`), and a
 deliberately scoped-down HP platform-support lookup (`platformList.cab`) —
 see [`docs/Architecture.md`](docs/Architecture.md) section 3.2 for exactly
-what's real vs. out of scope per vendor, with source URLs. Tested against
-small real-data fixtures trimmed from each vendor's actual live catalog
-(not fabricated); an end-to-end download-and-parse of a *full* real catalog
-has not been wired into an automated test. Not included in the default
-source list — opt in via `waypoint.engine.factory.build_oem_sources()`.
+what's real vs. out of scope per vendor, with source URLs. The automated
+test suite runs against small real-data fixtures trimmed from each
+vendor's actual live catalog (not fabricated) — deliberately, so CI
+doesn't depend on Dell's/Lenovo's/HP's servers or spend network/credit
+cost on every run. Not included in the default source list — opt in via
+`waypoint.engine.factory.build_oem_sources()`.
+
+Dell's full `refresh()` pipeline (real download of `CatalogPC.cab` -> real
+`cabextract` -> real XML parse -> real MD5-verified `fetch()` of an actual
+driver package) was manually run once against the live network on
+2026-08-30: indexed 8,655 distinct hardware IDs / 159,338 candidates from
+the real 57.6MB catalog in ~1.5s, then downloaded a real 10.37MB driver
+package and confirmed its MD5 matched the catalog value
+(`450566a766e982f351f918cce26eb2e4`, independently re-checked with
+`md5sum`) before computing its SHA-256. This was a one-off manual
+validation run, not an addition to the automated suite — Lenovo's and
+HP's `refresh()` pipelines have not yet been run against live network.
 
 The Windows device backend (`waypoint.platform.windows`) and Windows Update
 Catalog source are written against documented APIs but not yet validated

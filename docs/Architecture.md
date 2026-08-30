@@ -113,6 +113,19 @@ Planned sources (each independently toggle-able):
     uncompressed) that shouldn't fire on every default scan. Exposed
     instead through an explicit opt-in, `engine/factory.py`'s
     `build_oem_sources()`, that a CLI flag or GUI settings toggle can call.
+  - **Live-network validation (2026-08-30, manual, not part of the
+    automated suite):** `DellCatalogSource.refresh(force=True)` run against
+    the real `https://downloads.dell.com/catalog/CatalogPC.cab` —
+    downloaded, `cabextract`-ed, and parsed in ~1.5s; produced 8,655
+    distinct hardware IDs / 159,338 total candidates from the real 57.6MB
+    `CatalogPC.xml`. Followed by a real `fetch()` of the smallest indexed
+    candidate (a 10.37MB driver package): downloaded, MD5-verified against
+    the catalog's published hash (`450566a766e982f351f918cce26eb2e4`,
+    independently re-checked with `md5sum` outside the code path), then
+    SHA-256-computed. Confirms the full download -> extract -> parse ->
+    match -> fetch -> verify pipeline works end-to-end against the real
+    service, not just the offline fixtures. Lenovo's and HP's `refresh()`
+    pipelines have not yet been run against live network — only Dell's has.
 - **Local signed cache** — a technician-built, content-addressed local
   store (drivers keyed by SHA-256, not filename/folder convention) — opt-in,
   incremental, no forced 20–60 GB blob.
