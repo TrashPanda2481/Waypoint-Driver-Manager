@@ -21,6 +21,7 @@ dev = ["pytest", "ruff"]
 
 [project.scripts]
 waypoint = "waypoint.cli.main:main"
+waypoint-gui = "waypoint.gui.app:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

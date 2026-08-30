@@ -15,9 +15,8 @@ import json
 import sys
 
 from waypoint.core.models import SignatureType
-from waypoint.engine.audit import AuditLog
+from waypoint.engine.factory import build_default_engine
 from waypoint.engine.session import WaypointEngine
-from waypoint.sources.local_cache import LocalCacheSource
 
 EXIT_CLEAN = 0
 EXIT_ACTION_NEEDED = 1
@@ -25,18 +24,11 @@ EXIT_ERROR = 2
 
 
 def _build_engine(args: argparse.Namespace) -> WaypointEngine:
-    if sys.platform == "win32":
-        from waypoint.platform.windows import WindowsDeviceBackend
-
-        backend = WindowsDeviceBackend()
-    else:
-        from waypoint.platform.linux import LinuxDeviceBackend
-
-        backend = LinuxDeviceBackend()
-
-    sources = [LocalCacheSource(args.cache_dir)]
-    audit = AuditLog(args.audit_log)
-    return WaypointEngine(backend, sources, audit, min_signature=SignatureType(args.min_signature))
+    return build_default_engine(
+        cache_dir=args.cache_dir,
+        audit_log_path=args.audit_log,
+        min_signature=SignatureType(args.min_signature),
+    )
 
 
 def cmd_scan(args: argparse.Namespace) -> int:
@@ -99,8 +91,16 @@ def cmd_apply(args: argparse.Namespace) -> int:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="waypoint", description="Waypoint Driver Manager CLI")
-    parser.add_argument("--cache-dir", default="./waypoint-cache", help="Local driver cache directory")
-    parser.add_argument("--audit-log", default="./waypoint-audit.jsonl", help="Audit log path (JSON Lines)")
+    parser.add_argument(
+        "--cache-dir",
+        default=None,
+        help="Local driver cache directory (default: waypoint.paths.default_cache_dir())",
+    )
+    parser.add_argument(
+        "--audit-log",
+        default=None,
+        help="Audit log path, JSON Lines (default: waypoint.paths.default_audit_log_path())",
+    )
     parser.add_argument(
         "--min-signature",
         default=SignatureType.ATTESTATION.value,

@@ -12,12 +12,20 @@ Waypoint design decisions.
 
 ## Status
 
-Early scaffold. The device-matching core (`waypoint.core`), engine
-orchestration (`waypoint.engine`), and local driver cache
-(`waypoint.sources.local_cache`) are implemented and unit-tested. The
-Windows device backend (`waypoint.platform.windows`) and Windows Update
+The device-matching core (`waypoint.core`), engine orchestration
+(`waypoint.engine`), local driver cache (`waypoint.sources.local_cache`),
+and the GUI's scan wiring (`waypoint.gui`) are implemented and covered by
+automated tests (13 passing, including a headless Qt test of the actual
+scan button -> background thread -> engine -> tree-view path). The GUI and
+CLI now share one backend/source construction path via
+`waypoint.engine.factory.build_default_engine()`, so they can't silently
+drift apart.
+
+The Windows device backend (`waypoint.platform.windows`) and Windows Update
 Catalog source are written against documented APIs but not yet validated
-on real hardware — that's the next milestone.
+on real hardware — that's the next milestone. Until then, running on
+Windows will exercise real code paths but is unverified; running on Linux
+exercises the parity backend, useful for GUI/engine development only.
 
 ## Layout
 
@@ -39,17 +47,24 @@ docs/        # architecture spec and design decisions
 ## Running the tests
 
 ```bash
-pip install -e ".[dev]"
-pytest
+pip install -e ".[dev,gui,linux]"   # add [windows] instead of [linux] on Windows
+QT_QPA_PLATFORM=offscreen pytest    # offscreen avoids needing a real display for GUI tests
 ```
 
-## Trying the CLI (mock/local-cache only for now)
+## Trying the CLI
 
 ```bash
-pip install -e .
+pip install -e ".[linux]"   # or ".[windows]" on Windows
 waypoint scan --json
 ```
 
-On non-Windows systems this uses `waypoint.platform.linux.LinuxDeviceBackend`,
+## Trying the GUI
+
+```bash
+pip install -e ".[gui,linux]"   # or ".[gui,windows]" on Windows
+waypoint-gui
+```
+
+On non-Windows systems both use `waypoint.platform.linux.LinuxDeviceBackend`,
 which is a parity/testing backend, not the primary target — see
 `docs/Architecture.md` section 6.
