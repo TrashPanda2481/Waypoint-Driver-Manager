@@ -15,7 +15,7 @@ Waypoint design decisions.
 The device-matching core (`waypoint.core`), engine orchestration
 (`waypoint.engine`), local driver cache (`waypoint.sources.local_cache`),
 and the GUI's scan wiring (`waypoint.gui`) are implemented and covered by
-automated tests (28 passing, including a headless Qt test of the actual
+automated tests (31 passing, including a headless Qt test of the actual
 scan button -> background thread -> engine -> tree-view path). The GUI and
 CLI now share one backend/source construction path via
 `waypoint.engine.factory.build_default_engine()`, so they can't silently
@@ -114,6 +114,13 @@ waypoint --oem scan --json
 pip install -e ".[gui,linux]"   # or ".[gui,windows]" on Windows
 waypoint-gui
 ```
+
+The main window has an "Include OEM catalogs" checkbox above the device
+tree — the GUI equivalent of `--oem` above. Unchecked (the default), a
+scan behaves exactly as before the checkbox existed. Checked, the Dell
+catalog refresh runs on a background thread so a first-time ~57MB
+download doesn't freeze the window; later scans against the same cache
+directory reuse the on-disk copy.
 
 On non-Windows systems both use `waypoint.platform.linux.LinuxDeviceBackend`,
 which is a parity/testing backend, not the primary target — see

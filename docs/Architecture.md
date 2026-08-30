@@ -124,8 +124,21 @@ Planned sources (each independently toggle-able):
     on-disk `CatalogPC.xml` instead of re-downloading it — no separate
     `--oem-refresh`/force flag exists yet; forcing a re-download today
     means deleting the cached file or calling `refresh(force=True)`
-    directly from Python. GUI settings-toggle wiring is still open (see
-    section 6).
+    directly from Python.
+  - **GUI wiring (2026-08-30):** `gui/app.py`'s `MainWindow` now has an
+    "Include OEM catalogs" checkbox, unchecked (off) by default — the
+    GUI equivalent of `--oem`. When checked, `gui/workers.py`'s
+    `ScanWorker` builds and refreshes the Dell source on the background
+    QThread (not the UI thread) before calling `engine.scan()`, so a
+    first-time ~57MB download can't freeze the window the way it would
+    if it ran synchronously from the button click. The OEM source is
+    merged into `engine.sources` only for that one scan and restored
+    afterward in a `finally` block, so unchecking the box before the
+    next scan genuinely takes effect and repeated scans with the box
+    left checked never duplicate the source. The OEM cache directory is
+    inferred from whichever `LocalCacheSource` the engine already has
+    (`MainWindow._oem_cache_dir()`), so GUI and CLI share one cache root
+    when both are pointed at the same `--cache-dir`/default location.
   - **Live-network validation (2026-08-30, manual, not part of the
     automated suite):** `DellCatalogSource.refresh(force=True)` run against
     the real `https://downloads.dell.com/catalog/CatalogPC.cab` —
@@ -298,9 +311,10 @@ waypoint/
   evaluator is judged worth building — not attempted this pass.
 - Whether to add a scheduled/background catalog refresh for the OEM
   sources (currently caller-triggered only via `.refresh()`).
-- GUI settings toggle for `build_oem_sources()` — the CLI equivalent
-  (`--oem`) was added 2026-08-30 (see section 3.2), but nothing in
-  `gui/app.py` calls `build_oem_sources()` yet.
+- ~~GUI settings toggle for `build_oem_sources()`~~ — RESOLVED (2026-08-30):
+  `gui/app.py` now has an "Include OEM catalogs" checkbox, off by
+  default, wired through `gui/workers.py`'s `ScanWorker`. See section
+  3.2 for details.
 - Whether a `--force-oem-refresh` (or similar) CLI flag is worth adding,
   vs. leaving forced re-download as a delete-the-cache-file / direct-
   Python-call operation as it is today.

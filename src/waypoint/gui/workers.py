@@ -16,21 +16,57 @@ from waypoint.engine.session import WaypointEngine
 
 
 class ScanWorker(QObject):
-    """Runs WaypointEngine.scan() off the UI thread."""
+    """Runs WaypointEngine.scan() off the UI thread.
+
+    If `include_oem` is set, this also builds and refreshes the OEM catalog
+    sources (`engine.factory.build_oem_sources()`) here on the background
+    thread — the GUI equivalent of the CLI's `--oem` flag (see
+    cli/main.py). This matters because a first-time refresh downloads a
+    real ~57MB catalog; doing that on the UI thread would freeze the
+    window exactly the way real-hardware WMI enumeration would if it ran
+    there instead of in this worker.
+
+    The OEM sources are added to `engine.sources` only for the duration of
+    this one `scan()` call and removed again in `finally`, regardless of
+    outcome — so toggling the checkbox off before the next scan genuinely
+    takes effect, and OEM sources are never silently duplicated onto
+    `engine.sources` across repeated scans with the checkbox left on.
+    """
 
     finished = Signal(list)  # list[DeviceAssessment]
     failed = Signal(str)
 
-    def __init__(self, engine: WaypointEngine) -> None:
+    def __init__(
+        self,
+        engine: WaypointEngine,
+        *,
+        include_oem: bool = False,
+        oem_cache_dir: str | None = None,
+    ) -> None:
         super().__init__()
         self._engine = engine
+        self._include_oem = include_oem
+        self._oem_cache_dir = oem_cache_dir
 
     def run(self) -> None:
+        original_sources = list(self._engine.sources)
         try:
+            if self._include_oem:
+                from waypoint.engine.factory import build_oem_sources
+
+                oem_sources = build_oem_sources(self._oem_cache_dir)
+                for source in oem_sources:
+                    # force=False: see cli/main.py's identical comment —
+                    # only downloads if this cache_dir has never been
+                    # refreshed before.
+                    source.refresh(force=False)
+                self._engine.sources = original_sources + oem_sources
             assessments: list[DeviceAssessment] = self._engine.scan()
         except Exception as exc:  # noqa: BLE001 — worker boundary: report to UI, never crash the thread
             self.failed.emit(_describe_scan_error(exc))
             return
+        finally:
+            self._engine.sources = original_sources
         self.finished.emit(assessments)
 
 

@@ -128,3 +128,133 @@ def test_scan_failure_is_surfaced_without_crashing(qapp, tmp_path, monkeypatch):
         lambda: "Scan failed" in window.status_label.text() and window.scan_button.isEnabled(),
     )
     assert window.scan_button.isEnabled()
+
+
+def test_oem_checkbox_defaults_unchecked_and_scan_matches_nothing_without_it(qapp, tmp_path):
+    """Sanity check mirroring test_cli_oem_flag.py's without-oem case: a
+    device only matched by the Dell fixture catalog should not be found
+    when the OEM checkbox is left unchecked (the default)."""
+    import os
+    import shutil
+
+    from waypoint.core.models import Device
+
+    fixtures = os.path.join(os.path.dirname(__file__), "fixtures", "oem")
+    dell_hwid = "PCI\\VEN_8086&DEV_7745"  # same fixture hwid used in test_oem_sources.py
+
+    cache_dir = tmp_path / "cache"
+    os.makedirs(cache_dir, exist_ok=True)
+    shutil.copy(
+        os.path.join(fixtures, "dell_catalog_sample.xml"),
+        os.path.join(cache_dir, "CatalogPC.xml"),
+    )
+
+    device = Device(
+        hwids=(dell_hwid,),
+        class_guid="{class}",
+        class_name="Sensor",
+        friendly_name="Fake Intel Sensor",
+        instance_id="DEV1",
+        problem_code=28,
+        installed=None,
+    )
+    backend = MockDeviceBackend([device])
+    local_source = LocalCacheSource(str(cache_dir))
+    audit = AuditLog(str(tmp_path / "audit.jsonl"))
+    engine = WaypointEngine(backend, [local_source], audit)
+
+    window = MainWindow(engine=engine)
+    assert window.oem_checkbox.isChecked() is False  # opt-in, off by default
+
+    window.on_scan_clicked()
+    _pump(qapp, lambda: len(window.assessments) > 0 and window.scan_button.isEnabled())
+
+    assert window.assessments[0].status == DeviceStatus.MISSING
+    assert window.assessments[0].candidates == []
+
+
+def test_oem_checkbox_checked_wires_dell_source_into_scan(qapp, tmp_path):
+    """With the checkbox checked, the same device (only matched by the Dell
+    fixture catalog) should be found -- proves the checkbox actually
+    reaches ScanWorker and gets merged into engine.sources for the scan."""
+    import os
+    import shutil
+
+    from waypoint.core.models import Device, SignatureType
+
+    fixtures = os.path.join(os.path.dirname(__file__), "fixtures", "oem")
+    dell_hwid = "PCI\\VEN_8086&DEV_7745"
+
+    cache_dir = tmp_path / "cache"
+    os.makedirs(cache_dir, exist_ok=True)
+    shutil.copy(
+        os.path.join(fixtures, "dell_catalog_sample.xml"),
+        os.path.join(cache_dir, "CatalogPC.xml"),
+    )
+
+    device = Device(
+        hwids=(dell_hwid,),
+        class_guid="{class}",
+        class_name="Sensor",
+        friendly_name="Fake Intel Sensor",
+        instance_id="DEV1",
+        problem_code=28,
+        installed=None,
+    )
+    backend = MockDeviceBackend([device])
+    local_source = LocalCacheSource(str(cache_dir))
+    audit = AuditLog(str(tmp_path / "audit.jsonl"))
+    # Dell's catalog carries no signature metadata and is treated as
+    # UNSIGNED by design (see dell_catalog.py's _ASSUMED_SIGNATURE) --
+    # loosen the policy so the candidate isn't filtered back out by the
+    # (correct, conservative) default signature gate, same reasoning as
+    # tests/test_cli_oem_flag.py.
+    engine = WaypointEngine(backend, [local_source], audit, min_signature=SignatureType.UNSIGNED)
+
+    window = MainWindow(engine=engine)
+    window.oem_checkbox.setChecked(True)
+
+    window.on_scan_clicked()
+    assert "OEM" in window.status_label.text()
+    _pump(qapp, lambda: len(window.assessments) > 0 and window.scan_button.isEnabled())
+
+    assert len(window.assessments[0].candidates) == 1
+    assert window.assessments[0].candidates[0].source_id == "dell_catalog"
+
+    # engine.sources must be restored to its original state after the
+    # scan -- OEM sources are per-scan, not a permanent mutation.
+    assert engine.sources == [local_source]
+
+
+def test_oem_checkbox_download_not_called_when_cache_already_seeded(qapp, tmp_path, monkeypatch):
+    """Mirrors test_cli_oem_flag.py's cache-reuse proof: a pre-seeded
+    cache_dir must not trigger a real network download."""
+    import os
+    import shutil
+
+    from waypoint.sources.oem import dell_catalog as dell_catalog_module
+
+    fixtures = os.path.join(os.path.dirname(__file__), "fixtures", "oem")
+    cache_dir = tmp_path / "cache"
+    os.makedirs(cache_dir, exist_ok=True)
+    shutil.copy(
+        os.path.join(fixtures, "dell_catalog_sample.xml"),
+        os.path.join(cache_dir, "CatalogPC.xml"),
+    )
+
+    def _fail_if_called(url, dest):
+        raise AssertionError("download_file() should not be called when the catalog is already cached")
+
+    monkeypatch.setattr(dell_catalog_module, "download_file", _fail_if_called)
+
+    backend = MockDeviceBackend([])
+    local_source = LocalCacheSource(str(cache_dir))
+    audit = AuditLog(str(tmp_path / "audit.jsonl"))
+    engine = WaypointEngine(backend, [local_source], audit)
+
+    window = MainWindow(engine=engine)
+    window.oem_checkbox.setChecked(True)
+    window.on_scan_clicked()
+
+    _pump(qapp, lambda: window.scan_button.isEnabled())
+    assert "Scan failed" not in window.status_label.text()

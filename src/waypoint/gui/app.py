@@ -16,6 +16,7 @@ import sys
 from PySide6.QtCore import QThread
 from PySide6.QtWidgets import (
     QApplication,
+    QCheckBox,
     QHeaderView,
     QLabel,
     QMainWindow,
@@ -30,6 +31,7 @@ from waypoint.core.models import Device, DeviceAssessment, DeviceStatus
 from waypoint.engine.factory import build_default_engine
 from waypoint.engine.session import WaypointEngine
 from waypoint.gui.workers import ScanWorker
+from waypoint.sources.local_cache import LocalCacheSource
 
 _TIER_LABELS = {
     DeviceStatus.MISSING: "Missing",
@@ -68,6 +70,17 @@ class MainWindow(QMainWindow):
         self.status_label = QLabel("No scan run yet.")
         layout.addWidget(self.status_label)
 
+        # Opt-in, off by default — the GUI equivalent of the CLI's `--oem`
+        # flag (see cli/main.py). Left unchecked, a scan behaves exactly
+        # as before this toggle existed. Checking it before clicking Scan
+        # adds Dell's real per-device catalog to this scan's source list;
+        # see ScanWorker.run() in gui/workers.py for why the refresh
+        # itself happens on the background thread, not here.
+        self.oem_checkbox = QCheckBox(
+            "Include OEM catalogs (Dell — downloads a real catalog on first use)"
+        )
+        layout.addWidget(self.oem_checkbox)
+
         self.tree = QTreeWidget()
         self.tree.setHeaderLabels(["Device", "Class", "Status", "Candidate", "Source", "Signature"])
         self.tree.header().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
@@ -84,10 +97,19 @@ class MainWindow(QMainWindow):
             return  # a scan is already in flight
 
         self.scan_button.setEnabled(False)
-        self.status_label.setText("Scanning…")
+        if self.oem_checkbox.isChecked():
+            self.status_label.setText(
+                "Scanning… (including OEM catalogs — first use downloads a real catalog, may take a moment)"
+            )
+        else:
+            self.status_label.setText("Scanning…")
 
         thread = QThread(self)
-        worker = ScanWorker(self.engine)
+        worker = ScanWorker(
+            self.engine,
+            include_oem=self.oem_checkbox.isChecked(),
+            oem_cache_dir=self._oem_cache_dir(),
+        )
         worker.moveToThread(thread)
 
         thread.started.connect(worker.run)
@@ -100,6 +122,19 @@ class MainWindow(QMainWindow):
         self._thread = thread
         self._worker = worker
         thread.start()
+
+    def _oem_cache_dir(self) -> str | None:
+        """Reuse the same cache directory `LocalCacheSource` is already
+        using, so OEM catalog files land next to the local cache instead
+        of a second, possibly-inconsistent default location — the same
+        cache_dir the CLI's `--oem` flag shares with `--cache-dir`.
+        Falls back to None (engine.factory's own default_cache_dir()) if
+        no LocalCacheSource is present, e.g. a test-constructed engine.
+        """
+        for source in self.engine.sources:
+            if isinstance(source, LocalCacheSource):
+                return str(source.cache_root)
+        return None
 
     def _on_thread_finished(self) -> None:
         if self._thread is not None:
