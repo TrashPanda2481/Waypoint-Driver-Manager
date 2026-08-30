@@ -43,6 +43,39 @@ def build_default_sources(cache_dir: str | None = None) -> list[DriverSource]:
     return sources
 
 
+def build_oem_sources(cache_dir: str | None = None) -> list[DriverSource]:
+    """OEM per-device catalog sources (currently: Dell's CatalogPC.cab).
+
+    Deliberately NOT included in `build_default_sources()`. Two reasons:
+
+    1. Cost. `DellCatalogSource.refresh()` downloads and parses a ~57MB
+       uncompressed XML catalog — not something to trigger on every default
+       scan, consistent with the user instruction to limit credit/resource-
+       consuming activity to what's actually needed.
+    2. `refresh()` requires network access and is not idempotent-cheap the
+       way `LocalCacheSource` is; a caller (CLI flag, GUI settings toggle)
+       should opt into it explicitly and control when the catalog is
+       refreshed vs. reused from `cache_dir`.
+
+    Only Dell is exposed here because only Dell's per-device catalog
+    (`dell_catalog.DellCatalogSource`) implements the `DriverSource`
+    protocol (search-by-hardware-ID). Lenovo and Dell's driver-pack
+    catalogs, and HP's platform list, are a different shape
+    (`ModelDriverPackSource` / platform-support-only) and are not
+    `DriverSource`s — see sources/oem/model_pack.py and
+    sources/oem/hp_platform.py for why, and expose those through separate
+    model-based lookups rather than folding them into this list.
+
+    Callers must call `.refresh()` on the returned source(s) before the
+    first `search()` (or point `cache_dir` at a location where a previous
+    `refresh()` already ran) — this function only constructs the source,
+    it never triggers a download itself.
+    """
+    from waypoint.sources.oem.dell_catalog import DellCatalogSource
+
+    return [DellCatalogSource(cache_dir or str(default_cache_dir()))]
+
+
 def build_default_engine(
     *,
     cache_dir: str | None = None,

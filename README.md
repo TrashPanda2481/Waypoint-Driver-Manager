@@ -15,11 +15,22 @@ Waypoint design decisions.
 The device-matching core (`waypoint.core`), engine orchestration
 (`waypoint.engine`), local driver cache (`waypoint.sources.local_cache`),
 and the GUI's scan wiring (`waypoint.gui`) are implemented and covered by
-automated tests (13 passing, including a headless Qt test of the actual
+automated tests (23 passing, including a headless Qt test of the actual
 scan button -> background thread -> engine -> tree-view path). The GUI and
 CLI now share one backend/source construction path via
 `waypoint.engine.factory.build_default_engine()`, so they can't silently
 drift apart.
+
+OEM catalog sourcing (`waypoint.sources.oem`) is implemented for Dell
+(per-device `CatalogPC.cab` as a full `DriverSource`, plus the model-keyed
+`DriverPackCatalog.cab`), Lenovo (model-keyed `catalogv2.xml`), and a
+deliberately scoped-down HP platform-support lookup (`platformList.cab`) —
+see [`docs/Architecture.md`](docs/Architecture.md) section 3.2 for exactly
+what's real vs. out of scope per vendor, with source URLs. Tested against
+small real-data fixtures trimmed from each vendor's actual live catalog
+(not fabricated); an end-to-end download-and-parse of a *full* real catalog
+has not been wired into an automated test. Not included in the default
+source list — opt in via `waypoint.engine.factory.build_oem_sources()`.
 
 The Windows device backend (`waypoint.platform.windows`) and Windows Update
 Catalog source are written against documented APIs but not yet validated
@@ -32,8 +43,10 @@ exercises the parity backend, useful for GUI/engine development only.
 ```
 src/waypoint/
   core/      # pure device/candidate matching logic — no I/O, fully tested
-  sources/   # driver source plugins (local cache implemented; Windows
-             # Update Catalog and OEM catalogs are follow-up milestones)
+  sources/   # driver source plugins (local cache + OEM catalogs implemented;
+             # Windows Update Catalog source is written but not yet
+             # validated on real hardware)
+  sources/oem/  # Dell/Lenovo/HP catalog sources (see docs/Architecture.md 3.2)
   engine/    # scan -> plan -> backup -> install -> rollback orchestration
              # + append-only JSON-Lines audit log
   platform/  # OS backends behind one interface (mock, windows, linux)

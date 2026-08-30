@@ -64,8 +64,55 @@ Planned sources (each independently toggle-able):
 - **Windows Update Catalog** — via `Microsoft.Update.Session` COM search
   (`IsInstalled=0 and Type='Driver'`), the same official channel Windows
   Update itself uses. [Microsoft Q&A](https://learn.microsoft.com/en-ca/answers/questions/5656657/microsoft-update-catalog-searching-for-firmware-up)
-- **OEM vendor catalogs** — Dell Command, HP Image Assistant, Lenovo/Intel
-  published driver feeds where they expose machine-readable catalogs.
+- **OEM vendor catalogs** — implemented for Dell, Lenovo, and (scoped down)
+  HP. Verified by downloading and inspecting each vendor's real published
+  feed (2026-08-30), not assumed from documentation:
+  - **Dell per-device catalog** (`sources/oem/dell_catalog.py`,
+    `DellCatalogSource`) — [`CatalogPC.cab`](https://downloads.dell.com/catalog/CatalogPC.cab),
+    the same feed Dell Command | Update and SCCM third-party-update
+    workflows consume. Genuinely per-hardware-ID: each driver component
+    lists PCI `vendorID`/`deviceID`/`subVendorID`/`subDeviceID` pairs,
+    matched into the same `DriverSource.search(hwids)` interface every
+    other source implements. Only MD5 is published per-component (no
+    SHA-256) — `search()` honestly returns `sha256=""`, and `fetch()`
+    verifies against the published MD5 before computing and returning a
+    real SHA-256 of the verified bytes.
+  - **Dell driver-pack catalog** (`sources/oem/dell_driverpack.py`,
+    `DellDriverPackSource`) — [`DriverPackCatalog.cab`](https://downloads.dell.com/catalog/DriverPackCatalog.cab),
+    keyed by Dell's SMBIOS `systemID`, not by hardware ID — a different
+    shape (see `ModelDriverPackSource` below), matching how MDT/SCCM
+    driver-pack injection actually works. Publishes real SHA-256 per
+    package.
+  - **Lenovo driver-pack catalog** (`sources/oem/lenovo_driverpack.py`,
+    `LenovoDriverPackSource`) — [`catalogv2.xml`](https://download.lenovo.com/cdrt/td/catalogv2.xml),
+    keyed by the 4-character machine-type prefix read from a real
+    system's SMBIOS product name. Its `crc` attribute is actually a
+    SHA-256 digest (64 hex chars) despite the name — reported honestly as
+    `hash_algorithm="sha256"`, not taken at face value as a CRC32.
+  - **HP platform support list** (`sources/oem/hp_platform.py`,
+    `HpPlatformCatalogSource`) — [`platformList.cab`](https://hpia.hpcloud.hp.com/ref/platformList.cab),
+    **deliberately scoped down**: only answers "is this SystemID a known
+    HP platform, and for which OS versions" — not a `DriverSource` or
+    `ModelDriverPackSource`. HP's actual per-update applicability feed
+    ([`HpCatalogForSms.latest.cab`](https://hpia.hpcloud.hp.com/downloads/sccmcatalog/HpCatalogForSms.latest.cab))
+    turned out to be a WSUS Software Distribution Package (SDP) format —
+    applicability is expressed as arbitrary WQL (`bar:WmiQuery` against
+    `Win32_ComputerSystem`/`Win32_BaseBoard`), not a flat HWID/model list.
+    Building a WQL evaluator to fake per-device matching on top of that
+    was judged out of scope and dishonest to attempt partially, so
+    `hp_platform.py` explicitly does not try — see its module docstring.
+  - **New protocol for model-keyed sources** (`sources/oem/model_pack.py`,
+    `ModelDriverPackSource` + `DriverPack`) — Dell's and Lenovo's
+    driver-pack catalogs answer "what's the one bundle for this system
+    model" rather than "what candidates exist for this hardware ID",
+    which doesn't fit `DriverSource`. Modeled as its own small protocol
+    rather than stretching `DriverSource` to cover a shape it wasn't
+    designed for.
+  - Not included in `build_default_sources()` — OEM catalog refresh is
+    real, sizeable network I/O (Dell's `CatalogPC.xml` alone is ~57MB
+    uncompressed) that shouldn't fire on every default scan. Exposed
+    instead through an explicit opt-in, `engine/factory.py`'s
+    `build_oem_sources()`, that a CLI flag or GUI settings toggle can call.
 - **Local signed cache** — a technician-built, content-addressed local
   store (drivers keyed by SHA-256, not filename/folder convention) — opt-in,
   incremental, no forced 20–60 GB blob.
@@ -108,7 +155,10 @@ waypoint/
   core/        # pure logic: device enumeration abstraction, HWID matching,
                # candidate ranking — no I/O side effects, fully unit-testable
   sources/     # DriverSource plugin interface + implementations
-               # (windows_update.py, oem_catalog.py, local_cache.py)
+               # (windows_update.py, local_cache.py, oem/dell_catalog.py)
+               # plus the model-keyed OEM protocol under sources/oem/
+               # (model_pack.py, dell_driverpack.py, lenovo_driverpack.py,
+               # hp_platform.py)
   engine/      # orchestration: scan -> plan -> backup -> install -> verify
                # -> rollback. Owns all side effects and the audit log.
   platform/    # OS-specific backends (win_devices.py via SetupAPI/WMI,
@@ -170,8 +220,17 @@ waypoint/
 
 ## 6. Open Decisions / To Revisit
 
-- Exact OEM catalogs to integrate first (Dell/HP/Lenovo have differing
-  levels of machine-readable feed support — needs a scoping pass per vendor).
+- ~~Exact OEM catalogs to integrate first~~ — RESOLVED (2026-08-30): Dell's
+  per-device `CatalogPC.cab` is genuinely HWID-keyed and now implemented as
+  a full `DriverSource`; Dell/Lenovo driver-pack catalogs are model-keyed
+  and implemented via the new `ModelDriverPackSource` protocol; HP's real
+  per-update feed is WSUS SDP/WQL-based and was judged too complex to fake
+  honestly, so HP support is scoped to platform-list lookup only. See
+  section 3.2 for details and citations.
+- Whether/how to expose HP per-device driver matching if a future WQL
+  evaluator is judged worth building — not attempted this pass.
+- Whether to add a scheduled/background catalog refresh for the OEM
+  sources (currently caller-triggered only via `.refresh()`).
 - Whether `platform/linux_devices.py` targets kernel-module/firmware
   matching (closer to a different problem domain) or stays scoped to
   Linux-side testing/parity for the core engine only.
