@@ -276,6 +276,18 @@ waypoint/
 
 ## 4. Platform & Stack
 
+> **Status note (in progress):** a full Rust rewrite of this stack — core,
+> platform, sources, engine, CLI, and GUI (iced instead of PySide6) — is
+> under active development on the `rust-rewrite` branch, alongside the
+> Python version described below (still the `main` branch, still what's
+> released). See `docs/TODO-rust-port.md` for exactly what's ported,
+> what's real-but-unvalidated, and what's explicitly deferred (OEM catalog
+> sources) as of the current state of that branch. This section is not
+> yet rewritten to describe the Rust stack as primary — that update is
+> deferred until the Rust scaffold has had more real-world (ideally
+> bare-metal Windows) validation, not just a clean compile in a Linux
+> sandbox.
+
 - **Language:** Python 3.12+ for `core`/`engine`/`sources`/`cli` — matches
   existing tooling fluency and keeps the logic genuinely cross-platform.
 - **GUI:** PySide6 (Qt) — GUI-first per requirements, and the same toolkit

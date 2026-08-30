@@ -1,0 +1,15 @@
+[package]
+name = "waypoint-cli"
+version.workspace = true
+edition.workspace = true
+
+[[bin]]
+name = "waypoint-cli"
+path = "src/main.rs"
+
+[dependencies]
+clap = { version = "4.6.6", features = ["derive"] }
+serde_json.workspace = true
+waypoint-core = { path = "../core" }
+waypoint-engine = { path = "../engine" }
+waypoint-platform = { path = "../platform" }

@@ -9,3 +9,6 @@ waypoint-cache/
 waypoint-audit.jsonl
 .venv/
 venv/
+
+# Rust
+/rust/target/

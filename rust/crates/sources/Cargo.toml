@@ -1,0 +1,13 @@
+[package]
+name = "waypoint-sources"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+waypoint-core = { path = "../core" }
+serde.workspace = true
+serde_json.workspace = true
+time.workspace = true
+sha2.workspace = true
+
+[target.'cfg(target_os = "windows")'.dependencies]

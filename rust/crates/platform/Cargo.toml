@@ -1,0 +1,15 @@
+[package]
+name = "waypoint-platform"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+waypoint-core = { path = "../core" }
+time.workspace = true
+
+[target.'cfg(target_os = "linux")'.dependencies]
+udev = "0.9"
+
+[target.'cfg(target_os = "windows")'.dependencies]
+wmi = "0.13"
+serde.workspace = true
