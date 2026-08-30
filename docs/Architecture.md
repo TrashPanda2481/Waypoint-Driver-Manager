@@ -118,13 +118,10 @@ Planned sources (each independently toggle-able):
     Only wires in `DellCatalogSource` (the only OEM source that
     implements the `DriverSource` shape today — see the model-keyed note
     above for why Lenovo/Dell-driverpack/HP aren't included here). The
-    CLI calls `.refresh(force=False)` once per invocation, so the first
-    `--oem` run against a given `--cache-dir` pays the ~57MB download but
-    every subsequent run against the same `--cache-dir` reuses the
-    on-disk `CatalogPC.xml` instead of re-downloading it — no separate
-    `--oem-refresh`/force flag exists yet; forcing a re-download today
-    means deleting the cached file or calling `refresh(force=True)`
-    directly from Python.
+    CLI calls `.refresh(force=False)` once per invocation by default, so
+    the first `--oem` run against a given `--cache-dir` pays the ~57MB
+    download but every subsequent run against the same `--cache-dir`
+    reuses the on-disk `CatalogPC.xml` instead of re-downloading it.
   - **GUI wiring (2026-08-30):** `gui/app.py`'s `MainWindow` now has an
     "Include OEM catalogs" checkbox, unchecked (off) by default — the
     GUI equivalent of `--oem`. When checked, `gui/workers.py`'s
@@ -139,6 +136,19 @@ Planned sources (each independently toggle-able):
     inferred from whichever `LocalCacheSource` the engine already has
     (`MainWindow._oem_cache_dir()`), so GUI and CLI share one cache root
     when both are pointed at the same `--cache-dir`/default location.
+  - **Force-refresh flag (2026-08-30):** CLI `--force-oem-refresh` and
+    the GUI's "Force refresh (ignore cached catalog)" checkbox both call
+    `.refresh(force=True)` instead of `force=False`, re-downloading the
+    catalog even when a cached copy exists. Both are no-ops without
+    `--oem`/the OEM checkbox also being set: the CLI prints a warning to
+    stderr (`--force-oem-refresh has no effect without --oem`) and
+    continues rather than erroring; the GUI checkbox is disabled
+    (greyed out) and automatically unchecked whenever the OEM checkbox
+    is off, so it can't be left checked in a state where it would
+    silently do nothing. Routine scans/fleet checks should leave this
+    off — it exists for cases where the cached catalog might be stale
+    (e.g. a scheduled job that explicitly wants fresh Dell data), not as
+    a default.
   - **Live-network validation (2026-08-30, manual, not part of the
     automated suite):** `DellCatalogSource.refresh(force=True)` run against
     the real `https://downloads.dell.com/catalog/CatalogPC.cab` —
@@ -315,9 +325,10 @@ waypoint/
   `gui/app.py` now has an "Include OEM catalogs" checkbox, off by
   default, wired through `gui/workers.py`'s `ScanWorker`. See section
   3.2 for details.
-- Whether a `--force-oem-refresh` (or similar) CLI flag is worth adding,
-  vs. leaving forced re-download as a delete-the-cache-file / direct-
-  Python-call operation as it is today.
+- ~~Whether a `--force-oem-refresh` (or similar) CLI flag is worth
+  adding~~ — RESOLVED (2026-08-30): added. See section 3.2 for details
+  (CLI `--force-oem-refresh` and the GUI's "Force refresh (ignore cached
+  catalog)" checkbox, both no-ops without `--oem`/the OEM checkbox).
 - Whether `platform/linux_devices.py` targets kernel-module/firmware
   matching (closer to a different problem domain) or stays scoped to
   Linux-side testing/parity for the core engine only.

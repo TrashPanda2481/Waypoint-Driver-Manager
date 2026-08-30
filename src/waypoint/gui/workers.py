@@ -31,6 +31,12 @@ class ScanWorker(QObject):
     outcome — so toggling the checkbox off before the next scan genuinely
     takes effect, and OEM sources are never silently duplicated onto
     `engine.sources` across repeated scans with the checkbox left on.
+
+    `force_oem_refresh` is the GUI equivalent of the CLI's
+    `--force-oem-refresh`: forces a re-download of the OEM catalog even
+    if a cached copy already exists, instead of the default `force=False`
+    behavior of reusing whatever is on disk. Has no effect unless
+    `include_oem` is also set.
     """
 
     finished = Signal(list)  # list[DeviceAssessment]
@@ -42,11 +48,13 @@ class ScanWorker(QObject):
         *,
         include_oem: bool = False,
         oem_cache_dir: str | None = None,
+        force_oem_refresh: bool = False,
     ) -> None:
         super().__init__()
         self._engine = engine
         self._include_oem = include_oem
         self._oem_cache_dir = oem_cache_dir
+        self._force_oem_refresh = force_oem_refresh
 
     def run(self) -> None:
         original_sources = list(self._engine.sources)
@@ -56,10 +64,12 @@ class ScanWorker(QObject):
 
                 oem_sources = build_oem_sources(self._oem_cache_dir)
                 for source in oem_sources:
-                    # force=False: see cli/main.py's identical comment —
-                    # only downloads if this cache_dir has never been
-                    # refreshed before.
-                    source.refresh(force=False)
+                    # force=False (default): only downloads if this
+                    # cache_dir has never been refreshed before, see
+                    # cli/main.py's identical --force-oem-refresh comment.
+                    # force=True (force_oem_refresh checkbox): re-download
+                    # regardless of what's already cached.
+                    source.refresh(force=self._force_oem_refresh)
                 self._engine.sources = original_sources + oem_sources
             assessments: list[DeviceAssessment] = self._engine.scan()
         except Exception as exc:  # noqa: BLE001 — worker boundary: report to UI, never crash the thread

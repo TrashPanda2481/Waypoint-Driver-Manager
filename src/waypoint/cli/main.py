@@ -29,18 +29,23 @@ def _build_engine(args: argparse.Namespace) -> WaypointEngine:
         audit_log_path=args.audit_log,
         min_signature=SignatureType(args.min_signature),
     )
+    if args.force_oem_refresh and not args.oem:
+        print(
+            "warning: --force-oem-refresh has no effect without --oem "
+            "(no OEM sources are being used this run)",
+            file=sys.stderr,
+        )
     if args.oem:
         oem_sources = build_oem_sources(args.cache_dir)
         for source in oem_sources:
-            # force=False: download only if this cache_dir has never been
-            # refreshed before; a second `--oem` run against the same
-            # cache_dir reuses the on-disk catalog instead of
+            # force=False (default): download only if this cache_dir has
+            # never been refreshed before; a second `--oem` run against
+            # the same cache_dir reuses the on-disk catalog instead of
             # re-downloading it, consistent with the user instruction to
-            # limit credit/network cost to what's actually needed. There
-            # is no CLI flag yet to force a re-download — delete the
-            # cached catalog file under cache_dir, or call
-            # `source.refresh(force=True)` directly from Python, to do so.
-            source.refresh(force=False)
+            # limit credit/network cost to what's actually needed.
+            # --force-oem-refresh overrides this and re-downloads
+            # regardless of what's already cached.
+            source.refresh(force=args.force_oem_refresh)
         engine.sources.extend(oem_sources)
     return engine
 
@@ -130,10 +135,23 @@ def build_parser() -> argparse.ArgumentParser:
             "engine.factory.build_oem_sources()). Off by default because "
             "the first use downloads a ~57MB catalog over the network; "
             "subsequent runs against the same --cache-dir reuse the "
-            "on-disk copy instead of re-downloading it. See "
+            "on-disk copy instead of re-downloading it (see "
+            "--force-oem-refresh to override that). See "
             "docs/Architecture.md section 3.2 for what's covered and "
             "what isn't (Lenovo/HP model-keyed catalogs are not yet "
             "wired into this flag)."
+        ),
+    )
+    parser.add_argument(
+        "--force-oem-refresh",
+        action="store_true",
+        help=(
+            "Only meaningful together with --oem. Re-download the OEM "
+            "catalog even if a cached copy already exists under "
+            "--cache-dir, instead of reusing it. Use when the cached "
+            "catalog might be stale (e.g. scheduled fleet checks that "
+            "want fresh Dell data) -- routine scans should leave this "
+            "off to avoid an unnecessary ~57MB download every run."
         ),
     )
     sub = parser.add_subparsers(dest="command", required=True)

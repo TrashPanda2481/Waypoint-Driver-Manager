@@ -258,3 +258,77 @@ def test_oem_checkbox_download_not_called_when_cache_already_seeded(qapp, tmp_pa
 
     _pump(qapp, lambda: window.scan_button.isEnabled())
     assert "Scan failed" not in window.status_label.text()
+
+
+def test_force_oem_refresh_checkbox_disabled_by_default_and_enabled_with_oem(qapp, tmp_path):
+    """The force-refresh checkbox should start disabled (since OEM
+    catalogs are off by default), become enabled when OEM is checked, and
+    go back to disabled+unchecked if OEM is unchecked again -- so it can
+    never be left in a checked-but-inert state."""
+    backend = MockDeviceBackend([])
+    local_source = LocalCacheSource(str(tmp_path / "cache"))
+    audit = AuditLog(str(tmp_path / "audit.jsonl"))
+    engine = WaypointEngine(backend, [local_source], audit)
+
+    window = MainWindow(engine=engine)
+    assert window.force_oem_refresh_checkbox.isEnabled() is False
+    assert window.force_oem_refresh_checkbox.isChecked() is False
+
+    window.oem_checkbox.setChecked(True)
+    assert window.force_oem_refresh_checkbox.isEnabled() is True
+
+    window.force_oem_refresh_checkbox.setChecked(True)
+    window.oem_checkbox.setChecked(False)
+    assert window.force_oem_refresh_checkbox.isEnabled() is False
+    assert window.force_oem_refresh_checkbox.isChecked() is False  # reset, not just disabled
+
+
+def test_force_oem_refresh_checkbox_forces_redownload_even_when_cached(qapp, tmp_path, monkeypatch):
+    """With OEM + force-refresh both checked, refresh(force=True) must be
+    called even though a valid cached catalog already exists -- the GUI
+    counterpart of test_cli_oem_flag.py's identical CLI proof."""
+    import shutil
+
+    from waypoint.sources.oem import dell_catalog as dell_catalog_module
+
+    fixtures = os.path.join(os.path.dirname(__file__), "fixtures", "oem")
+    cache_dir = tmp_path / "cache"
+    os.makedirs(cache_dir, exist_ok=True)
+    shutil.copy(
+        os.path.join(fixtures, "dell_catalog_sample.xml"),
+        os.path.join(cache_dir, "CatalogPC.xml"),
+    )
+
+    call_count = {"n": 0}
+    real_fixture = os.path.join(fixtures, "dell_catalog_sample.xml")
+
+    def _fake_download(url, dest):
+        call_count["n"] += 1
+        with open(dest, "wb") as f:
+            f.write(b"fake-cab-bytes")
+
+    def _fake_extract_cab(cab_path, dest_dir):
+        from pathlib import Path
+
+        target = Path(dest_dir) / "CatalogPC.xml"
+        shutil.copy(real_fixture, target)
+        return [target]
+
+    monkeypatch.setattr(dell_catalog_module, "download_file", _fake_download)
+    monkeypatch.setattr(dell_catalog_module, "extract_cab", _fake_extract_cab)
+
+    backend = MockDeviceBackend([])
+    local_source = LocalCacheSource(str(cache_dir))
+    audit = AuditLog(str(tmp_path / "audit.jsonl"))
+    engine = WaypointEngine(backend, [local_source], audit)
+
+    window = MainWindow(engine=engine)
+    window.oem_checkbox.setChecked(True)
+    window.force_oem_refresh_checkbox.setChecked(True)
+    window.on_scan_clicked()
+
+    assert "force-refreshing" in window.status_label.text()
+    _pump(qapp, lambda: window.scan_button.isEnabled())
+
+    assert "Scan failed" not in window.status_label.text()
+    assert call_count["n"] == 1  # download_file WAS called despite the pre-seeded cache

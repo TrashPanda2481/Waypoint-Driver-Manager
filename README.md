@@ -15,7 +15,7 @@ Waypoint design decisions.
 The device-matching core (`waypoint.core`), engine orchestration
 (`waypoint.engine`), local driver cache (`waypoint.sources.local_cache`),
 and the GUI's scan wiring (`waypoint.gui`) are implemented and covered by
-automated tests (31 passing, including a headless Qt test of the actual
+automated tests (36 passing, including a headless Qt test of the actual
 scan button -> background thread -> engine -> tree-view path). The GUI and
 CLI now share one backend/source construction path via
 `waypoint.engine.factory.build_default_engine()`, so they can't silently
@@ -106,6 +106,11 @@ waypoint scan --json
 # First run downloads ~57MB; later runs against the same --cache-dir
 # reuse the on-disk copy instead of re-downloading it. Off by default.
 waypoint --oem scan --json
+
+# Force a fresh download instead of reusing the cached catalog (e.g. for
+# a scheduled job that wants current Dell data). No effect without --oem
+# -- prints a warning to stderr rather than silently doing nothing.
+waypoint --oem --force-oem-refresh scan --json
 ```
 
 ## Trying the GUI
@@ -121,6 +126,11 @@ scan behaves exactly as before the checkbox existed. Checked, the Dell
 catalog refresh runs on a background thread so a first-time ~57MB
 download doesn't freeze the window; later scans against the same cache
 directory reuse the on-disk copy.
+
+A second checkbox, "Force refresh (ignore cached catalog)", is the GUI
+equivalent of `--force-oem-refresh`. It stays disabled and unchecked
+unless "Include OEM catalogs" is also checked, so it can never be left
+checked in a state where it would do nothing.
 
 On non-Windows systems both use `waypoint.platform.linux.LinuxDeviceBackend`,
 which is a parity/testing backend, not the primary target — see

@@ -172,3 +172,93 @@ def test_oem_cache_dir_is_reused_not_redownloaded(tmp_path, monkeypatch):
         ]
     )
     assert rc == 0  # no devices at all -> clean
+
+
+def test_force_oem_refresh_flag_defaults_to_off():
+    parser = build_parser()
+    args = parser.parse_args(["scan"])
+    assert args.force_oem_refresh is False
+
+
+def test_force_oem_refresh_without_oem_warns_but_does_not_error(tmp_path, monkeypatch, capsys):
+    """--force-oem-refresh without --oem should not silently pretend to
+    do something -- it must warn on stderr, per the honesty instruction
+    (don't let a flag look like it did something when it didn't)."""
+    cache_dir = tmp_path / "cache"
+    audit_log = tmp_path / "audit.jsonl"
+    monkeypatch.setattr(
+        "waypoint.engine.factory.build_default_backend",
+        lambda: MockDeviceBackend([]),
+    )
+
+    rc = main(
+        [
+            "--cache-dir",
+            str(cache_dir),
+            "--audit-log",
+            str(audit_log),
+            "--force-oem-refresh",
+            "scan",
+            "--json",
+        ]
+    )
+    captured = capsys.readouterr()
+    assert rc == 0
+    assert "no effect without --oem" in captured.err
+
+
+def test_force_oem_refresh_forces_redownload_even_when_cached(tmp_path, monkeypatch):
+    """The core behavior: with --oem --force-oem-refresh, refresh(force=True)
+    must be called even though a valid cached catalog already exists --
+    proven here by asserting download_file() IS called (the opposite of
+    test_oem_cache_dir_is_reused_not_redownloaded)."""
+    from waypoint.sources.oem import dell_catalog as dell_catalog_module
+
+    cache_dir = tmp_path / "cache"
+    _seed_dell_cache(str(cache_dir))
+    audit_log = tmp_path / "audit.jsonl"
+
+    call_count = {"n": 0}
+    real_extract_needed_file = os.path.join(FIXTURES, "dell_catalog_sample.xml")
+
+    def _fake_download(url, dest):
+        call_count["n"] += 1
+        # Simulate a real download landing at `dest` (a .cab path inside a
+        # tempdir) by dropping in a minimal real cab-less stand-in: since
+        # DellCatalogSource.refresh() expects to extract a .cab, we instead
+        # monkeypatch extract_cab too, to keep this a pure "was a network
+        # call attempted" check without needing a real .cab fixture.
+        with open(dest, "wb") as f:
+            f.write(b"fake-cab-bytes")
+
+    def _fake_extract_cab(cab_path, dest_dir):
+        # Return the real fixture XML path as if it were extracted --
+        # keeps the rest of refresh()'s parse step working on real data.
+        import shutil
+        from pathlib import Path
+
+        target = Path(dest_dir) / "CatalogPC.xml"
+        shutil.copy(real_extract_needed_file, target)
+        return [target]
+
+    monkeypatch.setattr(dell_catalog_module, "download_file", _fake_download)
+    monkeypatch.setattr(dell_catalog_module, "extract_cab", _fake_extract_cab)
+    monkeypatch.setattr(
+        "waypoint.engine.factory.build_default_backend",
+        lambda: MockDeviceBackend([]),
+    )
+
+    rc = main(
+        [
+            "--cache-dir",
+            str(cache_dir),
+            "--audit-log",
+            str(audit_log),
+            "--oem",
+            "--force-oem-refresh",
+            "scan",
+            "--json",
+        ]
+    )
+    assert rc == 0
+    assert call_count["n"] == 1  # download_file WAS called despite the pre-seeded cache

@@ -81,6 +81,25 @@ class MainWindow(QMainWindow):
         )
         layout.addWidget(self.oem_checkbox)
 
+        # Only meaningful when the box above is checked — the GUI
+        # equivalent of the CLI's --force-oem-refresh. Disabled (and
+        # visually greyed out) whenever OEM catalogs aren't included, so
+        # it can't be checked in a state where it would silently do
+        # nothing; see cli/main.py's identical --force-oem-refresh flag
+        # and its "has no effect without --oem" warning for the CLI side
+        # of the same rule.
+        self.force_oem_refresh_checkbox = QCheckBox(
+            "Force refresh (ignore cached catalog)"
+        )
+        self.force_oem_refresh_checkbox.setEnabled(False)
+        self.oem_checkbox.toggled.connect(self.force_oem_refresh_checkbox.setEnabled)
+        self.oem_checkbox.toggled.connect(
+            lambda checked: None
+            if checked
+            else self.force_oem_refresh_checkbox.setChecked(False)
+        )
+        layout.addWidget(self.force_oem_refresh_checkbox)
+
         self.tree = QTreeWidget()
         self.tree.setHeaderLabels(["Device", "Class", "Status", "Candidate", "Source", "Signature"])
         self.tree.header().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
@@ -97,7 +116,11 @@ class MainWindow(QMainWindow):
             return  # a scan is already in flight
 
         self.scan_button.setEnabled(False)
-        if self.oem_checkbox.isChecked():
+        if self.oem_checkbox.isChecked() and self.force_oem_refresh_checkbox.isChecked():
+            self.status_label.setText(
+                "Scanning… (force-refreshing OEM catalogs — re-downloading regardless of cache, may take a moment)"
+            )
+        elif self.oem_checkbox.isChecked():
             self.status_label.setText(
                 "Scanning… (including OEM catalogs — first use downloads a real catalog, may take a moment)"
             )
@@ -109,6 +132,7 @@ class MainWindow(QMainWindow):
             self.engine,
             include_oem=self.oem_checkbox.isChecked(),
             oem_cache_dir=self._oem_cache_dir(),
+            force_oem_refresh=self.force_oem_refresh_checkbox.isChecked(),
         )
         worker.moveToThread(thread)
 
