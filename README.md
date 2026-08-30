@@ -33,16 +33,24 @@ doesn't depend on Dell's/Lenovo's/HP's servers or spend network/credit
 cost on every run. Not included in the default source list — opt in via
 `waypoint.engine.factory.build_oem_sources()`.
 
-Dell's full `refresh()` pipeline (real download of `CatalogPC.cab` -> real
-`cabextract` -> real XML parse -> real MD5-verified `fetch()` of an actual
-driver package) was manually run once against the live network on
-2026-08-30: indexed 8,655 distinct hardware IDs / 159,338 candidates from
-the real 57.6MB catalog in ~1.5s, then downloaded a real 10.37MB driver
-package and confirmed its MD5 matched the catalog value
-(`450566a766e982f351f918cce26eb2e4`, independently re-checked with
-`md5sum`) before computing its SHA-256. This was a one-off manual
-validation run, not an addition to the automated suite — Lenovo's and
-HP's `refresh()` pipelines have not yet been run against live network.
+All three OEM `refresh()` pipelines have now been manually run once
+against the live network (2026-08-30, one-off validation runs, not added
+to the automated suite — CI still uses the offline fixtures deliberately):
+- **Dell** (`CatalogPC.cab`): real download -> `cabextract` -> XML parse ->
+  8,655 hardware IDs / 159,338 candidates in ~1.5s. Then a real `fetch()`
+  of a real 10.37MB driver package, MD5-verified against the catalog's
+  published hash (`450566a766e982f351f918cce26eb2e4`, independently
+  re-checked with `md5sum`), then SHA-256-computed.
+- **Lenovo** (`catalogv2.xml`, no cab): real download -> XML parse ->
+  1,475 machine-type codes / 8,674 driver-pack entries in ~0.2s. Spot-check
+  on machine-type `10M4` matched the offline fixture exactly. The
+  referenced driver-pack download itself (~300MB per a `HEAD` check) was
+  not downloaded to verify its hash end-to-end — too large to justify for
+  a spot-check, so the "crc is actually SHA-256" claim rests on the
+  64-character length match for this vendor, not a hashed download.
+- **HP** (`platformList.cab`): real download -> `cabextract` -> XML parse
+  -> 603 real SystemIDs in ~0.1s. Spot-check on SystemID `1909` matched
+  the offline fixture exactly (`HP ZBook 15 Mobile Workstation`).
 
 The Windows device backend (`waypoint.platform.windows`) and Windows Update
 Catalog source are written against documented APIs but not yet validated

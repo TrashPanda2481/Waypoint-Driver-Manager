@@ -124,8 +124,29 @@ Planned sources (each independently toggle-able):
     independently re-checked with `md5sum` outside the code path), then
     SHA-256-computed. Confirms the full download -> extract -> parse ->
     match -> fetch -> verify pipeline works end-to-end against the real
-    service, not just the offline fixtures. Lenovo's and HP's `refresh()`
-    pipelines have not yet been run against live network — only Dell's has.
+    service, not just the offline fixtures.
+  - **Live-network validation, continued (2026-08-30):**
+    `LenovoDriverPackSource.refresh(force=True)` run against the real
+    `https://download.lenovo.com/cdrt/td/catalogv2.xml` (plain XML, no
+    cab) — downloaded and parsed in ~0.2s, indexing 1,475 distinct
+    machine-type codes / 8,674 total driver-pack entries from the real
+    1.39MB catalog. Spot-checked machine-type `10M4` (the same one used in
+    the offline fixture) -> 1 real pack, ThinkCentre M715Q, with a real
+    64-hex-char `crc` value confirming the earlier finding that this field
+    is actually SHA-256. Also confirmed the full-serial-truncation path
+    (`10M4S00100` -> same result as `10M4`) against real catalog data. The
+    referenced driver-pack download itself (`tc_m715q_w1064_201804.exe`,
+    ~300MB per a `HEAD` check) was **not** downloaded to verify that hash
+    end-to-end — too large to justify for a spot-check, so the SHA-256
+    claim rests on the 64-character length match, not a downloaded-and-
+    hashed file, for Lenovo specifically (unlike the Dell case above, where
+    the actual 10.37MB file was downloaded and hashed).
+    `HpPlatformCatalogSource.refresh(force=True)` run against the real
+    `https://hpia.hpcloud.hp.com/ref/platformList.cab` — downloaded,
+    `cabextract`-ed, and parsed in ~0.1s, indexing 603 real HP SystemIDs
+    from the real 2.48MB `platformList.xml`. Spot-checked SystemID `1909`
+    -> `HP ZBook 15 Mobile Workstation`, exactly matching the offline
+    fixture; an unknown SystemID (`ZZZZ`) correctly returned no match.
 - **Local signed cache** — a technician-built, content-addressed local
   store (drivers keyed by SHA-256, not filename/folder convention) — opt-in,
   incremental, no forced 20–60 GB blob.
