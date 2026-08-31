@@ -3,6 +3,10 @@ name = "waypoint-cli"
 version.workspace = true
 edition.workspace = true
 
+[lib]
+name = "waypoint_cli"
+path = "src/lib.rs"
+
 [[bin]]
 name = "waypoint-cli"
 path = "src/main.rs"
@@ -13,3 +17,6 @@ serde_json.workspace = true
 waypoint-core = { path = "../core" }
 waypoint-engine = { path = "../engine" }
 waypoint-platform = { path = "../platform" }
+
+[dev-dependencies]
+tempfile = "3"

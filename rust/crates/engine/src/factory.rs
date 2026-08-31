@@ -68,16 +68,34 @@ pub fn build_oem_sources(cache_dir: Option<&str>) -> Result<Vec<Box<dyn DriverSo
     Ok(vec![Box::new(DellCatalogSource::new(cache_dir)?)])
 }
 
-pub fn build_default_engine(
+/// Dependency-injection seam: identical to `build_default_engine()` except
+/// the caller supplies the backend instead of it being resolved internally
+/// via `build_default_backend()`. Exists so callers (test suites, chiefly)
+/// can swap in `waypoint_platform::MockDeviceBackend` without needing
+/// Python's `monkeypatch.setattr("...build_default_backend", ...)` — Rust
+/// has no equivalent way to swap a free function out from under compiled
+/// code, so the seam has to be an explicit parameter instead.
+/// `build_default_engine()` is just this function called with the real
+/// backend, so the two can never drift apart.
+pub fn build_engine_with_backend(
+    backend: Box<dyn DeviceBackend>,
     cache_dir: Option<&str>,
     audit_log_path: Option<&str>,
     min_signature: SignatureType,
 ) -> Result<WaypointEngine, String> {
-    let backend = build_default_backend()?;
     let sources = build_default_sources(cache_dir)?;
     let audit_path = audit_log_path
         .map(std::path::PathBuf::from)
         .unwrap_or_else(default_audit_log_path);
     let audit = AuditLog::new(audit_path)?;
     Ok(WaypointEngine::new(backend, sources, audit, min_signature))
+}
+
+pub fn build_default_engine(
+    cache_dir: Option<&str>,
+    audit_log_path: Option<&str>,
+    min_signature: SignatureType,
+) -> Result<WaypointEngine, String> {
+    let backend = build_default_backend()?;
+    build_engine_with_backend(backend, cache_dir, audit_log_path, min_signature)
 }

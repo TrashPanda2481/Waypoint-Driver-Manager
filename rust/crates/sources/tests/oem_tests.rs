@@ -161,3 +161,67 @@ fn test_hp_platform_unknown_system_id_returns_none() {
     source.load_from_xml(&fixture("hp_platformlist_sample.xml")).unwrap();
     assert!(source.is_supported("ZZZZ").unwrap().is_none());
 }
+
+// Port of the two `tests/test_cli_oem_flag.py` cases that monkeypatch
+// the module-level `download_file`/`extract_cab` functions
+// (`test_oem_cache_dir_is_reused_not_redownloaded` and
+// `test_force_oem_refresh_forces_redownload_even_when_cached`) — moved
+// here, against `DellCatalogSource::refresh()` directly, using its own
+// `set_downloader`/`set_extractor` seam instead of a CLI-level one. See
+// `crates/cli/tests/oem_flag_tests.rs`'s module doc comment for why.
+
+#[test]
+fn test_dell_catalog_refresh_skips_download_when_cache_exists_and_not_forced() {
+    let tmp = tmp_dir("dell-refresh-cached");
+    std::fs::copy(fixture("dell_catalog_sample.xml"), tmp.join("CatalogPC.xml")).unwrap();
+
+    let mut source = DellCatalogSource::new(&tmp).unwrap();
+    let download_calls = std::rc::Rc::new(std::cell::Cell::new(0u32));
+    let download_calls_clone = download_calls.clone();
+    source.set_downloader(move |_url, _dest| {
+        download_calls_clone.set(download_calls_clone.get() + 1);
+        Err("download_file() should not be called when the catalog is already cached on disk (force=false)".to_string())
+    });
+
+    source.refresh(false).expect("refresh(force=false) with an existing cache should succeed without downloading");
+    assert_eq!(download_calls.get(), 0);
+
+    // Confirms it actually parsed the pre-seeded file, not just "no error".
+    let results = source.search(&["PCI\\VEN_8086&DEV_7745".to_string()]).unwrap();
+    assert_eq!(results.len(), 1);
+}
+
+#[test]
+fn test_dell_catalog_refresh_redownloads_when_forced_even_if_cached() {
+    let tmp = tmp_dir("dell-refresh-forced");
+    std::fs::copy(fixture("dell_catalog_sample.xml"), tmp.join("CatalogPC.xml")).unwrap();
+
+    let mut source = DellCatalogSource::new(&tmp).unwrap();
+    let download_calls = std::rc::Rc::new(std::cell::Cell::new(0u32));
+    let extract_calls = std::rc::Rc::new(std::cell::Cell::new(0u32));
+    let download_calls_clone = download_calls.clone();
+    let extract_calls_clone = extract_calls.clone();
+    let fixture_xml = fixture("dell_catalog_sample.xml");
+
+    source.set_downloader(move |_url, dest| {
+        download_calls_clone.set(download_calls_clone.get() + 1);
+        // Simulate a real download landing at `dest` (a .cab path inside a
+        // tempdir) — contents don't matter since the extractor below is
+        // also faked, mirroring the Python test's "fake-cab-bytes" stand-in.
+        std::fs::write(dest, b"fake-cab-bytes").map_err(|e| e.to_string())?;
+        Ok(dest.to_path_buf())
+    });
+    source.set_extractor(move |_cab_path, dest_dir| {
+        extract_calls_clone.set(extract_calls_clone.get() + 1);
+        let target = dest_dir.join("CatalogPC.xml");
+        std::fs::copy(&fixture_xml, &target).map_err(|e| e.to_string())?;
+        Ok(vec![target])
+    });
+
+    source.refresh(true).expect("refresh(force=true) should redownload even with a valid cache present");
+    assert_eq!(download_calls.get(), 1); // download_file WAS called despite the pre-seeded cache
+    assert_eq!(extract_calls.get(), 1);
+
+    let results = source.search(&["PCI\\VEN_8086&DEV_7745".to_string()]).unwrap();
+    assert_eq!(results.len(), 1);
+}
