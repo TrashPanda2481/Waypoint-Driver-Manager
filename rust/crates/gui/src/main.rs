@@ -18,11 +18,15 @@
 //!   udev/mock enumeration is fast enough that this is not noticeable in
 //!   practice, but a real Windows WMI fleet scan could briefly block the
 //!   window — tracked as deferred scope, see docs/TODO-rust-port.md.
-//! - The OEM checkbox is present for interface parity but permanently
-//!   disabled: `build_oem_sources()` is not yet ported to Rust (see
-//!   `waypoint-sources` crate docs), so there is nothing for it to enable
-//!   yet. This mirrors the CLI's `--oem` flag, which returns a hard error
-//!   rather than silently no-op'ing.
+//! - The OEM checkbox is opt-in, off by default, and now wired the same
+//!   way as the CLI's `--oem` flag: checking it before clicking Scan adds
+//!   `engine::factory::build_oem_sources()` (Dell's real per-device
+//!   catalog) to that one scan's source list, refreshed with
+//!   `force_oem_refresh` per the force-refresh checkbox, then restored to
+//!   the original source list afterward — mirroring `ScanWorker.run()`'s
+//!   try/finally sources-restore pattern in `gui/workers.py` (Python runs
+//!   this on a background thread; this port runs it synchronously on
+//!   click, per the deviation noted above).
 //! - Rendered as a grouped column list rather than Qt's `QTreeWidget`
 //!   (iced has no built-in tree widget); the same three-tier grouping,
 //!   counts, and per-row fields (device, class, status, candidate
@@ -32,7 +36,7 @@ use iced::widget::{button, checkbox, column, container, row, scrollable, text, C
 use iced::{Alignment, Element, Length, Task};
 
 use waypoint_core::{DeviceAssessment, DeviceStatus};
-use waypoint_engine::factory::build_default_engine;
+use waypoint_engine::factory::{build_default_engine, build_oem_sources};
 use waypoint_engine::WaypointEngine;
 
 const TIER_ORDER: [DeviceStatus; 3] = [
@@ -57,8 +61,7 @@ struct WaypointApp {
     status_line: String,
     assessments: Vec<DeviceAssessment>,
     scanning: bool,
-    /// Present for interface parity with the Python GUI's OEM checkbox;
-    /// permanently unusable until OEM sources are ported (see module docs).
+    /// GUI equivalent of the CLI's `--oem` flag — off by default, opt-in.
     include_oem: bool,
     force_oem_refresh: bool,
 }
@@ -112,16 +115,75 @@ impl WaypointApp {
                 if self.scanning {
                     return Task::none(); // a scan is already in flight (mirrors the Python guard)
                 }
-                let Some(engine) = &self.engine else {
+                if self.engine.is_none() {
                     self.status_line = format!(
                         "Scan failed: engine unavailable ({})",
                         self.engine_error.as_deref().unwrap_or("unknown error")
                     );
                     return Task::none();
                 };
-                self.status_line = "Scanning…".to_string();
-                match engine.scan() {
-                    Ok(assessments) => {
+
+                self.status_line = if self.include_oem && self.force_oem_refresh {
+                    "Scanning… (force-refreshing OEM catalogs — re-downloading regardless of cache, may take a moment)".to_string()
+                } else if self.include_oem {
+                    "Scanning… (including OEM catalogs — first use downloads a real catalog, may take a moment)".to_string()
+                } else {
+                    "Scanning…".to_string()
+                };
+
+                // Mirrors `ScanWorker.run()`'s try/finally sources-restore
+                // pattern (`gui/workers.py`): OEM sources are added to
+                // `engine.sources` only for the duration of this one
+                // `scan()` call and truncated back off again afterward, so
+                // toggling the checkbox off before the next scan genuinely
+                // takes effect and OEM sources never silently accumulate
+                // across repeated scans left checked.
+                let engine = self.engine.as_mut().unwrap();
+                let original_len = engine.sources.len();
+                let mut oem_build_error: Option<String> = None;
+                if self.include_oem {
+                    // `None` cache_dir: this GUI builds its engine with
+                    // `build_default_engine(None, ...)`, so its
+                    // `LocalCacheSource` is already using
+                    // `paths::default_cache_dir()` — the same fallback
+                    // `build_oem_sources(None)` resolves to, matching
+                    // Python's `_oem_cache_dir()` None-fallback behavior
+                    // (this GUI has no cache-dir override field).
+                    match build_oem_sources(None) {
+                        Ok(oem_sources) => {
+                            let mut refresh_error = None;
+                            for source in &oem_sources {
+                                // force=false (default): only downloads if
+                                // this cache_dir has never been refreshed
+                                // before. force=true (force-refresh
+                                // checkbox): re-download regardless of
+                                // what's already cached.
+                                if let Err(err) = source.refresh(self.force_oem_refresh) {
+                                    refresh_error = Some(err);
+                                    break;
+                                }
+                            }
+                            match refresh_error {
+                                Some(err) => oem_build_error = Some(err),
+                                None => engine.sources.extend(oem_sources),
+                            }
+                        }
+                        Err(err) => oem_build_error = Some(err),
+                    }
+                }
+
+                let scan_result = if oem_build_error.is_none() {
+                    Some(engine.scan())
+                } else {
+                    None
+                };
+                engine.sources.truncate(original_len); // always restore, regardless of outcome
+
+                match (oem_build_error, scan_result) {
+                    (Some(err), _) => {
+                        self.status_line = format!("Scan failed: could not prepare OEM catalogs: {err}");
+                    }
+                    (None, Some(Ok(assessments))) => {
                         self.assessments = assessments;
                         let total = self.assessments.len();
                         let actionable = self
@@ -135,9 +197,10 @@ impl WaypointApp {
                             "Scan complete — {total} device(s) assessed, {actionable} need attention."
                         );
                     }
-                    Err(err) => {
+                    (None, Some(Err(err))) => {
                         self.status_line = format!("Scan failed: {err}");
                     }
+                    (None, None) => unreachable!(),
                 }
             }
         }
@@ -146,7 +209,7 @@ impl WaypointApp {
 
     fn view(&self) -> Element<'_, Message> {
         let oem_checkbox = checkbox(self.include_oem)
-            .label("Include OEM catalogs (not yet available in this Rust build)")
+            .label("Include OEM catalogs (Dell — downloads a real catalog on first use)")
             .on_toggle(Message::ToggleOem);
 
         let force_refresh_checkbox = if self.include_oem {

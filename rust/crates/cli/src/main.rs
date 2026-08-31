@@ -16,16 +16,19 @@
 //! stub rather than inventing a `--plan-file` replay flow the Python CLI
 //! doesn't have yet.
 //!
-//! **Scope note:** `--oem` maps to `build_oem_sources()` in Python, which
-//! is not ported in this pass (see `waypoint-sources` crate docs). Passing
-//! `--oem` here is an honest error, not a silent no-op.
+//! **`--oem` wiring:** direct port of `cli/main.py`'s `_build_engine()`.
+//! `--oem` opts into `engine::factory::build_oem_sources()` (currently:
+//! Dell's `CatalogPC.cab`) in addition to the default sources.
+//! `--force-oem-refresh` only has an effect together with `--oem` — a
+//! warning is printed to stderr (not an error) if it's passed alone,
+//! matching Python's behavior exactly.
 
 use std::process::ExitCode;
 
 use clap::{Parser, Subcommand};
 
 use waypoint_core::SignatureType;
-use waypoint_engine::factory::build_default_engine;
+use waypoint_engine::factory::{build_default_engine, build_oem_sources};
 use waypoint_engine::WaypointEngine;
 
 const EXIT_CLEAN: u8 = 0;
@@ -47,14 +50,18 @@ struct Cli {
     #[arg(long, default_value = "attestation")]
     min_signature: String,
 
-    /// Opt in to OEM per-device catalog sources in addition to the default
-    /// sources. NOT YET PORTED to Rust — passing this flag is a hard error,
-    /// not a silent no-op, so a fleet script never assumes OEM coverage it
-    /// isn't getting.
+    /// Opt in to OEM per-device catalog sources (currently: Dell's
+    /// CatalogPC.cab) in addition to the default sources. Downloads and
+    /// parses a ~57MB catalog on first use per cache_dir — not something
+    /// a default scan does automatically, consistent with the user
+    /// instruction to limit credit/network cost to what's actually needed.
     #[arg(long, default_value_t = false)]
     oem: bool,
 
-    /// Only meaningful together with --oem. NOT YET PORTED (see --oem).
+    /// Only meaningful together with --oem. Re-downloads the OEM catalog
+    /// even if a previous --oem run already cached it under cache_dir.
+    /// Without this flag, a second --oem run against the same cache_dir
+    /// reuses the on-disk catalog instead of re-downloading it.
     #[arg(long, default_value_t = false)]
     force_oem_refresh: bool,
 
@@ -98,13 +105,20 @@ fn build_engine(cli: &Cli) -> Result<WaypointEngine, String> {
              (no OEM sources are being used this run)"
         );
     }
+    let mut engine = engine;
     if cli.oem {
-        return Err(
-            "--oem requires OEM catalog sources (Dell CatalogPC.cab, etc.), which are not yet \
-             ported to this Rust build — see docs/TODO-rust-port.md. Run without --oem, or use \
-             the Python CLI for OEM-catalog scans for now."
-                .to_string(),
-        );
+        let oem_sources = build_oem_sources(cli.cache_dir.as_deref())?;
+        for source in &oem_sources {
+            // force=false (default): download only if this cache_dir has
+            // never been refreshed before; a second --oem run against
+            // the same cache_dir reuses the on-disk catalog instead of
+            // re-downloading it, consistent with the user instruction to
+            // limit credit/network cost to what's actually needed.
+            // --force-oem-refresh overrides this and re-downloads
+            // regardless of what's already cached.
+            source.refresh(cli.force_oem_refresh)?;
+        }
+        engine.sources.extend(oem_sources);
     }
     Ok(engine)
 }

@@ -1,0 +1,553 @@
+<?xml version='1.0' encoding='utf-8'?>
+<Manifest baseLocation="downloads.dell.com" version="26.06.12">
+  <SoftwareComponent schemaVersion="2.0" identifier="43234429-954c-4ab8-9e26-981bb2dfc075" packageID="025D7" releaseID="025D7" hashMD5="6ca1a71bbaa8a53f3509858d3b39033f" path="FOLDER12660163M/4/Intel-Integrated-Sensor-Solution-Driver_025D7_WIN64_3.11.100.7733_A00_02.EXE" dateTime="2025-01-21T09:03:46Z" releaseDate="March 31, 2026" vendorVersion="3.11.100.7733" dellVersion="A00" packageType="LW64" size="11003752">
+    <Name>
+      <Display lang="en">Intel Integrated Sensor Solution Driver,3.11.100.7733,A00</Display>
+    </Name>
+    <ComponentType value="DRVR">
+      <Display lang="en">Driver</Display>
+    </ComponentType>
+    <Description>
+      <Display lang="en">The package contains the Intel Integrated Sensor Solution driver. The Intel Integrated Sensor Solution driver regulates the sensors for supported systems.</Display>
+    </Description>
+    <Category value="CS">
+      <Display lang="en">Chipset</Display>
+    </Category>
+    <SupportedDevices>
+      <Device componentID="103834" embedded="false">
+        <PCIInfo deviceID="7745" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="7E45" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="7F78" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="A845" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="51FC" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="54FC" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="6E78" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="7745" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="7A78" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="7AF8" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="7E45" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="7E90" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="7F78" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="A845" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="D354" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="E345" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="E445" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="51FC" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="54FC" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="6E78" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="7745" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="7A78" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="7AF8" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="7E45" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="7E90" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="7F78" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="A845" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="D354" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="E345" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="E445" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="51FC" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="54FC" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="6E78" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="7745" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="7A78" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="7AF8" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="7E45" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="7E90" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="7F78" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="A845" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="D354" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="E345" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="E445" vendorID="8086" subDeviceID="" subVendorID="" />
+        <Display lang="en">Intel Integrated Sensor Solution Driver</Display>
+      </Device>
+    </SupportedDevices>
+    <SupportedOperatingSystems>
+      <OperatingSystem osCode="EXCAL" osVendor="Microsoft" majorVersion="10" minorVersion="0" spMajorVersion="0" spMinorVersion="0" osArch="x64">
+        <Display lang="en">Windows 10 64-bit- Excalibur</Display>
+      </OperatingSystem>
+      <OperatingSystem osCode="IOT01" osVendor="Microsoft" majorVersion="10" minorVersion="0" spMajorVersion="0" spMinorVersion="0" osArch="x64">
+        <Display lang="en">Windows 10 64-Bit</Display>
+      </OperatingSystem>
+      <OperatingSystem osCode="PE1064" osVendor="Microsoft" majorVersion="10" minorVersion="0" spMajorVersion="0" spMinorVersion="0" osArch="x64">
+        <Display lang="en">Windows 10 64-Bit</Display>
+      </OperatingSystem>
+      <OperatingSystem osCode="W10P4" osVendor="Microsoft" majorVersion="10" minorVersion="0" spMajorVersion="0" spMinorVersion="0" osArch="x64">
+        <Display lang="en">Windows 10 64-Bit</Display>
+      </OperatingSystem>
+      <OperatingSystem osCode="W11TM" osVendor="Microsoft" majorVersion="10" minorVersion="0" spMajorVersion="0" spMinorVersion="0" osArch="x64">
+        <Display lang="en">Windows 11 IOT</Display>
+      </OperatingSystem>
+      <OperatingSystem osCode="W21P4" osVendor="Microsoft" majorVersion="10" minorVersion="0" spMajorVersion="0" spMinorVersion="0" osArch="x64">
+        <Display lang="en">Windows 11</Display>
+      </OperatingSystem>
+      <OperatingSystem osCode="WTCLD" osVendor="Microsoft" majorVersion="0" minorVersion="0" spMajorVersion="0" spMinorVersion="0" osArch="x64">
+        <Display lang="en">Windows 10S 64-Bit</Display>
+      </OperatingSystem>
+    </SupportedOperatingSystems>
+    <LUCategory value="NONE">
+      <Display lang="en">NONE</Display>
+    </LUCategory>
+    <SupportedSystems>
+      <Brand key="58" prefix="DPL">
+        <Display lang="en">Dell Pro Laptops</Display>
+        <Model systemID="0CF4">
+          <Display lang="en">Dell-Pro-13-Plus-PB13250</Display>
+        </Model>
+        <Model systemID="0CF3">
+          <Display lang="en">Dell-Pro-13-Plus-PB13250</Display>
+        </Model>
+        <Model systemID="0CDB">
+          <Display lang="en">Dell-Pro-13-Plus-PB13250</Display>
+        </Model>
+        <Model systemID="0CF5">
+          <Display lang="en">Dell-Pro-16-Plus-PB16250</Display>
+        </Model>
+        <Model systemID="0CF6">
+          <Display lang="en">Dell-Pro-16-Plus-PB16250</Display>
+        </Model>
+        <Model systemID="0CDD">
+          <Display lang="en">Dell-Pro-16-Plus-PB16250</Display>
+        </Model>
+      </Brand>
+    </SupportedSystems>
+    <ImportantInfo URL="http://www.dell.com/support/home/us/en/19/Drivers/DriversDetails?driverId=025D7" />
+    <Criticality value="1">
+      <Display lang="en">Recommended</Display>
+    </Criticality>
+  </SoftwareComponent>
+  <SoftwareComponent schemaVersion="2.0" identifier="04ba611f-49bd-4ee5-b939-71b90af2f44f" packageID="01DV7" releaseID="01DV7" hashMD5="e67cb9e3e9fae07926f2cca3d8420904" path="FOLDER04604427M/3/AMD-Radeon-R7-M465X-M465-Graphics-Card-Driver_01DV7_WIN_21.19.136.0_A01.EXE" dateTime="2017-10-17T03:16:07Z" releaseDate="December 04, 2020" vendorVersion="16.400.2701" dellVersion="A01" packageType="LWXP" size="539119632">
+    <Name>
+      <Display lang="en">AMD Radeon Graphics Driver,16.400.2701,A01</Display>
+    </Name>
+    <ComponentType value="DRVR">
+      <Display lang="en">Driver</Display>
+    </ComponentType>
+    <Description>
+      <Display lang="en">This package contains the AMD Radeon R7 M465X and M465 graphics driver. A graphics or video driver is the software that enables communication between the graphics card and the operating system, games, and applications.</Display>
+    </Description>
+    <Category value="VI">
+      <Display lang="en">Video</Display>
+    </Category>
+    <SupportedDevices>
+      <Device componentID="105657" embedded="false">
+        <PCIInfo deviceID="6900" vendorID="1002" subDeviceID="079D" subVendorID="1028" />
+        <Display lang="en">AMD Radeon R7 M465 Graphics Card</Display>
+      </Device>
+      <Device componentID="105656" embedded="false">
+        <PCIInfo deviceID="682B" vendorID="1002" subDeviceID="079C" subVendorID="1028" />
+        <Display lang="en">AMDRadeon R7 M465X Graphics Card</Display>
+      </Device>
+    </SupportedDevices>
+    <SupportedOperatingSystems>
+      <OperatingSystem osCode="IOT01" osVendor="Microsoft" majorVersion="10" minorVersion="0" spMajorVersion="0" spMinorVersion="0" osArch="x64">
+        <Display lang="en">Windows 10 64-Bit</Display>
+      </OperatingSystem>
+      <OperatingSystem osCode="POS01" osVendor="Microsoft" majorVersion="6" minorVersion="1" spMajorVersion="0" spMinorVersion="0" osArch="x86">
+        <Display lang="en">Windows 7 32-bit</Display>
+      </OperatingSystem>
+      <OperatingSystem osCode="POS02" osVendor="Microsoft" majorVersion="6" minorVersion="1" spMajorVersion="0" spMinorVersion="0" osArch="x64">
+        <Display lang="en">Windows 7 64-bit</Display>
+      </OperatingSystem>
+      <OperatingSystem osCode="W7H64" osVendor="Microsoft" majorVersion="6" minorVersion="1" spMajorVersion="0" spMinorVersion="0" osArch="x64">
+        <Display lang="en">Windows 7 64-bit</Display>
+      </OperatingSystem>
+      <OperatingSystem osCode="W7HP3" osVendor="Microsoft" majorVersion="6" minorVersion="1" spMajorVersion="0" spMinorVersion="0" osArch="x86">
+        <Display lang="en">Windows 7 32-bit</Display>
+      </OperatingSystem>
+      <OperatingSystem osCode="W7HP6" osVendor="Microsoft" majorVersion="6" minorVersion="1" spMajorVersion="0" spMinorVersion="0" osArch="x64">
+        <Display lang="en">Windows 7 64-bit</Display>
+      </OperatingSystem>
+      <OperatingSystem osCode="W7P32" osVendor="Microsoft" majorVersion="6" minorVersion="1" spMajorVersion="0" spMinorVersion="0" osArch="x86">
+        <Display lang="en">Windows 7 32-bit</Display>
+      </OperatingSystem>
+      <OperatingSystem osCode="WIN7x" osVendor="Microsoft" majorVersion="6" minorVersion="1" spMajorVersion="0" spMinorVersion="0" osArch="x64">
+        <Display lang="en">Windows 7 64-bit</Display>
+      </OperatingSystem>
+    </SupportedOperatingSystems>
+    <LUCategory value="NONE">
+      <Display lang="en">NONE</Display>
+    </LUCategory>
+    <SupportedSystems>
+      <Brand key="1" prefix="OP">
+        <Display lang="en">Optiplex</Display>
+        <Model systemID="079D">
+          <Display lang="en">5250-AIO</Display>
+        </Model>
+        <Model systemID="079C">
+          <Display lang="en">7450-AIO</Display>
+        </Model>
+      </Brand>
+    </SupportedSystems>
+    <ImportantInfo URL="http://www.dell.com/support/home/us/en/19/Drivers/DriversDetails?driverId=01DV7" />
+    <Criticality value="1">
+      <Display lang="en">Recommended</Display>
+    </Criticality>
+  </SoftwareComponent>
+  <SoftwareComponent schemaVersion="2.0" identifier="bc0eee5d-1587-458a-bfc0-c9f2b76f35e9" packageID="02HHG" releaseID="02HHG" hashMD5="5250647c3d291eeb41c93a6c1a87c474" path="FOLDER06207191M/5/Realtek-High-Definition-Audio-Driver_02HHG_WIN_6.0.8929.1_A06_04.EXE" dateTime="2020-01-10T05:49:46Z" releaseDate="January 29, 2024" vendorVersion="6.0.8929.1" dellVersion="A06" packageType="LWXP" size="293062576">
+    <Name>
+      <Display lang="en">Realtek High Definition Audio Driver,6.0.8929.1,A06</Display>
+    </Name>
+    <ComponentType value="DRVR">
+      <Display lang="en">Driver</Display>
+    </ComponentType>
+    <Description>
+      <Display lang="en">This package contains the Realtek High Definition audio driver. Audio driver is the software that helps your operating system to communicate with audio devices such as internal sound cards, speakers, headsets, and microphones.</Display>
+    </Description>
+    <Category value="AU">
+      <Display lang="en">Audio</Display>
+    </Category>
+    <SupportedDevices>
+      <Device componentID="100352" embedded="false">
+        <PCIInfo deviceID="0299" vendorID="10EC" subDeviceID="080D" subVendorID="1028" />
+        <PCIInfo deviceID="0299" vendorID="10EC" subDeviceID="08AC" subVendorID="1028" />
+        <PCIInfo deviceID="0299" vendorID="10EC" subDeviceID="077A" subVendorID="1028" />
+        <Display lang="en">Realtek High Definition Audio</Display>
+      </Device>
+    </SupportedDevices>
+    <SupportedOperatingSystems>
+      <OperatingSystem osCode="IOTL3" osVendor="Microsoft" majorVersion="10" minorVersion="0" spMajorVersion="0" spMinorVersion="0" osArch="x64">
+        <Display lang="en">Windows 10 64-Bit</Display>
+      </OperatingSystem>
+      <OperatingSystem osCode="W10H4" osVendor="Microsoft" majorVersion="10" minorVersion="0" spMajorVersion="0" spMinorVersion="0" osArch="x64">
+        <Display lang="en">Windows 10 64-Bit</Display>
+      </OperatingSystem>
+      <OperatingSystem osCode="W10P4" osVendor="Microsoft" majorVersion="10" minorVersion="0" spMajorVersion="0" spMinorVersion="0" osArch="x64">
+        <Display lang="en">Windows 10 64-Bit</Display>
+      </OperatingSystem>
+      <OperatingSystem osCode="WTCLD" osVendor="Microsoft" majorVersion="0" minorVersion="0" spMajorVersion="0" spMinorVersion="0" osArch="x64">
+        <Display lang="en">Windows 10S 64-Bit</Display>
+      </OperatingSystem>
+    </SupportedOperatingSystems>
+    <LUCategory value="NONE">
+      <Display lang="en">NONE</Display>
+    </LUCategory>
+    <SupportedSystems>
+      <Brand key="72" prefix="XPSNOTEBOOK">
+        <Display lang="en">XPS Notebook</Display>
+        <Model systemID="080D">
+          <Display lang="en">9575</Display>
+        </Model>
+        <Model systemID="077A">
+          <Display lang="en">9365</Display>
+        </Model>
+      </Brand>
+      <Brand key="11" prefix="PRE">
+        <Display lang="en">Precision</Display>
+        <Model systemID="08AC">
+          <Display lang="en">5530-2-IN-1</Display>
+        </Model>
+      </Brand>
+    </SupportedSystems>
+    <ImportantInfo URL="http://www.dell.com/support/home/us/en/19/Drivers/DriversDetails?driverId=02HHG" />
+    <Criticality value="1">
+      <Display lang="en">Recommended</Display>
+    </Criticality>
+  </SoftwareComponent>
+  <SoftwareComponent schemaVersion="2.0" identifier="72929230-4e18-4b3f-9de0-3c1405ecebf8" packageID="055FN" releaseID="055FN" hashMD5="c0164522df6f6e7303c6068ebf23afcd" path="FOLDER06141476M/4/NVIDIA-GeForce-Desktop-DC-Graphics-Driver_055FN_WIN_26.21.14.4183_A00_03.EXE" dateTime="2019-12-25T09:01:37Z" releaseDate="July 01, 2025" vendorVersion="26.21.14.4183" dellVersion="A00" packageType="LWXP" size="548985376">
+    <Name>
+      <Display lang="en">NVIDIA GeForce Desktop DC Graphics Driver,26.21.14.4183,A00</Display>
+    </Name>
+    <ComponentType value="DRVR">
+      <Display lang="en">Driver</Display>
+    </ComponentType>
+    <Description>
+      <Display lang="en">This package contains the DCH graphics driver for NVIDIA Desktop GeForce GPU products. A graphics or video driver is the software that enables communication between the graphics card and the operating system, games, and applications.</Display>
+    </Description>
+    <Category value="VI">
+      <Display lang="en">Video</Display>
+    </Category>
+    <SupportedDevices>
+      <Device componentID="109449" embedded="false">
+        <PCIInfo deviceID="1287" vendorID="10DE" subDeviceID="108B" subVendorID="1028" />
+        <Display lang="en">nVIDIA GeForce GT730</Display>
+      </Device>
+      <Device componentID="109434" embedded="false">
+        <PCIInfo deviceID="1F82" vendorID="10DE" subDeviceID="1265" subVendorID="1028" />
+        <Display lang="en">nVIDIA GeForce GTX 1650</Display>
+      </Device>
+      <Device componentID="109433" embedded="false">
+        <PCIInfo deviceID="2187" vendorID="10DE" subDeviceID="1365" subVendorID="1028" />
+        <Display lang="en">nVIDIA GeForce GTX 1650 Super</Display>
+      </Device>
+      <Device componentID="108728" embedded="false">
+        <PCIInfo deviceID="1287" vendorID="10DE" subDeviceID="108B" subVendorID="1028" />
+        <Display lang="en">nVIDIA GeForce GT730</Display>
+      </Device>
+      <Device componentID="109746" embedded="false">
+        <PCIInfo deviceID="21C4" vendorID="10DE" subDeviceID="3796" subVendorID="1028" />
+        <Display lang="en">nVIDIA GeForce GTX 1660 Super</Display>
+      </Device>
+      <Device componentID="106548" embedded="false">
+        <PCIInfo deviceID="1D01" vendorID="10DE" subDeviceID="11C7" subVendorID="1028" />
+        <Display lang="en">nVIDIA GeForce GT1030</Display>
+      </Device>
+      <Device componentID="109435" embedded="false">
+        <PCIInfo deviceID="2184" vendorID="10DE" subDeviceID="3794" subVendorID="1028" />
+        <Display lang="en">nVIDIA GeForce GTX 1660</Display>
+      </Device>
+      <Device componentID="109757" embedded="false">
+        <PCIInfo deviceID="1F08" vendorID="10DE" subDeviceID="3759" subVendorID="1028" />
+        <Display lang="en">nVIDIA GeForce RTX 2060</Display>
+      </Device>
+      <Device componentID="109194" embedded="false">
+        <PCIInfo deviceID="1E84" vendorID="10DE" subDeviceID="C723" subVendorID="1028" />
+        <Display lang="en">nVIDIA GeForce RTX 2070 SUPER</Display>
+      </Device>
+      <Device componentID="109756" embedded="false">
+        <PCIInfo deviceID="2182" vendorID="10DE" subDeviceID="375D" subVendorID="1028" />
+        <Display lang="en">nVIDIA GeForce GTX 1660 TI</Display>
+      </Device>
+    </SupportedDevices>
+    <SupportedOperatingSystems>
+      <OperatingSystem osCode="IOTL3" osVendor="Microsoft" majorVersion="10" minorVersion="0" spMajorVersion="0" spMinorVersion="0" osArch="x64">
+        <Display lang="en">Windows 10 64-Bit</Display>
+      </OperatingSystem>
+      <OperatingSystem osCode="W10H4" osVendor="Microsoft" majorVersion="10" minorVersion="0" spMajorVersion="0" spMinorVersion="0" osArch="x64">
+        <Display lang="en">Windows 10 64-Bit</Display>
+      </OperatingSystem>
+      <OperatingSystem osCode="W10P4" osVendor="Microsoft" majorVersion="10" minorVersion="0" spMajorVersion="0" spMinorVersion="0" osArch="x64">
+        <Display lang="en">Windows 10 64-Bit</Display>
+      </OperatingSystem>
+    </SupportedOperatingSystems>
+    <LUCategory value="NONE">
+      <Display lang="en">NONE</Display>
+    </LUCategory>
+    <SupportedSystems>
+      <Brand key="1" prefix="OP">
+        <Display lang="en">Optiplex</Display>
+        <Model systemID="09A6">
+          <Display lang="en">5080</Display>
+        </Model>
+        <Model systemID="09A7">
+          <Display lang="en">5080</Display>
+        </Model>
+      </Brand>
+    </SupportedSystems>
+    <ImportantInfo URL="http://www.dell.com/support/home/us/en/19/Drivers/DriversDetails?driverId=055FN" />
+    <Criticality value="1">
+      <Display lang="en">Recommended</Display>
+    </Criticality>
+  </SoftwareComponent>
+  <SoftwareComponent schemaVersion="2.0" identifier="dda5af32-bd27-4c73-b87e-b87819227cc1" packageID="05NDM" releaseID="05NDM" hashMD5="f84c1ab95e2e88cf58d86dac79e1f85d" path="FOLDER03349593M/3/Video_Driver_05NDM_WN32_10.18.15.4279_A01.EXE" dateTime="2015-09-25T11:53:10Z" releaseDate="November 06, 2020" vendorVersion="10.18.15.4279" dellVersion="A01" packageType="LWXP" size="110582456">
+    <Name>
+      <Display lang="en">Intel HD/Iris Graphics Driver,10.18.15.4279,A01</Display>
+    </Name>
+    <ComponentType value="DRVR">
+      <Display lang="en">Driver</Display>
+    </ComponentType>
+    <Description>
+      <Display lang="en">This package contains the driver for the Intel HD, 5300, 5500, 6000, 515, 520, 530, P530, and Iris 540 graphics. A graphics or video driver is the software that enables communication between the graphics card and the operating system, games, and applications.</Display>
+    </Description>
+    <Category value="VI">
+      <Display lang="en">Video</Display>
+    </Category>
+    <SupportedDevices>
+      <Device componentID="103717" embedded="false">
+        <PCIInfo deviceID="1902" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="1912" vendorID="8086" subDeviceID="06BB" subVendorID="1028" />
+        <PCIInfo deviceID="191D" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="193D" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="1912" vendorID="8086" subDeviceID="06B7" subVendorID="1028" />
+        <PCIInfo deviceID="1912" vendorID="8086" subDeviceID="06C7" subVendorID="1028" />
+        <PCIInfo deviceID="191D" vendorID="8086" subDeviceID="06B7" subVendorID="1028" />
+        <PCIInfo deviceID="191D" vendorID="8086" subDeviceID="06C7" subVendorID="1028" />
+        <PCIInfo deviceID="1912" vendorID="8086" subDeviceID="06BA" subVendorID="1028" />
+        <PCIInfo deviceID="1912" vendorID="8086" subDeviceID="06B9" subVendorID="1028" />
+        <Display lang="en">Intel HD, Iris, Iris Pro Graphics</Display>
+      </Device>
+      <Device componentID="103292" embedded="false">
+        <PCIInfo deviceID="0402" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="0412" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="041A" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="041E" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="0D22" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="1912" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="1912" vendorID="8086" subDeviceID="06C6" subVendorID="1028" />
+        <PCIInfo deviceID="22B0" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="22B1" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="280B" vendorID="8086" subDeviceID="8086" subVendorID="0101" />
+        <PCIInfo deviceID="1912" vendorID="8086" subDeviceID="06C5" subVendorID="1028" />
+        <PCIInfo deviceID="280B" vendorID="8086" subDeviceID="8086" subVendorID="0101" />
+        <Display lang="en">Intel HD, Iris, Iris Pro Graphics</Display>
+      </Device>
+    </SupportedDevices>
+    <SupportedOperatingSystems>
+      <OperatingSystem osCode="W7P32" osVendor="Microsoft" majorVersion="6" minorVersion="1" spMajorVersion="0" spMinorVersion="0" osArch="x86">
+        <Display lang="en">Windows 7 32-bit</Display>
+      </OperatingSystem>
+      <OperatingSystem osCode="W7U32" osVendor="Microsoft" majorVersion="6" minorVersion="1" spMajorVersion="0" spMinorVersion="0" osArch="x86">
+        <Display lang="en">Windows 7 32-bit</Display>
+      </OperatingSystem>
+      <OperatingSystem osCode="WB32P" osVendor="Microsoft" majorVersion="6" minorVersion="3" spMajorVersion="0" spMinorVersion="0" osArch="x86">
+        <Display lang="en">Windows 8.1 32-bit</Display>
+      </OperatingSystem>
+    </SupportedOperatingSystems>
+    <LUCategory value="NONE">
+      <Display lang="en">NONE</Display>
+    </LUCategory>
+    <SupportedSystems>
+      <Brand key="1" prefix="OP">
+        <Display lang="en">Optiplex</Display>
+        <Model systemID="06C5">
+          <Display lang="en">7440-AIO</Display>
+        </Model>
+        <Model systemID="06B9">
+          <Display lang="en">7040</Display>
+        </Model>
+        <Model systemID="06BA">
+          <Display lang="en">5040</Display>
+        </Model>
+      </Brand>
+      <Brand key="11" prefix="PRE">
+        <Display lang="en">Precision</Display>
+        <Model systemID="06B7">
+          <Display lang="en">T3620</Display>
+        </Model>
+        <Model systemID="06C7">
+          <Display lang="en">T3420</Display>
+        </Model>
+      </Brand>
+    </SupportedSystems>
+    <ImportantInfo URL="http://www.dell.com/support/home/us/en/19/Drivers/DriversDetails?driverId=05NDM" />
+    <Criticality value="1">
+      <Display lang="en">Recommended</Display>
+    </Criticality>
+  </SoftwareComponent>
+  <SoftwareComponent schemaVersion="2.0" identifier="d1dab574-7d43-42dc-94ae-967b36d83896" packageID="00PPJ" releaseID="00PPJ" hashMD5="5d3ab7e47ef38b795977571dfdf92edf" path="FOLDER04971139M/6/Intel-HD-Iris-Graphics-Driver_00PPJ_WIN_23.20.16.5018_A09_02.EXE" dateTime="2017-12-25T06:20:27Z" releaseDate="June 17, 2024" vendorVersion="23.20.16.5018" dellVersion="A09" packageType="LWXP" size="359267304">
+    <Name>
+      <Display lang="en">Intel HD/Iris Graphics Driver,23.20.16.5018,A09</Display>
+    </Name>
+    <ComponentType value="DRVR">
+      <Display lang="en">Driver</Display>
+    </ComponentType>
+    <Description>
+      <Display lang="en">The package contains the Intel HD 620 and Iris 640 graphics drivers for the 7th and 8th generation Intel processors. A graphics or video driver is the software that enables communication between the graphics card and the operating system, games, and applications.</Display>
+    </Description>
+    <Category value="VI">
+      <Display lang="en">Video</Display>
+    </Category>
+    <SupportedDevices>
+      <Device componentID="108570" embedded="false">
+        <PCIInfo deviceID="280B" vendorID="8086" subDeviceID="8086" subVendorID="0101" />
+        <PCIInfo deviceID="591E" vendorID="8086" subDeviceID="2212" subVendorID="1028" />
+        <Display lang="en">Gfx Driver</Display>
+      </Device>
+      <Device componentID="103292" embedded="false">
+        <PCIInfo deviceID="1602" vendorID="8086" subDeviceID="066B" subVendorID="1028" />
+        <PCIInfo deviceID="1606" vendorID="8086" subDeviceID="066B" subVendorID="1028" />
+        <PCIInfo deviceID="160E" vendorID="8086" subDeviceID="066B" subVendorID="1028" />
+        <PCIInfo deviceID="1616" vendorID="8086" subDeviceID="066B" subVendorID="1028" />
+        <PCIInfo deviceID="161E" vendorID="8086" subDeviceID="066B" subVendorID="1028" />
+        <PCIInfo deviceID="1622" vendorID="8086" subDeviceID="066B" subVendorID="1028" />
+        <PCIInfo deviceID="162E" vendorID="8086" subDeviceID="066B" subVendorID="1028" />
+        <PCIInfo deviceID="0A84" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="1902" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="1906" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="190B" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="1912" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="1916" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="191B" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="191D" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="191E" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="1921" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="1923" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="1926" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="1927" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="192B" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="192D" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="193A" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="193B" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="193D" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="1A84" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="1A85" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="5902" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="5906" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="590B" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="5912" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="5916" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="5917" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="591B" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="591D" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="591E" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="5921" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="5926" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="5927" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="5A84" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="5A85" vendorID="8086" subDeviceID="" subVendorID="" />
+        <Display lang="en">Intel HD, 515 Graphics</Display>
+      </Device>
+      <Device componentID="159" embedded="false">
+        <PCIInfo deviceID="0A84" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="1902" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="1906" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="190B" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="1912" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="1916" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="191B" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="191D" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="191E" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="1921" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="1923" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="1926" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="1927" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="192B" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="192D" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="193A" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="193B" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="193D" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="1A84" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="1A85" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="5902" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="5906" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="590B" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="5912" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="5916" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="5917" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="591B" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="591D" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="591E" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="5921" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="5926" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="5927" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="5A84" vendorID="8086" subDeviceID="" subVendorID="" />
+        <PCIInfo deviceID="5A85" vendorID="8086" subDeviceID="" subVendorID="" />
+        <Display lang="en">Intel HD and Iris Graphics</Display>
+      </Device>
+    </SupportedDevices>
+    <SupportedOperatingSystems>
+      <OperatingSystem osCode="IOT01" osVendor="Microsoft" majorVersion="10" minorVersion="0" spMajorVersion="0" spMinorVersion="0" osArch="x64">
+        <Display lang="en">Windows 10 64-Bit</Display>
+      </OperatingSystem>
+      <OperatingSystem osCode="W10H4" osVendor="Microsoft" majorVersion="10" minorVersion="0" spMajorVersion="0" spMinorVersion="0" osArch="x64">
+        <Display lang="en">Windows 10 64-Bit</Display>
+      </OperatingSystem>
+      <OperatingSystem osCode="W10P4" osVendor="Microsoft" majorVersion="10" minorVersion="0" spMajorVersion="0" spMinorVersion="0" osArch="x64">
+        <Display lang="en">Windows 10 64-Bit</Display>
+      </OperatingSystem>
+      <OperatingSystem osCode="WEL16" osVendor="Microsoft" majorVersion="10" minorVersion="0" spMajorVersion="0" spMinorVersion="0" osArch="x64">
+        <Display lang="en">Windows 10 64-Bit</Display>
+      </OperatingSystem>
+    </SupportedOperatingSystems>
+    <LUCategory value="NONE">
+      <Display lang="en">NONE</Display>
+    </LUCategory>
+    <SupportedSystems>
+      <Brand key="4" prefix="LAT">
+        <Display lang="en">Latitude</Display>
+        <Model systemID="081D">
+          <Display lang="en">5290-2-IN-1</Display>
+        </Model>
+        <Model systemID="07A4">
+          <Display lang="en">5285</Display>
+        </Model>
+        <Model systemID="07A5">
+          <Display lang="en">7285</Display>
+        </Model>
+      </Brand>
+    </SupportedSystems>
+    <ImportantInfo URL="http://www.dell.com/support/home/us/en/19/Drivers/DriversDetails?driverId=00PPJ" />
+    <Criticality value="1">
+      <Display lang="en">Recommended</Display>
+    </Criticality>
+  </SoftwareComponent>
+</Manifest>

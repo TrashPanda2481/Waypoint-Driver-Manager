@@ -23,4 +23,23 @@ pub trait DriverSource {
     /// `candidate.sha256`, and return the local path. Must error if the
     /// hash does not match — never install an unverified download.
     fn fetch(&self, candidate: &DriverCandidate, dest_dir: &str) -> Result<String, String>;
+
+    /// Refresh whatever on-disk catalog data this source relies on
+    /// before `search()`/`fetch()` are called (e.g. re-download and
+    /// re-parse an OEM catalog). Most sources have nothing to refresh
+    /// (`LocalCacheSource` just re-reads its manifest on every call,
+    /// `WindowsUpdateCatalogSource` has no local catalog at all), so the
+    /// default is a no-op — only OEM catalog sources
+    /// (`oem::dell_catalog::DellCatalogSource`, etc.) override this.
+    ///
+    /// Added as a trait method (rather than a concrete-type-only method
+    /// called before boxing) so callers holding a `Box<dyn DriverSource>`
+    /// — e.g. the CLI's `--oem`/`--force-oem-refresh` wiring and the
+    /// GUI's OEM checkbox — can call `.refresh(force)` uniformly without
+    /// downcasting, mirroring how Python's duck-typed `source.refresh()`
+    /// call in `cli/main.py`'s `_build_engine()` works regardless of
+    /// which concrete source class is in the list.
+    fn refresh(&self, _force: bool) -> Result<(), String> {
+        Ok(())
+    }
 }
