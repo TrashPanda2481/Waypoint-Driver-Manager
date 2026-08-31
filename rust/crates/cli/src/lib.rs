@@ -42,9 +42,10 @@ use std::io::Write;
 use clap::{Parser, Subcommand};
 
 use waypoint_core::SignatureType;
-use waypoint_engine::factory::{build_oem_sources, build_engine_with_backend};
+use waypoint_engine::factory::{build_oem_model_pack_sources, build_oem_sources, build_engine_with_backend};
 use waypoint_engine::WaypointEngine;
-use waypoint_platform::DeviceBackend;
+use waypoint_platform::{DeviceBackend, SystemModel};
+use waypoint_sources::oem::ModelDriverPackSource;
 
 pub const EXIT_CLEAN: u8 = 0;
 pub const EXIT_ACTION_NEEDED: u8 = 1;
@@ -103,6 +104,21 @@ pub enum Command {
     Apply {
         #[arg(long, default_value_t = false)]
         apply: bool,
+    },
+    /// Look up whole-system OEM driver packs (Dell/Lenovo driver-pack
+    /// bundles, HP platform support) for this machine's detected model,
+    /// rather than per-device candidates. Separate from `scan`/`plan`
+    /// because these sources return whole downloadable bundles keyed by
+    /// system model, not per-device driver candidates -- see
+    /// `waypoint_engine::factory::build_oem_model_pack_sources`.
+    Driverpack {
+        #[arg(long, default_value_t = false)]
+        json: bool,
+        /// Re-download each source's catalog even if cache_dir already
+        /// has one cached. Same semantics as `--force-oem-refresh` for
+        /// `scan`/`plan`.
+        #[arg(long, default_value_t = false)]
+        force_refresh: bool,
     },
 }
 
@@ -247,6 +263,171 @@ pub fn cmd_plan(
     Ok(EXIT_CLEAN)
 }
 
+/// Dependency-injection seam for `driverpack`: identical to
+/// `cmd_driverpack()` except the caller supplies the `SystemModel`
+/// directly instead of it being resolved via
+/// `waypoint_platform::detect_system_model()`. Mirrors
+/// `build_engine_with_injected_backend`'s reasoning -- Rust can't
+/// monkeypatch a free function the way the Python test suite does, so
+/// tests inject the value this function actually consumes.
+///
+/// Partial-failure resilience: if one source's `refresh()` fails (e.g.
+/// no network), a warning goes to `err` and the other sources are still
+/// tried -- mirrors the existing `--force-oem-refresh`-without-`--oem`
+/// warning pattern in `build_engine_with_injected_backend` above, rather
+/// than aborting the whole command over one source being unreachable.
+pub fn cmd_driverpack_with_model(
+    model: &SystemModel,
+    cache_dir: Option<&str>,
+    force_refresh: bool,
+    json: bool,
+    out: &mut dyn Write,
+    err: &mut dyn Write,
+) -> Result<u8, String> {
+    let (dell, lenovo, hp) = build_oem_model_pack_sources(cache_dir)?;
+
+    let dell_packs = match dell.refresh(force_refresh) {
+        Ok(()) => {
+            // Dell's own KB recommends the systemID lookup first, with a
+            // fallback to name-matching when systemID isn't available or
+            // doesn't resolve to anything -- see dell_driverpack.rs's
+            // indexing comment for the citation.
+            let by_sku = model
+                .sku_number
+                .as_deref()
+                .map(|k| dell.packs_for_model(k))
+                .transpose()?
+                .unwrap_or_default();
+            if !by_sku.is_empty() {
+                by_sku
+            } else {
+                model
+                    .product_name
+                    .as_deref()
+                    .map(|k| dell.packs_for_model(k))
+                    .transpose()?
+                    .unwrap_or_default()
+            }
+        }
+        Err(e) => {
+            let _ = writeln!(err, "warning: Dell driver-pack refresh failed, skipping: {e}");
+            Vec::new()
+        }
+    };
+
+    let lenovo_packs = match lenovo.refresh(force_refresh) {
+        Ok(()) => model
+            .product_name
+            .as_deref()
+            .map(|k| lenovo.packs_for_model(k))
+            .transpose()?
+            .unwrap_or_default(),
+        Err(e) => {
+            let _ = writeln!(err, "warning: Lenovo driver-pack refresh failed, skipping: {e}");
+            Vec::new()
+        }
+    };
+
+    let hp_supported = match hp.refresh(force_refresh) {
+        Ok(()) => model
+            .baseboard_product
+            .as_deref()
+            .map(|k| hp.is_supported(k))
+            .transpose()?
+            .flatten(),
+        Err(e) => {
+            let _ = writeln!(err, "warning: HP platform-list refresh failed, skipping: {e}");
+            None
+        }
+    };
+
+    let found = !dell_packs.is_empty() || !lenovo_packs.is_empty() || hp_supported.is_some();
+
+    if json {
+        let payload = serde_json::json!({
+            "model": {
+                "product_name": model.product_name,
+                "sku_number": model.sku_number,
+                "baseboard_product": model.baseboard_product,
+            },
+            "dell": dell_packs.iter().map(|p| serde_json::json!({
+                "model_name": p.model_name,
+                "model_key": p.model_key,
+                "os_label": p.os_label,
+                "version": p.version,
+                "url": p.url,
+                "size_bytes": p.size_bytes,
+            })).collect::<Vec<_>>(),
+            "lenovo": lenovo_packs.iter().map(|p| serde_json::json!({
+                "model_name": p.model_name,
+                "model_key": p.model_key,
+                "os_label": p.os_label,
+                "version": p.version,
+                "url": p.url,
+                "size_bytes": p.size_bytes,
+            })).collect::<Vec<_>>(),
+            "hp_supported": hp_supported.as_ref().map(|info| serde_json::json!({
+                "system_id": info.system_id,
+                "product_name": info.product_name,
+                "supported_os_descriptions": info.supported_os_descriptions,
+            })),
+        });
+        let _ = writeln!(out, "{}", serde_json::to_string_pretty(&payload).unwrap());
+    } else {
+        let _ = writeln!(
+            out,
+            "model: product_name={:?} sku_number={:?} baseboard_product={:?}",
+            model.product_name, model.sku_number, model.baseboard_product
+        );
+        if dell_packs.is_empty() {
+            let _ = writeln!(out, "Dell: no driver pack found");
+        } else {
+            for p in &dell_packs {
+                let _ = writeln!(out, "Dell: {} [{}] {} -> {}", p.model_name, p.os_label, p.version, p.url);
+            }
+        }
+        if lenovo_packs.is_empty() {
+            let _ = writeln!(out, "Lenovo: no driver pack found");
+        } else {
+            for p in &lenovo_packs {
+                let _ = writeln!(out, "Lenovo: {} [{}] {} -> {}", p.model_name, p.os_label, p.version, p.url);
+            }
+        }
+        match &hp_supported {
+            Some(info) => {
+                let _ = writeln!(
+                    out,
+                    "HP: {} supported ({} OS entries)",
+                    info.product_name,
+                    info.supported_os_descriptions.len()
+                );
+            }
+            None => {
+                let _ = writeln!(out, "HP: not found in platform list");
+            }
+        }
+    }
+
+    Ok(if found { EXIT_CLEAN } else { EXIT_ACTION_NEEDED })
+}
+
+/// Real path: detects the real system model, then delegates to the same
+/// wiring logic every test exercises via `cmd_driverpack_with_model`.
+/// `force_refresh` here is `Command::Driverpack`'s own flag, not
+/// `--force-oem-refresh` (that one only applies to `--oem`'s
+/// per-device Dell catalog used by `scan`/`plan`; this is a separate,
+/// unrelated set of sources with its own refresh flag).
+pub fn cmd_driverpack(
+    cli: &Cli,
+    force_refresh: bool,
+    json: bool,
+    out: &mut dyn Write,
+    err: &mut dyn Write,
+) -> Result<u8, String> {
+    let model = waypoint_platform::detect_system_model()?;
+    cmd_driverpack_with_model(&model, cli.cache_dir.as_deref(), force_refresh, json, out, err)
+}
+
 pub fn cmd_apply(err_out: &mut dyn Write) -> u8 {
     let _ = writeln!(
         err_out,
@@ -282,6 +463,13 @@ pub fn run_with_backend(
             // engine at all (it's an honest stub, see module docs), so it
             // can't fail on backend/OEM-source errors the way scan/plan can.
             Command::Apply { .. } => Ok(cmd_apply(err)),
+            // driverpack looks up whole-system model packs, not
+            // per-device candidates, so it never touches the
+            // `DeviceBackend` this function was handed at all -- same
+            // shape as `Apply` above in that respect.
+            Command::Driverpack { json, force_refresh } => {
+                cmd_driverpack(&cli, *force_refresh, *json, out, err)
+            }
         }
     })();
     match result {

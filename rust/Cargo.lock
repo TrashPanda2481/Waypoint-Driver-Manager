@@ -3901,6 +3901,7 @@ dependencies = [
  "waypoint-core",
  "waypoint-engine",
  "waypoint-platform",
+ "waypoint-sources",
 ]
 
 [[package]]

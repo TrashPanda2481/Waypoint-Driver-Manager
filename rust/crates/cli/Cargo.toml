@@ -17,6 +17,7 @@ serde_json.workspace = true
 waypoint-core = { path = "../core" }
 waypoint-engine = { path = "../engine" }
 waypoint-platform = { path = "../platform" }
+waypoint-sources = { path = "../sources" }
 
 [dev-dependencies]
 tempfile = "3"

@@ -8,7 +8,9 @@
 //!
 use waypoint_core::SignatureType;
 use waypoint_platform::{self, DeviceBackend};
-use waypoint_sources::oem::DellCatalogSource;
+use waypoint_sources::oem::{
+    DellCatalogSource, DellDriverPackSource, HpPlatformCatalogSource, LenovoDriverPackSource,
+};
 use waypoint_sources::{DriverSource, LocalCacheSource};
 
 use crate::audit::AuditLog;
@@ -66,6 +68,33 @@ pub fn build_oem_sources(cache_dir: Option<&str>) -> Result<Vec<Box<dyn DriverSo
         .map(std::path::PathBuf::from)
         .unwrap_or_else(default_cache_dir);
     Ok(vec![Box::new(DellCatalogSource::new(cache_dir)?)])
+}
+
+/// The model-based OEM sources: Dell's driver-pack catalog, Lenovo's
+/// driver-pack catalog, and HP's platform (support-advisory-only) list.
+/// Companion to `build_oem_sources()` above, split out because these
+/// three are `ModelDriverPackSource`-shaped (looked up by whole-system
+/// model key, returning whole downloadable bundles) rather than
+/// `DriverSource`-shaped (looked up by per-device hardware ID) -- see
+/// `waypoint_sources::oem`'s module docs for why they can't share one
+/// trait/list with `build_oem_sources()`. Consumed by the CLI's
+/// `driverpack` subcommand, not by `scan`/`plan`.
+///
+/// Same cost/refresh contract as `build_oem_sources()`: construction
+/// never downloads anything; callers must call `.refresh(force)` on
+/// each source themselves before the first `packs_for_model()`/
+/// `is_supported()` call.
+pub fn build_oem_model_pack_sources(
+    cache_dir: Option<&str>,
+) -> Result<(DellDriverPackSource, LenovoDriverPackSource, HpPlatformCatalogSource), String> {
+    let cache_dir = cache_dir
+        .map(std::path::PathBuf::from)
+        .unwrap_or_else(default_cache_dir);
+    Ok((
+        DellDriverPackSource::new(&cache_dir)?,
+        LenovoDriverPackSource::new(&cache_dir)?,
+        HpPlatformCatalogSource::new(&cache_dir)?,
+    ))
 }
 
 /// Dependency-injection seam: identical to `build_default_engine()` except

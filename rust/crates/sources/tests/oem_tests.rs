@@ -114,6 +114,31 @@ fn test_dell_driverpack_unknown_model_returns_empty() {
 }
 
 #[test]
+fn test_dell_driverpack_falls_back_to_name_when_no_systemid_match() {
+    // Per Dell's own driver-pack KB, systemID isn't reliably readable via
+    // WMI on Windows, so callers are expected to fall back to matching
+    // the catalog's human model name. This fixture has TWO systemIDs
+    // ("092F" and "0932") both named "OptiPlex 5070" -- a real case in
+    // the sample data, not a contrived one -- so a name-keyed lookup
+    // must return the union of packs from both.
+    let tmp = tmp_dir("dell-dp-name-fallback");
+    let source = DellDriverPackSource::new(&tmp).unwrap();
+    source.load_from_xml(&fixture("dell_driverpack_sample.xml")).unwrap();
+
+    let by_name = source.packs_for_model("OptiPlex 5070").unwrap();
+    assert_eq!(by_name.len(), 2);
+    assert!(by_name.iter().all(|p| p.model_name == "OptiPlex 5070"));
+
+    let by_name_lowercase = source.packs_for_model("optiplex 5070").unwrap();
+    assert_eq!(by_name_lowercase.len(), 2);
+
+    // systemID lookup for either ID individually still returns just that
+    // one pack -- name-indexing is additive, not a replacement.
+    let by_id = source.packs_for_model("0932").unwrap();
+    assert_eq!(by_id.len(), 1);
+}
+
+#[test]
 fn test_lenovo_driverpack_matches_machine_type() {
     let tmp = tmp_dir("lenovo-match");
     let source = LenovoDriverPackSource::new(&tmp).unwrap();

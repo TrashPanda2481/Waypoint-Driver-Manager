@@ -134,9 +134,10 @@ impl DellDriverPackSource {
                 if system_id.is_empty() {
                     continue;
                 }
+                let model_name = model.attribute("name").unwrap_or("unknown").to_string();
                 let pack = DriverPack {
                     pack_id: pack_id.clone(),
-                    model_name: model.attribute("name").unwrap_or("unknown").to_string(),
+                    model_name: model_name.clone(),
                     model_key: system_id.to_string(),
                     os_label: os_label.clone(),
                     version: version.clone(),
@@ -147,7 +148,23 @@ impl DellDriverPackSource {
                     size_bytes,
                     source_id: "dell_driverpack".to_string(),
                 };
-                index.entry(system_id.to_uppercase()).or_default().push(pack);
+                index.entry(system_id.to_uppercase()).or_default().push(pack.clone());
+                // Also index by the human model name (e.g. "OptiPlex
+                // 5070"). Dell's own driver-pack KB
+                // (https://www.dell.com/support/kbdoc/en-us/000122176/driver-pack-catalog)
+                // says systemID "is not readily accessible [via a] WMI
+                // query" and recommends matching by this name attribute
+                // instead on Windows -- see waypoint_platform::model's
+                // module doc for the full citation. Different models can
+                // legitimately share one display name (multiple
+                // systemIDs both named "OptiPlex 5070" in this catalog),
+                // so this is a Vec, and a caller falling back to
+                // name-based lookup may get packs for more than one
+                // systemID under that name -- an honest consequence of
+                // name being a coarser key than systemID, not a bug.
+                if !model_name.is_empty() && model_name != "unknown" {
+                    index.entry(model_name.to_uppercase()).or_default().push(pack);
+                }
             }
         }
 

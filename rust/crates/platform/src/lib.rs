@@ -8,6 +8,7 @@
 
 pub mod base;
 pub mod mock;
+pub mod model;
 
 #[cfg(target_os = "linux")]
 pub mod linux;
@@ -17,6 +18,7 @@ pub mod windows;
 
 pub use base::{DeviceBackend, InstallResult};
 pub use mock::MockDeviceBackend;
+pub use model::{detect_system_model, SystemModel};
 
 #[cfg(target_os = "linux")]
 pub use linux::LinuxDeviceBackend;
