@@ -31,6 +31,18 @@
 //!   (iced has no built-in tree widget); the same three-tier grouping,
 //!   counts, and per-row fields (device, class, status, candidate
 //!   version, source, signature) are preserved.
+//! - **Driver-pack lookup section (new scope, no Python GUI equivalent
+//!   — `gui/app.py`/`gui/workers.py` never had this feature either).**
+//!   Reuses `waypoint_cli::cmd_driverpack_with_model` directly rather
+//!   than re-implementing the Dell-SKU-then-name-fallback/Lenovo/HP
+//!   wiring a second time — same reasoning as `factory.rs`'s module
+//!   doc: if CLI and GUI logic lived in two places they could silently
+//!   drift apart. Runs synchronously on button click, same threading
+//!   deviation as Scan above (network refresh of the Dell/Lenovo/HP
+//!   catalogs could briefly block the window on a real machine with an
+//!   empty cache — not exercised in this sandbox, which has no
+//!   `/sys/class/dmi/id` to detect a real model from in the first
+//!   place).
 
 use iced::widget::{button, checkbox, column, container, row, scrollable, text, Column};
 use iced::{Alignment, Element, Length, Task};
@@ -64,6 +76,15 @@ struct WaypointApp {
     /// GUI equivalent of the CLI's `--oem` flag — off by default, opt-in.
     include_oem: bool,
     force_oem_refresh: bool,
+    /// GUI equivalent of `waypoint driverpack --force-refresh`.
+    driverpack_force_refresh: bool,
+    driverpack_running: bool,
+    driverpack_status: String,
+    /// Raw parsed JSON from `cmd_driverpack_with_model`'s `--json` output —
+    /// kept as `serde_json::Value` rather than typed structs since this is
+    /// display-only and the shape is already documented at the CLI layer
+    /// (`crates/cli/src/lib.rs`'s `Driverpack` doc comment).
+    driverpack_result: Option<serde_json::Value>,
 }
 
 #[derive(Debug, Clone)]
@@ -71,6 +92,8 @@ enum Message {
     ToggleOem(bool),
     ToggleForceOemRefresh(bool),
     Scan,
+    ToggleDriverpackForceRefresh(bool),
+    LookupDriverpacks,
 }
 
 impl WaypointApp {
@@ -93,6 +116,10 @@ impl WaypointApp {
                 scanning: false,
                 include_oem: false,
                 force_oem_refresh: false,
+                driverpack_force_refresh: false,
+                driverpack_running: false,
+                driverpack_status: "No driver-pack lookup run yet.".to_string(),
+                driverpack_result: None,
             },
             Task::none(),
         )
@@ -203,6 +230,75 @@ impl WaypointApp {
                     (None, None) => unreachable!(),
                 }
             }
+            Message::ToggleDriverpackForceRefresh(checked) => {
+                self.driverpack_force_refresh = checked;
+            }
+            Message::LookupDriverpacks => {
+                if self.driverpack_running {
+                    return Task::none(); // a lookup is already in flight (mirrors the Scan guard)
+                }
+                self.driverpack_running = true;
+
+                // `detect_system_model()` is the same call `cmd_driverpack()`
+                // (the CLI's real entry point) makes — see
+                // `waypoint-platform::model`. Unvalidated on real hardware in
+                // this sandbox (no `/sys/class/dmi/id`), same caveat as the
+                // CLI subcommand.
+                let model = match waypoint_platform::detect_system_model() {
+                    Ok(model) => model,
+                    Err(err) => {
+                        self.driverpack_running = false;
+                        self.driverpack_result = None;
+                        self.driverpack_status =
+                            format!("Driver-pack lookup failed: could not detect system model: {err}");
+                        return Task::none();
+                    }
+                };
+
+                // Reuses the CLI's own DI-seam function rather than
+                // re-implementing the Dell/Lenovo/HP wiring here — see the
+                // module doc at the top of this file. `cache_dir: None`
+                // matches this GUI's other OEM-adjacent calls above, which
+                // also fall back to `paths::default_cache_dir()`.
+                let mut out: Vec<u8> = Vec::new();
+                let mut err_buf: Vec<u8> = Vec::new();
+                let outcome = waypoint_cli::cmd_driverpack_with_model(
+                    &model,
+                    None,
+                    self.driverpack_force_refresh,
+                    true, // json: this GUI parses the machine-readable shape, not the human-readable one
+                    &mut out,
+                    &mut err_buf,
+                );
+                self.driverpack_running = false;
+
+                let warnings = String::from_utf8_lossy(&err_buf).trim().to_string();
+                match outcome {
+                    Ok(code) => match serde_json::from_slice::<serde_json::Value>(&out) {
+                        Ok(json) => {
+                            self.driverpack_result = Some(json);
+                            self.driverpack_status = if code == waypoint_cli::EXIT_CLEAN {
+                                "Driver pack(s) found.".to_string()
+                            } else {
+                                "No driver pack found for this model.".to_string()
+                            };
+                            if !warnings.is_empty() {
+                                self.driverpack_status
+                                    .push_str(&format!(" Warnings: {warnings}"));
+                            }
+                        }
+                        Err(err) => {
+                            self.driverpack_result = None;
+                            self.driverpack_status =
+                                format!("Driver-pack lookup failed: could not parse result: {err}");
+                        }
+                    },
+                    Err(err) => {
+                        self.driverpack_result = None;
+                        self.driverpack_status = format!("Driver-pack lookup failed: {err}");
+                    }
+                }
+            }
         }
         Task::none()
     }
@@ -270,6 +366,74 @@ impl WaypointApp {
 
         let table = container(scrollable(rows)).height(Length::Fixed(360.0));
 
+        // --- Driver-pack lookup section (GUI equivalent of `waypoint
+        // driverpack`, see module docs above). Separate from Scan/OEM above
+        // — this looks up whole model-level driver-pack bundles, not
+        // per-device candidates, matching the CLI subcommand's own scope. ---
+        let driverpack_force_refresh_checkbox = checkbox(self.driverpack_force_refresh)
+            .label("Force refresh (ignore cached catalogs)")
+            .on_toggle(Message::ToggleDriverpackForceRefresh);
+
+        let driverpack_button = if self.driverpack_running {
+            button("Looking up…")
+        } else {
+            button("Look up driver packs").on_press(Message::LookupDriverpacks)
+        };
+
+        let mut driverpack_column: Column<Message> = Column::new().spacing(6);
+        if let Some(json) = &self.driverpack_result {
+            let model = &json["model"];
+            let display_or_dash = |v: &serde_json::Value| -> String {
+                v.as_str().map(str::to_string).unwrap_or_else(|| "-".to_string())
+            };
+            driverpack_column = driverpack_column.push(text(format!(
+                "Model: product_name={} sku_number={} baseboard_product={}",
+                display_or_dash(&model["product_name"]),
+                display_or_dash(&model["sku_number"]),
+                display_or_dash(&model["baseboard_product"]),
+            )));
+
+            let dell = json["dell"].as_array().cloned().unwrap_or_default();
+            driverpack_column = driverpack_column.push(text(format!("Dell ({})", dell.len())).size(16));
+            for p in &dell {
+                driverpack_column = driverpack_column.push(text(format!(
+                    "  {} [{}] {} -> {}",
+                    display_or_dash(&p["model_name"]),
+                    display_or_dash(&p["os_label"]),
+                    display_or_dash(&p["version"]),
+                    display_or_dash(&p["url"]),
+                )));
+            }
+
+            let lenovo = json["lenovo"].as_array().cloned().unwrap_or_default();
+            driverpack_column = driverpack_column.push(text(format!("Lenovo ({})", lenovo.len())).size(16));
+            for p in &lenovo {
+                driverpack_column = driverpack_column.push(text(format!(
+                    "  {} [{}] {} -> {}",
+                    display_or_dash(&p["model_name"]),
+                    display_or_dash(&p["os_label"]),
+                    display_or_dash(&p["version"]),
+                    display_or_dash(&p["url"]),
+                )));
+            }
+
+            driverpack_column = driverpack_column.push(text("HP").size(16));
+            if json["hp_supported"].is_null() {
+                driverpack_column = driverpack_column.push(text("  no platform-list match"));
+            } else {
+                let hp = &json["hp_supported"];
+                let os_count = hp["supported_os_descriptions"]
+                    .as_array()
+                    .map(|a| a.len())
+                    .unwrap_or(0);
+                driverpack_column = driverpack_column.push(text(format!(
+                    "  {} — {os_count} supported OS description(s)",
+                    display_or_dash(&hp["product_name"]),
+                )));
+            }
+        }
+        let driverpack_results = container(scrollable(driverpack_column)).height(Length::Fixed(160.0));
+
         let content = column![
             text("Waypoint Driver Manager").size(24),
             text(format!("Backend: {}", self.backend_label)),
@@ -278,6 +442,10 @@ impl WaypointApp {
             header,
             table,
             button("Scan").on_press(Message::Scan),
+            text("Driver-pack lookup (model-level, not per-device)").size(18),
+            text(self.driverpack_status.clone()),
+            row![driverpack_button, driverpack_force_refresh_checkbox].spacing(20),
+            driverpack_results,
         ]
         .spacing(14)
         .padding(20);

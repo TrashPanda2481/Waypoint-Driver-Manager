@@ -3931,6 +3931,8 @@ name = "waypoint-gui"
 version = "0.1.0"
 dependencies = [
  "iced",
+ "serde_json",
+ "waypoint-cli",
  "waypoint-core",
  "waypoint-engine",
  "waypoint-platform",

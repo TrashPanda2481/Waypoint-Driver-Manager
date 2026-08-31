@@ -9,6 +9,8 @@ path = "src/main.rs"
 
 [dependencies]
 iced = { version = "0.14.0", features = ["debug"] }
+serde_json.workspace = true
+waypoint-cli = { path = "../cli" }
 waypoint-core = { path = "../core" }
 waypoint-engine = { path = "../engine" }
 waypoint-platform = { path = "../platform" }
