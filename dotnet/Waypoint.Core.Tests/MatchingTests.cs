@@ -7,10 +7,18 @@ namespace Waypoint.Core.Tests;
 
 public class MatchingTests
 {
+    // Split from CandidateOn so an explicit null date can't be silently swallowed by a default.
     private static DriverCandidate Candidate(
         string hwid = "HWID1",
         string version = "2.0",
-        DateOnly? driverDate = null,
+        SignatureType sig = SignatureType.Whql,
+        string source = "local_cache")
+        => CandidateOn(new DateOnly(2026, 1, 1), hwid, version, sig, source);
+
+    private static DriverCandidate CandidateOn(
+        DateOnly? driverDate,
+        string hwid = "HWID1",
+        string version = "2.0",
         SignatureType sig = SignatureType.Whql,
         string source = "local_cache")
     {
@@ -18,7 +26,7 @@ public class MatchingTests
             Hwid: hwid,
             ClassGuid: "{class}",
             Version: version,
-            DriverDate: driverDate ?? new DateOnly(2026, 1, 1),
+            DriverDate: driverDate,
             Publisher: "Acme",
             SignatureType: sig,
             Sha256: "abc123",
@@ -68,7 +76,7 @@ public class MatchingTests
     {
         var installed = new InstalledDriver("1.0", new DateOnly(2024, 1, 1), "Acme", SignatureType.Whql);
         var device = MakeDevice(installed: installed);
-        var candidate = Candidate(driverDate: new DateOnly(2026, 1, 1));
+        var candidate = CandidateOn(new DateOnly(2026, 1, 1));
         var assessment = Assert.Single(Matching.AssessAll(
             [device],
             new Dictionary<string, List<DriverCandidate>> { ["HWID1"] = [candidate] }));
@@ -81,7 +89,7 @@ public class MatchingTests
     {
         var installed = new InstalledDriver("2.0", new DateOnly(2026, 1, 1), "Acme", SignatureType.Whql);
         var device = MakeDevice(installed: installed);
-        var candidate = Candidate(driverDate: new DateOnly(2024, 1, 1)); // older than installed
+        var candidate = CandidateOn(new DateOnly(2024, 1, 1)); // older than installed
         var assessment = Assert.Single(Matching.AssessAll(
             [device],
             new Dictionary<string, List<DriverCandidate>> { ["HWID1"] = [candidate] }));

@@ -89,6 +89,32 @@ tests/       # unit tests for core matching + engine safety behavior
 docs/        # architecture spec and design decisions
 ```
 
+## The .NET port (in progress)
+
+Waypoint is being reimplemented in C# / .NET 8 — Windows-first, WPF GUI,
+signed self-contained binaries. Rationale and the phased plan are in
+[`docs/ADR-0001-language-migration-python-to-dotnet.md`](docs/ADR-0001-language-migration-python-to-dotnet.md).
+The Python tree above remains authoritative and runnable until each module
+has a validated .NET replacement.
+
+```
+dotnet/
+  Waypoint.Core/       # ported: models + matching (parity with src/waypoint/core)
+  Waypoint.Core.Tests/ # xUnit port of tests/test_matching.py + model invariants
+  Waypoint.Cli/        # AOT smoke test only — not yet a port of cli/main.py
+  Waypoint.Gui/        # WPF skeleton, not yet started
+```
+
+```bash
+cd dotnet
+dotnet test                                  # 15 tests
+dotnet publish Waypoint.Cli -c Release -r win-x64   # ~1.7MB standalone exe
+```
+
+Native AOT publish needs `vswhere.exe` on `PATH`
+(`C:\Program Files (x86)\Microsoft Visual Studio\Installer`) and the MSVC
+C++ toolchain. Binaries are **not** Authenticode-signed yet.
+
 ## Running the tests
 
 ```bash

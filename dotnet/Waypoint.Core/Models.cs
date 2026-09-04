@@ -2,13 +2,14 @@
 
 namespace Waypoint.Core;
 
-// Driver trust tier, strongest first.
+// Driver trust tier. Weakest first, so default() is Unsigned — an unset
+// signature must fail the policy gate, not sail through it. TrustRank orders.
 public enum SignatureType
 {
-    Whql,
-    Attestation,
-    TestSigned,
     Unsigned,
+    TestSigned,
+    Attestation,
+    Whql,
 }
 
 public static class SignatureTypeExtensions
@@ -71,7 +72,39 @@ public sealed record Device(
     string FriendlyName,
     string InstanceId,
     int? ProblemCode = null,
-    InstalledDriver? Installed = null);
+    InstalledDriver? Installed = null)
+{
+    // Copied because a record only freezes the reference; the caller's list stays writable.
+    public IReadOnlyList<string> Hwids { get; } = [.. Hwids];
+
+    // Hand-rolled because record equality reference-compares collection members.
+    public bool Equals(Device? other) =>
+        other is not null
+        && Hwids.SequenceEqual(other.Hwids)
+        && ClassGuid == other.ClassGuid
+        && ClassName == other.ClassName
+        && FriendlyName == other.FriendlyName
+        && InstanceId == other.InstanceId
+        && ProblemCode == other.ProblemCode
+        && Installed == other.Installed;
+
+    public override int GetHashCode()
+    {
+        var hash = new HashCode();
+        foreach (var hwid in Hwids)
+        {
+            hash.Add(hwid);
+        }
+
+        hash.Add(ClassGuid);
+        hash.Add(ClassName);
+        hash.Add(FriendlyName);
+        hash.Add(InstanceId);
+        hash.Add(ProblemCode);
+        hash.Add(Installed);
+        return hash.ToHashCode();
+    }
+}
 
 // A candidate driver offered by a source for one HWID.
 public sealed record DriverCandidate(
