@@ -22,5 +22,8 @@ TestResults/
 *.p12
 *.snk
 
+# machine-local signing identity (setup-dev-signing.ps1)
+Directory.Build.local.props
+
 # claude code worktrees
 .claude/worktrees/

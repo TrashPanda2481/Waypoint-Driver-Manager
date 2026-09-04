@@ -1,15 +1,19 @@
 <Project>
 
-  <!-- Signs published exes when a signing identity is configured. Set
-       WAYPOINT_SIGN_THUMBPRINT (env) or WaypointSignThumbprint (msbuild) to a
-       cert in CurrentUser\My. Swapping the self-signed dev cert for a real
-       OV/EV cert is a thumbprint change and nothing else. Unset = skip, so a
-       publish still works for anyone without a cert. -->
+  <!-- Signs published exes when a signing identity is configured: a cert in
+       CurrentUser\My named by thumbprint. Precedence is /p:WaypointSignThumbprint,
+       then WAYPOINT_SIGN_THUMBPRINT, then the machine-local props file that
+       setup-dev-signing.ps1 writes. Unset = skip, so a publish still works for
+       anyone without a cert. Swapping the self-signed dev cert for a real OV/EV
+       cert is a thumbprint change and nothing else. -->
 
   <PropertyGroup>
     <WaypointSignThumbprint Condition="'$(WaypointSignThumbprint)' == ''">$(WAYPOINT_SIGN_THUMBPRINT)</WaypointSignThumbprint>
     <WaypointTimestampUrl Condition="'$(WaypointTimestampUrl)' == ''">http://timestamp.digicert.com</WaypointTimestampUrl>
   </PropertyGroup>
+
+  <Import Project="$(MSBuildThisFileDirectory)Directory.Build.local.props"
+          Condition="Exists('$(MSBuildThisFileDirectory)Directory.Build.local.props')" />
 
   <Target Name="WaypointSign" Condition="'$(WaypointSignThumbprint)' != ''">
     <PropertyGroup>
@@ -33,7 +37,7 @@
   <Target Name="WaypointSignSkipped"
           AfterTargets="Publish"
           Condition="'$(OutputType)' == 'Exe' and '$(WaypointSignThumbprint)' == ''">
-    <Message Importance="high" Text="Publish not signed: set WAYPOINT_SIGN_THUMBPRINT to sign." />
+    <Message Importance="high" Text="Publish not signed: run dotnet/setup-dev-signing.ps1 (or set WAYPOINT_SIGN_THUMBPRINT)." />
   </Target>
 
 </Project>

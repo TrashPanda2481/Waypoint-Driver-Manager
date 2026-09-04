@@ -122,13 +122,24 @@ C++ toolchain.
 
 ### Signing
 
-Publishing signs the exe when `WAYPOINT_SIGN_THUMBPRINT` names a code-signing
-cert in `CurrentUser\My`; unset, the publish succeeds unsigned. The cert is
-referenced by thumbprint, so no key material is ever stored in the repo.
+One-time setup per machine — creates a self-signed development certificate
+and points the build at it:
+
+```powershell
+pwsh dotnet/setup-dev-signing.ps1
+```
+
+After that `dotnet publish` signs automatically. The certificate is referenced
+by thumbprint from `CurrentUser\My`, so no key material is ever stored in the
+repo; the generated `Directory.Build.local.props` is gitignored and machine-local.
+Without it, publishing still succeeds — just unsigned, with a message saying so.
+
+Thumbprint precedence is `/p:WaypointSignThumbprint` > `WAYPOINT_SIGN_THUMBPRINT`
+> the local props file, so a real certificate can override the dev one per
+invocation without editing anything:
 
 ```bash
-export WAYPOINT_SIGN_THUMBPRINT=<thumbprint>
-dotnet publish Waypoint.Cli -c Release -r win-x64
+dotnet publish Waypoint.Cli -c Release -r win-x64 -p:WaypointSignThumbprint=<real-thumbprint>
 ```
 
 Signatures are SHA-256 and RFC3161-timestamped, so they stay valid past cert
@@ -139,7 +150,8 @@ be silently overwritten.
 The current cert is **self-signed and for development only**. It proves the
 signing pipeline, not distribution trust: the chain reports `UntrustedRoot`
 and SmartScreen/AV reputation is unvalidated. Moving to a real OV/EV
-certificate is a thumbprint change and nothing else.
+certificate is a thumbprint change and nothing else — rerun the setup script
+with `-Thumbprint <real>`, or pass it per invocation as above.
 
 ## Running the tests
 
