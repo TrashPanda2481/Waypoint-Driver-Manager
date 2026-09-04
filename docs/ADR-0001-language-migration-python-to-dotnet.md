@@ -134,3 +134,38 @@ the low-water mark.
 
 The Python implementation remains authoritative and runnable until each
 module above has a validated .NET replacement.
+
+## Deliberate behavioral divergences from the Python
+
+The port is otherwise faithful; these are the exceptions, recorded so a
+diff between the two trees doesn't read as an accident.
+
+- **Candidate ranking order (2026-09-04).** `core/matching.py`'s
+  `rank_candidates` sorts ascending on `(trust_rank, driver_date)`, so
+  `build_plan` picks the *oldest* candidate in the best trust tier —
+  contradicting its own docstring ("trust tier first, then recency") and
+  the product's purpose. Verified against the real Python: given a 2026
+  and a 2020 WHQL driver, it chooses the 2020 one. `Waypoint.Core`'s
+  `RankCandidates` sorts the date **descending**, so the newest acceptable
+  driver wins; undated candidates sort behind dated ones. The Python
+  retains the bug until it is retired.
+
+- **CAB extraction (2026-09-04).** `sources/oem/cab.py` shells out to
+  `expand.exe -F:* <cab> <destdir>` on Windows. That is broken for the
+  single-member cabs every OEM catalog actually ships: `expand.exe`
+  refuses to "expand a file onto itself" yet still exits 0, and for a
+  single-member cab it ignores `-F:` and names the payload after the CAB.
+  The Python's live validation ran through `cabextract` on Linux, so this
+  path was never exercised. The .NET `CabExtractor` stages into a private
+  directory, checks the MSCF header, and verifies the produced artifact
+  rather than the exit code.
+
+- **Async I/O.** `IDriverSource.Search` stays synchronous (it must not do
+  I/O); `RefreshAsync`/`FetchAsync` are async with a `CancellationToken`,
+  which is where network access actually happens.
+
+- **Fail-closed signature enum.** `SignatureType` is declared weakest-first
+  so `default()` is `Unsigned`, and JSON deserialization throws on an
+  unrecognized tier rather than defaulting — matching Python's
+  `SignatureType(...)` `ValueError` at the boundary where C# would
+  otherwise silently produce the most-trusted tier.

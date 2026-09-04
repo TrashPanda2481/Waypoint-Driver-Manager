@@ -11,6 +11,10 @@ public static class Matching
     private static readonly DateOnly MinDate = new(1970, 1, 1);
 
     // Trust tier first, then recency. Below-policy signatures are filtered, not just sorted last.
+    //
+    // Deliberate divergence from matching.py, which sorts the date ascending and
+    // so hands build_plan the OLDEST candidate in the best tier despite its
+    // docstring promising recency. Undated candidates fall to the back.
     public static List<DriverCandidate> RankCandidates(
         IEnumerable<DriverCandidate> candidates,
         SignatureType minSignature = SignatureType.Attestation)
@@ -18,7 +22,7 @@ public static class Matching
         return candidates
             .Where(c => c.SignatureType.TrustRank() <= minSignature.TrustRank())
             .OrderBy(c => c.SignatureType.TrustRank())
-            .ThenBy(c => c.DriverDate ?? MinDate)
+            .ThenByDescending(c => c.DriverDate ?? MinDate)
             .ToList();
     }
 

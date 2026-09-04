@@ -134,6 +134,49 @@ public class MatchingTests
     }
 
     [Fact]
+    public void RankCandidates_PutsTheNewestFirst_WithinATrustTier()
+    {
+        var old = CandidateOn(new DateOnly(2020, 1, 1), version: "1.0");
+        var newest = CandidateOn(new DateOnly(2026, 1, 1), version: "9.0");
+
+        Assert.Equal([newest, old], Matching.RankCandidates([old, newest]));
+    }
+
+    [Fact]
+    public void RankCandidates_PrefersTrustTierOverRecency()
+    {
+        var newerButWeaker = CandidateOn(new DateOnly(2026, 1, 1), sig: SignatureType.Attestation);
+        var olderButWhql = CandidateOn(new DateOnly(2020, 1, 1), sig: SignatureType.Whql);
+
+        Assert.Equal([olderButWhql, newerButWeaker], Matching.RankCandidates([newerButWeaker, olderButWhql]));
+    }
+
+    [Fact]
+    public void RankCandidates_SinksUndatedCandidatesBelowDatedOnes()
+    {
+        var undated = CandidateOn(null, version: "unknown");
+        var dated = CandidateOn(new DateOnly(2020, 1, 1), version: "1.0");
+
+        Assert.Equal([dated, undated], Matching.RankCandidates([undated, dated]));
+    }
+
+    [Fact]
+    public void UpgradeTier_OffersTheNewestCandidateFirst()
+    {
+        var installed = new InstalledDriver("1.0", new DateOnly(2019, 1, 1), "Acme", SignatureType.Whql);
+        var device = MakeDevice(installed: installed);
+        var old = CandidateOn(new DateOnly(2020, 1, 1), version: "2.0");
+        var newest = CandidateOn(new DateOnly(2026, 1, 1), version: "9.0");
+
+        var assessment = Assert.Single(Matching.AssessAll(
+            [device],
+            new Dictionary<string, List<DriverCandidate>> { ["HWID1"] = [old, newest] }));
+
+        Assert.Equal(DeviceStatus.UpgradeAvailable, assessment.Status);
+        Assert.Equal(newest, assessment.Candidates[0]);
+    }
+
+    [Fact]
     public void NonSharedHwid_IsNotFlaggedAmbiguous()
     {
         var deviceA = MakeDevice(hwids: ["HWID_A"], instanceId: "A");
