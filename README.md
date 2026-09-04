@@ -99,16 +99,21 @@ has a validated .NET replacement.
 
 ```
 dotnet/
-  Waypoint.Core/       # ported: models + matching (parity with src/waypoint/core)
-  Waypoint.Core.Tests/ # xUnit port of tests/test_matching.py + model invariants
+  Waypoint.Core/       # models, matching, and the shared contracts
+                       # (IDriverSource, IModelDriverPackSource, IDeviceBackend)
+  Waypoint.Sources/    # local cache + Dell/Lenovo/HP OEM catalogs
+                       # + Windows Update (COM, unvalidated)
+  Waypoint.Engine/     # audit log, plan, scan/plan/apply orchestration, factory
+  Waypoint.Platform/   # OS backends — mock only; Windows backend is step 3
   Waypoint.Cli/        # AOT smoke test only — not yet a port of cli/main.py
   Waypoint.Gui/        # WPF skeleton, not yet started
+  *.Tests/             # xUnit, incl. the real vendor catalog fixtures
 ```
 
 ```bash
 cd dotnet
-dotnet test                                  # 15 tests
-dotnet publish Waypoint.Cli -c Release -r win-x64   # ~1.7MB standalone exe
+dotnet test                                  # 60 tests
+dotnet publish Waypoint.Cli -c Release -r win-x64   # ~3MB standalone exe
 ```
 
 Native AOT publish needs `vswhere.exe` on `PATH`

@@ -10,12 +10,86 @@ public sealed class CabExtractionException(string message) : Exception(message);
 
 public static class CabExtractor
 {
-    // Extracts every file in cabPath into destDir, flat. Dell/HP/Lenovo cabs
-    // are a single XML payload, so no subdirectory handling is needed.
-    public static IReadOnlyList<string> Extract(string cabPath, string destDir)
-    {
-        Directory.CreateDirectory(destDir);
+    private static ReadOnlySpan<byte> CabMagic => "MSCF"u8;
 
+    // Pulls a catalog's XML payload out of its cab and puts it at destPath.
+    //
+    // Two expand.exe behaviours make the obvious implementation wrong. It
+    // refuses to "expand a file onto itself" and still exits 0, so extracting
+    // into the cab's own directory silently yields the cab back. And for a
+    // single-member cab it ignores -F: and names the output after the CAB
+    // ("platformList.cab" -> "platformlist.cab" holding XML), so the payload
+    // cannot be identified by extension. Hence: always stage into a private
+    // directory, and fall back to "the only file present" when nothing is
+    // named .xml.
+    public static string ExtractXmlPayload(string cabPath, string destPath)
+    {
+        RequireCabMagic(cabPath);
+
+        var parent = Path.GetDirectoryName(Path.GetFullPath(destPath));
+        if (!string.IsNullOrEmpty(parent))
+        {
+            Directory.CreateDirectory(parent);
+        }
+
+        var staging = Directory.CreateTempSubdirectory("waypoint-cab-");
+        try
+        {
+            var output = RunExpand(cabPath, staging.FullName);
+            var extracted = Directory.GetFiles(staging.FullName);
+
+            // expand.exe reports success on things that plainly failed, so
+            // trust the artifacts rather than the exit code.
+            if (extracted.Length == 0)
+            {
+                throw new CabExtractionException(
+                    $"expand.exe produced no output for {cabPath}. The download may be truncated or corrupt. {output}");
+            }
+
+            var payload = extracted.Length == 1
+                ? extracted[0]
+                : Array.Find(extracted, p => string.Equals(Path.GetExtension(p), ".xml", StringComparison.OrdinalIgnoreCase))
+                  ?? throw new CabExtractionException($"No .xml payload found inside {cabPath}");
+
+            if (new FileInfo(payload).Length == 0)
+            {
+                throw new CabExtractionException($"The payload extracted from {cabPath} is empty.");
+            }
+
+            File.Move(payload, destPath, overwrite: true);
+            return destPath;
+        }
+        finally
+        {
+            try
+            {
+                staging.Delete(recursive: true);
+            }
+            catch (IOException)
+            {
+            }
+            catch (UnauthorizedAccessException)
+            {
+            }
+        }
+    }
+
+    // A non-cab (an HTML error page, a truncated download) is copied through
+    // verbatim by expand.exe with exit code 0 — catch it here instead.
+    private static void RequireCabMagic(string cabPath)
+    {
+        Span<byte> header = stackalloc byte[4];
+        using var stream = File.OpenRead(cabPath);
+        if (stream.Read(header) != header.Length || !header.SequenceEqual(CabMagic))
+        {
+            throw new CabExtractionException(
+                $"{cabPath} is not a cabinet file (no MSCF header). The download probably " +
+                "failed or returned an error page rather than the catalog.");
+        }
+    }
+
+    private static string RunExpand(string cabPath, string destDir)
+    {
         var startInfo = new ProcessStartInfo("expand.exe")
         {
             RedirectStandardOutput = true,
@@ -32,17 +106,10 @@ public static class CabExtractor
                 $"Could not start expand.exe to unpack {cabPath}. On Windows this should never " +
                 "happen — expand.exe ships with the OS, so something is wrong with PATH.");
 
+        var stdOut = process.StandardOutput.ReadToEnd();
         var stdErr = process.StandardError.ReadToEnd();
-        process.StandardOutput.ReadToEnd();
         process.WaitForExit();
 
-        if (process.ExitCode != 0)
-        {
-            throw new CabExtractionException(
-                $"expand.exe failed on {cabPath} with exit code {process.ExitCode}. " +
-                $"The download may be truncated or corrupt. {stdErr.Trim()}");
-        }
-
-        return Directory.GetFiles(destDir);
+        return $"{stdOut.Trim()} {stdErr.Trim()}".Trim();
     }
 }

@@ -98,7 +98,7 @@ public sealed class HpPlatformCatalogSourceTests : IDisposable
     {
         var source = SourceFedBy(BuildCab(("readme.txt", null), ("notes.txt", null)));
 
-        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => source.RefreshAsync());
+        var ex = await Assert.ThrowsAsync<CabExtractionException>(() => source.RefreshAsync());
 
         Assert.Contains("No .xml payload", ex.Message);
     }

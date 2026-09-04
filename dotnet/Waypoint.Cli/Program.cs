@@ -1,48 +1,70 @@
-// AOT toolchain smoke test — mock data through Matching, not the real CLI yet.
+// AOT toolchain smoke test — exercises the real engine/source types against a
+// temp cache so the trimmer actually analyses them. Not the real CLI yet.
 
 using Waypoint.Core;
+using Waypoint.Engine;
+using Waypoint.Sources;
 
-var installed = new InstalledDriver(
-    Version: "27.20.100.8681",
-    DriverDate: new DateOnly(2023, 5, 1),
-    Publisher: "NVIDIA",
-    SignatureType: SignatureType.Whql);
+var scratch = Path.Combine(Path.GetTempPath(), "waypoint-smoke", Guid.NewGuid().ToString("N"));
+Directory.CreateDirectory(scratch);
 
-var device = new Device(
-    Hwids: ["PCI\\VEN_10DE&DEV_2504"],
-    ClassGuid: "{4d36e968-e325-11ce-bfc1-08002be10318}",
-    ClassName: "Display",
-    FriendlyName: "NVIDIA GeForce RTX 3060",
-    InstanceId: "PCI\\VEN_10DE&DEV_2504\\4&1a2b3c4d&0&0008",
-    Installed: installed);
-
-var candidate = new DriverCandidate(
-    Hwid: "PCI\\VEN_10DE&DEV_2504",
-    ClassGuid: "{4d36e968-e325-11ce-bfc1-08002be10318}",
-    Version: "32.0.15.6094",
-    DriverDate: new DateOnly(2026, 6, 1),
-    Publisher: "NVIDIA",
-    SignatureType: SignatureType.Whql,
-    Sha256: "0000000000000000000000000000000000000000000000000000000000000",
-    SizeBytes: 812_345_678,
-    SourceId: "local_cache",
-    SourceUrl: "https://example.test",
-    DownloadUri: "/cache/blobs/000.../driver.inf");
-
-var assessments = Matching.AssessAll(
-    [device],
-    new Dictionary<string, List<DriverCandidate>> { [candidate.Hwid] = [candidate] });
-
-foreach (var assessment in assessments)
+try
 {
-    Console.WriteLine($"{assessment.Device.FriendlyName} [{assessment.Device.ClassName}] -> {assessment.Status.ToWireString()}");
-    foreach (var c in assessment.Candidates)
+    var cache = new LocalCacheSource(Path.Combine(scratch, "cache"));
+
+    var driverFile = Path.Combine(scratch, "driver.inf");
+    File.WriteAllText(driverFile, "; fake inf for smoke-test purposes");
+    cache.AddPackage(
+        driverFile,
+        hwid: "PCI\\VEN_10DE&DEV_2504",
+        classGuid: "{4d36e968-e325-11ce-bfc1-08002be10318}",
+        version: "32.0.15.6094",
+        driverDate: new DateOnly(2026, 6, 1),
+        publisher: "NVIDIA",
+        signatureType: SignatureType.Whql);
+
+    var installed = new InstalledDriver(
+        Version: "27.20.100.8681",
+        DriverDate: new DateOnly(2023, 5, 1),
+        Publisher: "NVIDIA",
+        SignatureType: SignatureType.Whql);
+
+    var device = new Device(
+        Hwids: ["PCI\\VEN_10DE&DEV_2504"],
+        ClassGuid: "{4d36e968-e325-11ce-bfc1-08002be10318}",
+        ClassName: "Display",
+        FriendlyName: "NVIDIA GeForce RTX 3060",
+        InstanceId: "PCI\\VEN_10DE&DEV_2504\\4&1a2b3c4d&0&0008",
+        Installed: installed);
+
+    var candidates = cache.Search([device.Hwids[0]]).ToList();
+    var assessments = Matching.AssessAll(
+        [device],
+        new Dictionary<string, List<DriverCandidate>> { [device.Hwids[0]] = candidates });
+
+    var audit = new AuditLog(Path.Combine(scratch, "audit.jsonl"));
+    audit.Record("smoke", ("devices", assessments.Count), ("candidates", candidates.Count));
+
+    foreach (var assessment in assessments)
     {
-        Console.WriteLine($"  candidate: {c.Version} ({c.SignatureType.ToWireString()}, {c.DriverDate})");
+        Console.WriteLine(
+            $"{assessment.Device.FriendlyName} [{assessment.Device.ClassName}] -> {assessment.Status.ToWireString()}");
+        foreach (var candidate in assessment.Candidates)
+        {
+            Console.WriteLine(
+                $"  candidate: {candidate.Version} ({candidate.SignatureType.ToWireString()}, {candidate.DriverDate:yyyy-MM-dd}) from {candidate.SourceId}");
+        }
     }
 
-    foreach (var note in assessment.Notes)
+    Console.WriteLine($"audit records: {audit.ReadAll().Count}");
+}
+finally
+{
+    try
     {
-        Console.WriteLine($"  note: {note}");
+        Directory.Delete(scratch, recursive: true);
+    }
+    catch (IOException)
+    {
     }
 }

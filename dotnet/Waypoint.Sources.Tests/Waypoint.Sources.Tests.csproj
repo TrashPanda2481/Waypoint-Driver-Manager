@@ -28,6 +28,7 @@
   <!-- Real trimmed vendor catalogs, copied verbatim from tests/fixtures/oem. -->
   <ItemGroup>
     <None Include="fixtures\oem\*.xml" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="fixtures\oem\*.cab" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

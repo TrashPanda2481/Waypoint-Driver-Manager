@@ -57,11 +57,7 @@ public sealed class DellCatalogSource : IDriverSource
             {
                 var cabPath = Path.Combine(tmp, "CatalogPC.cab");
                 await _downloader(_catalogUrl, cabPath, cancellationToken).ConfigureAwait(false);
-                var extracted = CabExtractor.Extract(cabPath, tmp);
-                var xmlFile = extracted.FirstOrDefault(
-                    p => string.Equals(Path.GetExtension(p), ".xml", StringComparison.OrdinalIgnoreCase))
-                    ?? throw new InvalidOperationException($"No .xml payload found inside {_catalogUrl}");
-                File.Move(xmlFile, _catalogXmlPath, overwrite: true);
+                CabExtractor.ExtractXmlPayload(cabPath, _catalogXmlPath);
             }
             finally
             {

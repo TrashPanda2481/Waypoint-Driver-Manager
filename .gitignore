@@ -21,3 +21,6 @@ TestResults/
 *.pfx
 *.p12
 *.snk
+
+# claude code worktrees
+.claude/worktrees/

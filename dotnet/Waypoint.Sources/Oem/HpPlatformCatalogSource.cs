@@ -57,20 +57,7 @@ public sealed class HpPlatformCatalogSource
                 var cabPath = Path.Combine(tmp, "platformList.cab");
                 await _downloader(_catalogUrl, cabPath, cancellationToken).ConfigureAwait(false);
 
-                // Extract beside the cab, not over it: expand.exe writes its
-                // output next to the source name and no-ops (exit 0!) on
-                // "cannot expand a file onto itself".
-                var extracted = CabExtractor.Extract(cabPath, Path.Combine(tmp, "extracted"));
-
-                // expand.exe ignores -F: for a single-member cab and names the
-                // payload after the cab, so the XML can land as
-                // "platformlist.cab". platformList.cab has exactly one member.
-                var xmlFile = extracted.FirstOrDefault(
-                        p => string.Equals(Path.GetExtension(p), ".xml", StringComparison.OrdinalIgnoreCase))
-                    ?? (extracted.Count == 1 ? extracted[0] : null)
-                    ?? throw new InvalidOperationException($"No .xml payload found inside {_catalogUrl}");
-
-                File.Move(xmlFile, _catalogXmlPath, overwrite: true);
+                CabExtractor.ExtractXmlPayload(cabPath, _catalogXmlPath);
             }
             finally
             {
