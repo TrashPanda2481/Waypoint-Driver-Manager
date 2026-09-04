@@ -9,3 +9,8 @@ waypoint-cache/
 waypoint-audit.jsonl
 .venv/
 venv/
+
+# .NET (dotnet/ — see ADR-0001)
+dotnet/**/bin/
+dotnet/**/obj/
+*.user
