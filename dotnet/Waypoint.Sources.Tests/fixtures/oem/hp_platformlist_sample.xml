@@ -1,0 +1,140 @@
+<ImagePal>
+<Platform DateAdded="20260827" DateLastModified="20260827">
+		<ProductName DPBCompliant="false" Id="5257513" UDPCompliant="false">HP EliteBook 8770w Mobile Workstation</ProductName>
+		<OS Id="4249" DateAdded="20260827" DateLastModifiedFromXML="20240413">
+			<OSVersion>10.0</OSVersion>
+			<OSArchitecture>64</OSArchitecture>
+			<OSReleaseIdDisplay>1709</OSReleaseIdDisplay>
+			<OSReleaseIdFilename>1709</OSReleaseIdFilename>
+			<OSBuildId>16299</OSBuildId>
+			<OSDescription>Microsoft Windows 10</OSDescription>
+			<OSFromCapture>0</OSFromCapture>
+			<OSReleaseId>1709</OSReleaseId>
+			<IsWindows11>false</IsWindows11>
+		</OS>
+		<OS Id="4254" DateAdded="20260827" DateLastModifiedFromXML="20240413">
+			<OSVersion>10.0</OSVersion>
+			<OSArchitecture>64</OSArchitecture>
+			<OSReleaseIdDisplay>1803</OSReleaseIdDisplay>
+			<OSReleaseIdFilename>1803</OSReleaseIdFilename>
+			<OSBuildId>17134</OSBuildId>
+			<OSDescription>Microsoft Windows 10</OSDescription>
+			<OSFromCapture>0</OSFromCapture>
+			<OSReleaseId>1803</OSReleaseId>
+			<IsWindows11>false</IsWindows11>
+		</OS>
+		<SystemFamily>103C_5336AN</SystemFamily>
+		<SystemID>176c</SystemID>
+	</Platform>
+<Platform DateAdded="20260827" DateLastModified="20260827">
+		<ProductName DPBCompliant="true" Id="5387801" UDPCompliant="false">HP ZBook 15 Mobile Workstation</ProductName>
+		<OS Id="4249" DateAdded="20260827" DateLastModifiedFromXML="20240804">
+			<OSVersion>10.0</OSVersion>
+			<OSArchitecture>64</OSArchitecture>
+			<OSReleaseIdDisplay>1709</OSReleaseIdDisplay>
+			<OSReleaseIdFilename>1709</OSReleaseIdFilename>
+			<OSBuildId>16299</OSBuildId>
+			<OSDescription>Microsoft Windows 10</OSDescription>
+			<OSFromCapture>0</OSFromCapture>
+			<OSReleaseId>1709</OSReleaseId>
+			<IsWindows11>false</IsWindows11>
+		</OS>
+		<SystemFamily>103C_5336AN</SystemFamily>
+		<SystemID>1909</SystemID>
+	</Platform>
+<Platform DateAdded="20260827" DateLastModified="20260827">
+		<ProductName DPBCompliant="true" Id="5387513" UDPCompliant="false">HP ZBook 17 Mobile Workstation</ProductName>
+		<OS Id="4249" DateAdded="20260827" DateLastModifiedFromXML="20240803">
+			<OSVersion>10.0</OSVersion>
+			<OSArchitecture>64</OSArchitecture>
+			<OSReleaseIdDisplay>1709</OSReleaseIdDisplay>
+			<OSReleaseIdFilename>1709</OSReleaseIdFilename>
+			<OSBuildId>16299</OSBuildId>
+			<OSDescription>Microsoft Windows 10</OSDescription>
+			<OSFromCapture>0</OSFromCapture>
+			<OSReleaseId>1709</OSReleaseId>
+			<IsWindows11>false</IsWindows11>
+		</OS>
+		<SystemFamily>103C_5336AN</SystemFamily>
+		<SystemID>190a</SystemID>
+	</Platform>
+<Platform DateAdded="20260827" DateLastModified="20260827">
+		<ProductName DPBCompliant="true" Id="5405431" UDPCompliant="false">HP ProBook 440 G1 Notebook PC</ProductName>
+		<OS Id="4263" DateAdded="20260827" DateLastModifiedFromXML="20240420">
+			<OSVersion>10.0</OSVersion>
+			<OSArchitecture>64</OSArchitecture>
+			<OSReleaseIdDisplay>1809</OSReleaseIdDisplay>
+			<OSReleaseIdFilename>1809</OSReleaseIdFilename>
+			<OSBuildId>17763</OSBuildId>
+			<OSDescription>Microsoft Windows 10</OSDescription>
+			<OSFromCapture>0</OSFromCapture>
+			<OSReleaseId>1809</OSReleaseId>
+			<IsWindows11>false</IsWindows11>
+		</OS>
+		<OS Id="4254" DateAdded="20260827" DateLastModifiedFromXML="20240720">
+			<OSVersion>10.0</OSVersion>
+			<OSArchitecture>64</OSArchitecture>
+			<OSReleaseIdDisplay>1803</OSReleaseIdDisplay>
+			<OSReleaseIdFilename>1803</OSReleaseIdFilename>
+			<OSBuildId>17134</OSBuildId>
+			<OSDescription>Microsoft Windows 10</OSDescription>
+			<OSFromCapture>0</OSFromCapture>
+			<OSReleaseId>1803</OSReleaseId>
+			<IsWindows11>false</IsWindows11>
+		</OS>
+		<OS Id="4249" DateAdded="20260827" DateLastModifiedFromXML="20240420">
+			<OSVersion>10.0</OSVersion>
+			<OSArchitecture>64</OSArchitecture>
+			<OSReleaseIdDisplay>1709</OSReleaseIdDisplay>
+			<OSReleaseIdFilename>1709</OSReleaseIdFilename>
+			<OSBuildId>16299</OSBuildId>
+			<OSDescription>Microsoft Windows 10</OSDescription>
+			<OSFromCapture>0</OSFromCapture>
+			<OSReleaseId>1709</OSReleaseId>
+			<IsWindows11>false</IsWindows11>
+		</OS>
+		<SystemFamily>103C_5336AN</SystemFamily>
+		<SystemID>1944</SystemID>
+	</Platform>
+<Platform DateAdded="20260827" DateLastModified="20260827">
+		<ProductName DPBCompliant="true" Id="5405417" UDPCompliant="false">HP ProBook 470 G1 Notebook PC</ProductName>
+		<ProductName DPBCompliant="true" Id="5405424" UDPCompliant="false">HP ProBook 450 G1 Notebook PC</ProductName>
+		<ProductName DPBCompliant="true" Id="5405431" UDPCompliant="false">HP ProBook 440 G1 Notebook PC</ProductName>
+		<ProductName DPBCompliant="true" Id="5379212" UDPCompliant="false">HP ProBook 430 G1 Notebook PC</ProductName>
+		<OS Id="4249" DateAdded="20260827" DateLastModifiedFromXML="20240803">
+			<OSVersion>10.0</OSVersion>
+			<OSArchitecture>64</OSArchitecture>
+			<OSReleaseIdDisplay>1709</OSReleaseIdDisplay>
+			<OSReleaseIdFilename>1709</OSReleaseIdFilename>
+			<OSBuildId>16299</OSBuildId>
+			<OSDescription>Microsoft Windows 10</OSDescription>
+			<OSFromCapture>0</OSFromCapture>
+			<OSReleaseId>1709</OSReleaseId>
+			<IsWindows11>false</IsWindows11>
+		</OS>
+		<OS Id="4254" DateAdded="20260827" DateLastModifiedFromXML="20240612">
+			<OSVersion>10.0</OSVersion>
+			<OSArchitecture>64</OSArchitecture>
+			<OSReleaseIdDisplay>1803</OSReleaseIdDisplay>
+			<OSReleaseIdFilename>1803</OSReleaseIdFilename>
+			<OSBuildId>17134</OSBuildId>
+			<OSDescription>Microsoft Windows 10</OSDescription>
+			<OSFromCapture>0</OSFromCapture>
+			<OSReleaseId>1803</OSReleaseId>
+			<IsWindows11>false</IsWindows11>
+		</OS>
+		<OS Id="4263" DateAdded="20260827" DateLastModifiedFromXML="20240612">
+			<OSVersion>10.0</OSVersion>
+			<OSArchitecture>64</OSArchitecture>
+			<OSReleaseIdDisplay>1809</OSReleaseIdDisplay>
+			<OSReleaseIdFilename>1809</OSReleaseIdFilename>
+			<OSBuildId>17763</OSBuildId>
+			<OSDescription>Microsoft Windows 10</OSDescription>
+			<OSFromCapture>0</OSFromCapture>
+			<OSReleaseId>1809</OSReleaseId>
+			<IsWindows11>false</IsWindows11>
+		</OS>
+		<SystemFamily>103C_5336AN</SystemFamily>
+		<SystemID>1947</SystemID>
+	</Platform>
+</ImagePal>

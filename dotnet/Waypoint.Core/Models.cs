@@ -4,6 +4,7 @@ namespace Waypoint.Core;
 
 // Driver trust tier. Weakest first, so default() is Unsigned — an unset
 // signature must fail the policy gate, not sail through it. TrustRank orders.
+[System.Text.Json.Serialization.JsonConverter(typeof(SignatureTypeJsonConverter))]
 public enum SignatureType
 {
     Unsigned,

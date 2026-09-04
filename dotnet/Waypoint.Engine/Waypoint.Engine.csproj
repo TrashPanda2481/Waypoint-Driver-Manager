@@ -2,18 +2,14 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Waypoint.Core\Waypoint.Core.csproj" />
-    <ProjectReference Include="..\Waypoint.Engine\Waypoint.Engine.csproj" />
+    <ProjectReference Include="..\Waypoint.Sources\Waypoint.Sources.csproj" />
+    <ProjectReference Include="..\Waypoint.Platform\Waypoint.Platform.csproj" />
   </ItemGroup>
 
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <RootNamespace>Waypoint.Cli</RootNamespace>
-    <AssemblyName>waypoint</AssemblyName>
-    <InvariantGlobalization>true</InvariantGlobalization>
-    <PublishAot>true</PublishAot>
   </PropertyGroup>
 
 </Project>
