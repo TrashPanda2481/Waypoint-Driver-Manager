@@ -276,27 +276,40 @@ waypoint/
 
 ## 4. Platform & Stack
 
-- **Language:** Python 3.12+ for `core`/`engine`/`sources`/`cli` — matches
-  existing tooling fluency and keeps the logic genuinely cross-platform.
-- **GUI:** PySide6 (Qt) — GUI-first per requirements, and the same toolkit
-  already used for Compass GUI in Meridian OS, so patterns/QA habits carry
-  over even though this is a separate product.
-- **Windows device layer:** `pywin32`/WMI (`Win32_PnPEntity`,
-  `Win32_PnPSignedDriver`) for the first working version; option to move to
-  direct SetupAPI/CfgMgr32 via `ctypes` later if WMI enumeration proves too
-  slow on large fleets.
+> **Language migration in progress (2026-09-04).** The stack below is the
+> **target** stack. Waypoint is being reimplemented in C# / .NET 8; the
+> original Python 3.12+ implementation remains authoritative and runnable
+> until each module has a validated .NET replacement. Rationale, alternatives,
+> and the phased migration plan are in
+> [`ADR-0001-language-migration-python-to-dotnet.md`](ADR-0001-language-migration-python-to-dotnet.md).
+> Priority driving the change: a small, signable, AV-clean native binary —
+> a trust requirement, not a cosmetic one, for a driver tool (see §1).
+
+- **Language:** C# / .NET 8 for `core`/`engine`/`sources`/`cli`. Windows-first.
+  Core + CLI are Native-AOT-friendly (small, dependency-free native exe for
+  the automation use case).
+- **GUI:** WPF, deployed self-contained + trimmed + single-file (one signable
+  exe, no runtime install). GUI-first per requirements. Windows-only, matching
+  the real product target. (WPF is not Native-AOT-compatible today, so the GUI
+  bundles the runtime rather than being a pure AOT image; still far ahead of
+  the prior PyInstaller path on size, startup, and AV reputation.)
+- **Windows device layer:** P/Invoke to SetupAPI/CfgMgr32 and
+  `System.Management` (WMI: `Win32_PnPEntity`, `Win32_PnPSignedDriver`) —
+  first-class native interop, no shim layer.
 - **Windows install/backup primitives:** `pnputil /add-driver ... /install`,
   `pnputil /export-driver`, `pnputil /enum-drivers`
   ([Microsoft Learn — PnPUtil syntax](https://learn.microsoft.com/en-us/windows-hardware/drivers/devtest/pnputil-command-syntax)).
   DISM (`/Add-Driver`, offline image) is used only for offline-image /
   imaging-pipeline scenarios, not live-machine installs
   ([Microsoft Learn — DISM driver servicing](https://learn.microsoft.com/en-us/windows-hardware/manufacture/desktop/dism-driver-servicing-command-line-options-s14?view=windows-11)).
-- **Linux device layer:** `pyudev` + `lspci`/`lsusb` fallback, mapped onto
-  the same internal `Device`/`DriverCandidate` model so the core logic and
-  GUI don't need to know which OS they're on.
-- **Packaging:** PyInstaller one-file build for the Windows GUI/CLI binary
-  (matches "portable tool" expectations from the SDI world) + a pip-installable
-  package for the CLI/automation use case.
+- **Cross-platform core:** the OS-specific device layer sits behind one
+  interface, keeping `core`/`engine` OS-agnostic. The Python build carried a
+  Linux parity backend (`pyudev` + `lspci`/`lsusb`); the .NET rewrite is
+  Windows-first and drops it (see ADR-0001).
+- **Packaging:** Authenticode-signed self-contained .NET binaries — a native
+  CLI exe for automation and a single-file WPF exe for the GUI (both "portable
+  tool" friendly, matching SDI-world expectations, without the PyInstaller
+  AV-reputation cost).
 
 ## 5. Non-Goals (v1)
 
@@ -329,8 +342,16 @@ waypoint/
   adding~~ — RESOLVED (2026-08-30): added. See section 3.2 for details
   (CLI `--force-oem-refresh` and the GUI's "Force refresh (ignore cached
   catalog)" checkbox, both no-ops without `--oem`/the OEM checkbox).
-- Whether `platform/linux_devices.py` targets kernel-module/firmware
-  matching (closer to a different problem domain) or stays scoped to
-  Linux-side testing/parity for the core engine only.
+- ~~Implementation language~~ — RE-EVALUATED and CHANGED (2026-09-04):
+  migrating Python → C# / .NET 8, Windows-first, WPF GUI, signed
+  self-contained binaries. Driven by a "trust/clean-binary is the top
+  priority" call for a driver tool. Full rationale, alternatives (Rust/Go/
+  C++/stay-on-Python), and the phased migration plan in
+  [`ADR-0001-language-migration-python-to-dotnet.md`](ADR-0001-language-migration-python-to-dotnet.md).
+- Linux device-layer scope is moot under the .NET rewrite: the Windows-first
+  target drops the Linux parity backend (was `platform/linux.py`). Revisit
+  only if a genuine cross-platform requirement returns.
 - Distribution channel for the compiled Windows binary (GitHub Releases vs.
-  a signed installer) — deferred until v1 core is functional.
+  a signed installer) — deferred until v1 core is functional. Note: the
+  .NET move makes Authenticode signing first-class, so a signed artifact is
+  now the expected default either way.
