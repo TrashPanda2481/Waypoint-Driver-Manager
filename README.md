@@ -113,7 +113,28 @@ dotnet publish Waypoint.Cli -c Release -r win-x64   # ~1.7MB standalone exe
 
 Native AOT publish needs `vswhere.exe` on `PATH`
 (`C:\Program Files (x86)\Microsoft Visual Studio\Installer`) and the MSVC
-C++ toolchain. Binaries are **not** Authenticode-signed yet.
+C++ toolchain.
+
+### Signing
+
+Publishing signs the exe when `WAYPOINT_SIGN_THUMBPRINT` names a code-signing
+cert in `CurrentUser\My`; unset, the publish succeeds unsigned. The cert is
+referenced by thumbprint, so no key material is ever stored in the repo.
+
+```bash
+export WAYPOINT_SIGN_THUMBPRINT=<thumbprint>
+dotnet publish Waypoint.Cli -c Release -r win-x64
+```
+
+Signatures are SHA-256 and RFC3161-timestamped, so they stay valid past cert
+expiry. Signing is wired after AOT's `CopyNativeBinary` step — that target
+replaces the apphost in the publish directory, so signing on `Publish` would
+be silently overwritten.
+
+The current cert is **self-signed and for development only**. It proves the
+signing pipeline, not distribution trust: the chain reports `UntrustedRoot`
+and SmartScreen/AV reputation is unvalidated. Moving to a real OV/EV
+certificate is a thumbprint change and nothing else.
 
 ## Running the tests
 

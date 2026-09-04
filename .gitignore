@@ -16,3 +16,8 @@ dotnet/**/obj/
 .vs/
 TestResults/
 *.user
+
+# signing key material — never commit
+*.pfx
+*.p12
+*.snk

@@ -1,0 +1,39 @@
+<Project>
+
+  <!-- Signs published exes when a signing identity is configured. Set
+       WAYPOINT_SIGN_THUMBPRINT (env) or WaypointSignThumbprint (msbuild) to a
+       cert in CurrentUser\My. Swapping the self-signed dev cert for a real
+       OV/EV cert is a thumbprint change and nothing else. Unset = skip, so a
+       publish still works for anyone without a cert. -->
+
+  <PropertyGroup>
+    <WaypointSignThumbprint Condition="'$(WaypointSignThumbprint)' == ''">$(WAYPOINT_SIGN_THUMBPRINT)</WaypointSignThumbprint>
+    <WaypointTimestampUrl Condition="'$(WaypointTimestampUrl)' == ''">http://timestamp.digicert.com</WaypointTimestampUrl>
+  </PropertyGroup>
+
+  <Target Name="WaypointSign" Condition="'$(WaypointSignThumbprint)' != ''">
+    <PropertyGroup>
+      <_WaypointPublishedExe>$(PublishDir)$(AssemblyName).exe</_WaypointPublishedExe>
+    </PropertyGroup>
+    <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;$(MSBuildThisFileDirectory)sign.ps1&quot; -Path &quot;$(_WaypointPublishedExe)&quot; -Thumbprint $(WaypointSignThumbprint) -TimestampUrl $(WaypointTimestampUrl)" />
+  </Target>
+
+  <!-- AOT replaces the apphost in PublishDir via CopyNativeBinary, which itself
+       runs AfterTargets="Publish" — signing on Publish would be overwritten. -->
+  <Target Name="WaypointSignAotPublish"
+          AfterTargets="CopyNativeBinary"
+          DependsOnTargets="WaypointSign"
+          Condition="'$(PublishAot)' == 'true' and '$(OutputType)' == 'Exe'" />
+
+  <Target Name="WaypointSignPublish"
+          AfterTargets="Publish"
+          DependsOnTargets="WaypointSign"
+          Condition="'$(PublishAot)' != 'true' and '$(OutputType)' == 'Exe'" />
+
+  <Target Name="WaypointSignSkipped"
+          AfterTargets="Publish"
+          Condition="'$(OutputType)' == 'Exe' and '$(WaypointSignThumbprint)' == ''">
+    <Message Importance="high" Text="Publish not signed: set WAYPOINT_SIGN_THUMBPRINT to sign." />
+  </Target>
+
+</Project>
