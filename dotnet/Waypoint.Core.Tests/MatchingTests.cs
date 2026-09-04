@@ -1,8 +1,4 @@
-// Unit tests for Matching — the logic that directly encodes the "never
-// guess on ambiguous matches, never silently recommend a downgrade" rules
-// from docs/Architecture.md.
-//
-// Ported from tests/test_matching.py (see ADR-0001).
+// Ported from tests/test_matching.py.
 
 using Waypoint.Core;
 using Xunit;

@@ -1,10 +1,4 @@
-// Minimal CLI entry point for the .NET port (ADR-0001, migration step 1).
-//
-// This is a toolchain-validation slice, not a port of cli/main.py yet: it
-// exercises Waypoint.Core's matching logic end-to-end against mock data so
-// the signed, self-contained, Native-AOT CLI publish path can be proven
-// before engine/sources/platform are ported. Real device enumeration and
-// --json/--dry-run/--apply wiring land in migration step 2+.
+// AOT toolchain smoke test — mock data through Matching, not the real CLI yet.
 
 using Waypoint.Core;
 

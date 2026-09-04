@@ -1,31 +1,16 @@
-// Pure matching/ranking logic: Device + candidates -> DeviceAssessment.
-//
-// Zero I/O. Every method here is deterministic and takes its inputs as plain
-// data, which is what lets Waypoint.Core.Tests cover the "never guess on
-// ambiguous matches, never silently recommend a downgrade" rules without
-// touching real hardware, WMI, or udev.
-//
-// Ported from src/waypoint/core/matching.py (see ADR-0001).
+// Matching/ranking logic: Device + candidates -> DeviceAssessment. No I/O.
+// Ported from src/waypoint/core/matching.py.
 
 namespace Waypoint.Core;
 
 public static class Matching
 {
-    // Device Manager problem codes that mean "no driver at all" vs "driver
-    // present but broken." Code 28 = drivers not installed. Code 1 = device
-    // not configured correctly (often *some* driver present). This
-    // distinction drives the Missing vs Problem triage split described in
-    // docs/Architecture.md.
+    // Code 28 = no driver. Code 1 = driver present but broken (Missing vs Problem split).
     private static readonly HashSet<int> NoDriverCodes = [28];
 
     private static readonly DateOnly MinDate = new(1970, 1, 1);
 
-    /// <summary>
-    /// Sort candidates by trust tier first, then recency, filtering out
-    /// anything below the minimum signature policy. Never silently allows an
-    /// unsigned/test-signed driver through — that requires an explicit,
-    /// logged override at the engine layer, not a ranking default.
-    /// </summary>
+    // Trust tier first, then recency. Below-policy signatures are filtered, not just sorted last.
     public static List<DriverCandidate> RankCandidates(
         IEnumerable<DriverCandidate> candidates,
         SignatureType minSignature = SignatureType.Attestation)
@@ -37,13 +22,7 @@ public static class Matching
             .ToList();
     }
 
-    /// <summary>
-    /// Build the triage assessment for a single device.
-    /// <paramref name="candidatesByHwid"/> maps a hardware ID to every
-    /// candidate any source returned for it — the engine is responsible for
-    /// merging sources before calling this; matching logic itself stays
-    /// source-agnostic.
-    /// </summary>
+    // Single-device triage. candidatesByHwid is pre-merged by the caller (engine).
     public static DeviceAssessment AssessDevice(
         Device device,
         IReadOnlyDictionary<string, List<DriverCandidate>> candidatesByHwid,
@@ -103,13 +82,7 @@ public static class Matching
         };
     }
 
-    /// <summary>
-    /// Return every HWID that appears on more than one installed device in
-    /// this scan. SDI's "installed touchpad drivers on a desktop" class of
-    /// bug comes from resolving this kind of overlap automatically;
-    /// Waypoint's rule is: never do that silently. See
-    /// docs/Architecture.md section 3.1.
-    /// </summary>
+    // HWIDs shared by more than one device this scan — never auto-resolved.
     public static HashSet<string> FindAmbiguousHwids(IEnumerable<Device> devices)
     {
         var counts = new Dictionary<string, int>();
@@ -124,7 +97,7 @@ public static class Matching
         return counts.Where(kv => kv.Value > 1).Select(kv => kv.Key).ToHashSet();
     }
 
-    /// <summary>Convenience wrapper: assess every device and flag ambiguous HWIDs.</summary>
+    // Assess every device and flag ambiguous HWIDs.
     public static List<DeviceAssessment> AssessAll(
         IReadOnlyList<Device> devices,
         IReadOnlyDictionary<string, List<DriverCandidate>> candidatesByHwid,
