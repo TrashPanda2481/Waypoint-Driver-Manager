@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Per-machine MSI: Program Files, on PATH, removable from Add/Remove Programs.
      UpgradeCode is permanent — changing it breaks upgrades from installed copies. -->
-<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
+     xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
 
   <Package
       Name="Waypoint Driver Manager"
@@ -11,20 +12,38 @@
       Scope="perMachine"
       Compressed="yes">
 
-    <SummaryInformation Description="Driver detection, sourcing and install manager for Windows" />
+    <SummaryInformation
+        Description="Waypoint Driver Manager — driver detection, sourcing and install manager for Windows"
+        Manufacturer="Waypoint" />
+
+    <!-- A wizard, not a silent drop: an installer that never names itself
+         leaves the user with no idea what they just approved at the UAC
+         prompt. License page is skipped — the project ships no LICENSE file. -->
+    <ui:WixUI Id="WixUI_InstallDir" InstallDirectory="INSTALLFOLDER" />
+    <UI>
+      <Publish Dialog="WelcomeDlg" Control="Next" Event="NewDialog" Value="InstallDirDlg" Order="2" />
+      <Publish Dialog="InstallDirDlg" Control="Back" Event="NewDialog" Value="WelcomeDlg" Order="2" />
+    </UI>
 
     <MajorUpgrade DowngradeErrorMessage="A newer version of Waypoint Driver Manager is already installed." />
     <MediaTemplate EmbedCab="yes" />
 
     <Property Id="ARPURLINFOABOUT" Value="https://github.com/TrashPanda2481/Waypoint-Driver-Manager" />
-    <Property Id="ARPNOMODIFY" Value="1" />
+
+    <Icon Id="WaypointIcon" SourceFile="$(var.CliExe)" />
+    <Property Id="ARPPRODUCTICON" Value="WaypointIcon" />
 
     <StandardDirectory Id="ProgramFiles64Folder">
       <Directory Id="INSTALLFOLDER" Name="Waypoint" />
     </StandardDirectory>
 
+    <StandardDirectory Id="ProgramMenuFolder">
+      <Directory Id="WaypointMenuFolder" Name="Waypoint Driver Manager" />
+    </StandardDirectory>
+
     <Feature Id="Main" Title="Waypoint Driver Manager" Level="1">
       <ComponentGroupRef Id="ProductComponents" />
+      <ComponentGroupRef Id="StartMenuComponents" />
     </Feature>
 
     <ComponentGroup Id="ProductComponents" Directory="INSTALLFOLDER">
@@ -44,6 +63,30 @@
             Action="set"
             System="yes"
             Permanent="no" />
+      </Component>
+    </ComponentGroup>
+
+    <!-- Hosted in cmd /k rather than launched directly: waypoint is a console
+         app, so a bare shortcut would flash and vanish. Retarget this at
+         Waypoint.Gui.exe once the GUI exists (ADR-0001 step 4). -->
+    <ComponentGroup Id="StartMenuComponents" Directory="WaypointMenuFolder">
+      <Component Id="StartMenuShortcut" Guid="B3F5C7A1-9D24-4E86-A0F3-1C8B5E7D2946">
+        <Shortcut
+            Id="WaypointShortcut"
+            Name="Waypoint Driver Manager"
+            Description="Driver detection, sourcing and install manager"
+            Target="[System64Folder]cmd.exe"
+            Arguments="/k &quot;[INSTALLFOLDER]waypoint.exe&quot;"
+            WorkingDirectory="INSTALLFOLDER"
+            Icon="WaypointIcon" />
+        <RemoveFolder Id="RemoveWaypointMenuFolder" Directory="WaypointMenuFolder" On="uninstall" />
+        <RegistryValue
+            Root="HKLM"
+            Key="Software\Waypoint\DriverManager"
+            Name="StartMenuShortcut"
+            Type="integer"
+            Value="1"
+            KeyPath="yes" />
       </Component>
     </ComponentGroup>
 

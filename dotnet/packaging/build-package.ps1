@@ -88,6 +88,7 @@ if (-not (Get-Command wix -ErrorAction SilentlyContinue)) {
 $msiPath = Join-Path $artifacts "waypoint-$Version-$Runtime.msi"
 wix build (Join-Path $packagingDir 'Waypoint.wxs') `
     -arch x64 `
+    -ext WixToolset.UI.wixext `
     -d "ProductVersion=$Version" `
     -d "CliExe=$cliExe" `
     -o $msiPath
