@@ -1,11 +1,10 @@
-// Dell's official per-device driver catalog — CatalogPC.cab, a UTF-16 XML
-// manifest (~57MB unpacked) listing PCI vendor/device IDs per driver package.
-// Ported from src/waypoint/sources/oem/dell_catalog.py.
+// Dell's per-device catalog — CatalogPC.cab, UTF-16 XML (~57MB unpacked)
+// listing PCI vendor/device IDs per package. Ported from oem/dell_catalog.py.
 //
-// Two honest limits, verified against the real catalog (2026-08-30):
-// Dell publishes MD5 only, never SHA-256, so Search reports sha256="" and
-// FetchAsync earns the real hash after verifying MD5; and every SupportedDevices
-// entry observed was PCIInfo, so ACPI/HID/USB entries are ignored, not guessed at.
+// Verified against the real catalog (2026-08-30): Dell publishes MD5 only, so
+// Search reports sha256="" and FetchAsync earns the real hash after verifying
+// MD5; every SupportedDevices entry was PCIInfo, so ACPI/HID/USB are ignored
+// rather than guessed at.
 
 using System.Globalization;
 using System.Xml.Linq;
@@ -17,9 +16,8 @@ public sealed class DellCatalogSource : IDriverSource
 {
     public const string DefaultCatalogUrl = "https://downloads.dell.com/catalog/CatalogPC.cab";
 
-    // No signature-tier metadata is published here at all, unlike Windows Update.
-    // Unsigned-until-proven, so the engine's signature gate (docs/Architecture.md
-    // 3.3) holds these back unless a lower min_signature is chosen explicitly.
+    // Dell publishes no signature tier. Unsigned-until-proven, so the engine's
+    // gate (Architecture.md 3.3) holds these back unless min_signature is lowered.
     private const SignatureType AssumedSignature = SignatureType.Unsigned;
 
     private readonly string _catalogUrl;
@@ -45,8 +43,7 @@ public sealed class DellCatalogSource : IDriverSource
 
     public string CacheDir { get; }
 
-    // Explicit, opt-in-cost operation a caller schedules (daily, say) — never
-    // driven off Search, which must stay I/O-free.
+    // Caller-scheduled, never driven off Search, which must stay I/O-free.
     public async Task RefreshAsync(bool force = false, CancellationToken cancellationToken = default)
     {
         if (force || !File.Exists(_catalogXmlPath))
@@ -81,8 +78,7 @@ public sealed class DellCatalogSource : IDriverSource
     // Also the seam tests use to point at a small real-data fixture.
     public void LoadFromXml(string xmlPath)
     {
-        // Load, not a fixed-encoding reader: the real catalog is UTF-16 and the
-        // XML declaration is what says so.
+        // Let the XML declaration pick the encoding — the real catalog is UTF-16.
         var root = XDocument.Load(xmlPath).Root
             ?? throw new InvalidOperationException($"{xmlPath} has no root element");
         var baseLocation = (string?)root.Attribute("baseLocation") ?? "downloads.dell.com";
@@ -233,8 +229,7 @@ public sealed class DellCatalogSource : IDriverSource
         return hwids;
     }
 
-    // Dell's "March 04, 2021". Invariant culture: the CLI publishes with
-    // InvariantGlobalization, so ambient culture is not available to rely on.
+    // Dell's "March 04, 2021". Invariant: the CLI publishes InvariantGlobalization.
     private static DateOnly? ParseDellReleaseDate(string value)
     {
         if (value.Length == 0)

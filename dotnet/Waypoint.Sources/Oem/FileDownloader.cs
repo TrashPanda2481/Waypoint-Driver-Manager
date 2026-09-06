@@ -1,6 +1,5 @@
-// Streaming HTTP download. Injected into the OEM sources as a delegate so
-// tests never need network access.
-// Ported from src/waypoint/sources/oem/http.py.
+// Streaming HTTP download, injected into OEM sources as a delegate so tests
+// need no network. Ported from oem/http.py.
 
 namespace Waypoint.Sources.Oem;
 

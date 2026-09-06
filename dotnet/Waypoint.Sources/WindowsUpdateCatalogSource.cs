@@ -1,12 +1,8 @@
-// Windows Update Catalog driver source. Ported from
-// src/waypoint/sources/windows_update.py.
+// Windows Update Catalog driver source. Ported from sources/windows_update.py.
+// Queries the official channel — Microsoft.Update.Session / IUpdateSearcher
+// with "IsInstalled=0 and Type='Driver'" — not a third-party aggregator.
 //
-// Uses the same official channel Windows Update itself uses for driver offers
-// — Microsoft.Update.Session / IUpdateSearcher, queried for
-// "IsInstalled=0 and Type='Driver'" — rather than a third-party aggregator.
-//
-// NOT yet validated against real hardware. First implementation pass, to be
-// exercised on the Dell/Asus dev machines before being trusted.
+// NOT yet validated against real hardware.
 
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
@@ -72,9 +68,8 @@ public sealed class WindowsUpdateCatalogSource : IDriverSource
                         Version: UnknownVersion,
                         DriverDate: DateOnly.FromDateTime(DateTime.FromOADate(driver.GetDriverVerDate())),
                         Publisher: driver.GetDriverManufacturer() ?? UnknownPublisher,
-                        // WU-delivered drivers are Microsoft attestation-signed at
-                        // minimum; true WHQL status needs a follow-up catalog
-                        // inspection call and must not be assumed here.
+                        // Attestation-signed at minimum; real WHQL status needs a
+                        // follow-up catalog call and must not be assumed.
                         SignatureType: SignatureType.Attestation,
                         Sha256: string.Empty, // populated on FetchAsync, not known at search time
                         SizeBytes: (long)driver.GetMaxDownloadSize(),
@@ -116,13 +111,11 @@ public sealed class WindowsUpdateCatalogSource : IDriverSource
     }
 }
 
-// Hand-declared WUA vtables. `dynamic`/IDispatch late binding does not survive
-// Native AOT, and this assembly is linked into the AOT-published CLI.
-//
-// Slot order below is the wire contract, taken from wuapi.h in the Windows SDK.
-// Do not reorder, remove, or insert. `void` members are placeholders occupying
-// a slot we never call — their signatures are deliberately empty. InterfaceIsDual
-// puts slot 1 after IDispatch's seven entries.
+// Hand-declared WUA vtables: dynamic/IDispatch does not survive Native AOT,
+// and this assembly links into the AOT-published CLI. Slot order is the wire
+// contract from wuapi.h — do not reorder, remove or insert. `void` members are
+// unused placeholders holding a slot; InterfaceIsDual puts slot 1 after
+// IDispatch's seven entries.
 
 [ComImport]
 [Guid("816858a4-260d-4260-933a-2585f1abc76b")]

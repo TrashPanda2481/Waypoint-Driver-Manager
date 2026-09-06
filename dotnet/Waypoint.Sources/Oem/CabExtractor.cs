@@ -1,6 +1,5 @@
-// CAB extraction via expand.exe, which ships with Windows.
-// Ported from src/waypoint/sources/oem/cab.py (the cabextract fallback is
-// dropped — the .NET port is Windows-only, see ADR-0001).
+// CAB extraction via expand.exe, which ships with Windows. Ported from
+// oem/cab.py; the cabextract fallback is dropped as Windows-only (ADR-0001).
 
 using System.Diagnostics;
 
@@ -12,16 +11,11 @@ public static class CabExtractor
 {
     private static ReadOnlySpan<byte> CabMagic => "MSCF"u8;
 
-    // Pulls a catalog's XML payload out of its cab and puts it at destPath.
-    //
-    // Two expand.exe behaviours make the obvious implementation wrong. It
-    // refuses to "expand a file onto itself" and still exits 0, so extracting
-    // into the cab's own directory silently yields the cab back. And for a
-    // single-member cab it ignores -F: and names the output after the CAB
-    // ("platformList.cab" -> "platformlist.cab" holding XML), so the payload
-    // cannot be identified by extension. Hence: always stage into a private
-    // directory, and fall back to "the only file present" when nothing is
-    // named .xml.
+    // Two expand.exe quirks force this shape: it refuses to "expand a file
+    // onto itself" yet still exits 0, so extracting into the cab's own
+    // directory silently returns the cab; and for a single-member cab it
+    // ignores -F: and names the output after the CAB, so the payload can't be
+    // found by extension. Hence: stage privately, fall back to the only file.
     public static string ExtractXmlPayload(string cabPath, string destPath)
     {
         RequireCabMagic(cabPath);

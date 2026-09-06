@@ -1,5 +1,5 @@
 // In-memory backend for tests and for GUI/CLI development with no real
-// hardware. Ported from src/waypoint/platform/mock.py.
+// hardware. Ported from platform/mock.py.
 
 using Waypoint.Core;
 

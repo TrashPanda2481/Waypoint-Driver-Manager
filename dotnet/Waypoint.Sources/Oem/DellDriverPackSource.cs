@@ -1,5 +1,5 @@
 // Dell's per-model driver pack catalog, keyed by SMBIOS systemID.
-// Ported from src/waypoint/sources/oem/dell_driverpack.py.
+// Ported from sources/oem/dell_driverpack.py.
 
 using System.Globalization;
 using System.Xml.Linq;

@@ -1,5 +1,5 @@
 // Matching/ranking logic: Device + candidates -> DeviceAssessment. No I/O.
-// Ported from src/waypoint/core/matching.py.
+// Ported from core/matching.py.
 
 namespace Waypoint.Core;
 
@@ -10,11 +10,9 @@ public static class Matching
 
     private static readonly DateOnly MinDate = new(1970, 1, 1);
 
-    // Trust tier first, then recency. Below-policy signatures are filtered, not just sorted last.
-    //
-    // Deliberate divergence from matching.py, which sorts the date ascending and
-    // so hands build_plan the OLDEST candidate in the best tier despite its
-    // docstring promising recency. Undated candidates fall to the back.
+    // Trust tier first, then recency. Below-policy signatures are filtered out.
+    // Deliberate divergence: matching.py sorts the date ascending, handing
+    // build_plan the OLDEST candidate in the best tier. Undated sort last.
     public static List<DriverCandidate> RankCandidates(
         IEnumerable<DriverCandidate> candidates,
         SignatureType minSignature = SignatureType.Attestation)

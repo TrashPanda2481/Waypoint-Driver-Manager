@@ -1,5 +1,5 @@
-// Append-only JSON Lines audit trail. Ported from src/waypoint/engine/audit.py.
-// Answers "what did Waypoint do on this machine, and when" without screenshots.
+// Append-only JSON Lines audit trail: what Waypoint did on this machine, and
+// when. Ported from engine/audit.py.
 
 using System.Buffers;
 using System.Globalization;
@@ -32,7 +32,7 @@ public sealed class AuditLog
 
     public string LogPath { get; }
 
-    // Arbitrary field bag, written by hand — reflection serialization would not survive AOT trimming.
+    // Written by hand: reflection serialization would not survive AOT trimming.
     public void Record(string eventName, params (string Key, object? Value)[] fields)
     {
         var buffer = new ArrayBufferWriter<byte>();

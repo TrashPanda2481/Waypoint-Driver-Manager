@@ -1,6 +1,6 @@
 // Engine tests on the mock backend — no real OS or hardware. Covers the
-// safety-critical behavior in docs/Architecture.md section 3.3: the batch
-// aborts if the restore point fails, and unconfirmed entries never apply.
+// safety rules in Architecture.md 3.3: the batch aborts if the restore point
+// fails, and unconfirmed entries never apply.
 
 using System.Text.Json;
 using Waypoint.Core;

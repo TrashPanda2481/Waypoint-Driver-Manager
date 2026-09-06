@@ -1,6 +1,5 @@
-// The single orchestration path the GUI and CLI both call through:
-// scan -> plan -> (confirm) -> backup -> install. Ported from
-// src/waypoint/engine/session.py. See docs/Architecture.md section 3.4.
+// The one path GUI and CLI both call: scan -> plan -> (confirm) -> backup ->
+// install. Ported from engine/session.py. See Architecture.md 3.4.
 
 using Waypoint.Core;
 
@@ -80,8 +79,7 @@ public sealed class WaypointEngine
         return assessments;
     }
 
-    // Ambiguous devices and the upgrade tier are never auto-selected.
-    // See docs/Architecture.md section 3.1.
+    // Ambiguous devices and the upgrade tier are never auto-selected (3.1).
     public Plan BuildPlan(IReadOnlyList<DeviceAssessment> assessments)
     {
         var entries = new List<PlanEntry>();

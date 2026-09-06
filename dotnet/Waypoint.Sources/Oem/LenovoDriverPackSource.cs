@@ -1,5 +1,5 @@
 // Lenovo's per-model driver pack catalog, keyed by 4-character machine type.
-// Ported from src/waypoint/sources/oem/lenovo_driverpack.py.
+// Ported from sources/oem/lenovo_driverpack.py.
 
 using System.Globalization;
 using System.Xml.Linq;

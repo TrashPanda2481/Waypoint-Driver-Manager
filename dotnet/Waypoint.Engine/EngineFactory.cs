@@ -1,6 +1,5 @@
-// Single place deciding which backend and sources a real session uses, so the
-// CLI and GUI cannot drift apart (docs/Architecture.md 3.4).
-// Ported from src/waypoint/engine/factory.py.
+// One place for backend + source selection, so CLI and GUI can't drift
+// (Architecture.md 3.4). Ported from engine/factory.py.
 
 using Waypoint.Core;
 using Waypoint.Sources;
@@ -27,13 +26,9 @@ public static class EngineFactory
         return sources;
     }
 
-    // Deliberately not in BuildDefaultSources: RefreshAsync pulls a ~57MB
-    // catalog, which must not fire on every scan. Callers opt in, and must
-    // RefreshAsync (or point cacheDir at a previous refresh) before Search.
-    //
-    // Dell only, because DellCatalogSource is the sole OEM source shaped like
-    // IDriverSource. Lenovo's and Dell's driver-pack catalogs are model-keyed
-    // (IModelDriverPackSource) and HP's is platform-lookup only.
+    // Opt-in: RefreshAsync pulls a ~57MB catalog, too costly for every scan.
+    // Call RefreshAsync (or reuse a cacheDir that has) before Search.
+    // Dell only — the sole OEM source shaped like IDriverSource.
     public static List<IDriverSource> BuildOemSources(string? cacheDir = null)
         => [new DellCatalogSource(cacheDir ?? WaypointPaths.DefaultCacheDir)];
 

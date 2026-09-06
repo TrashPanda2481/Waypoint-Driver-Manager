@@ -1,4 +1,4 @@
-// Core data models. Ported from src/waypoint/core/models.py.
+// Core data models. Ported from core/models.py.
 
 namespace Waypoint.Core;
 
@@ -57,7 +57,6 @@ public static class DeviceStatusExtensions
     };
 }
 
-// Driver currently bound to a device.
 public sealed record InstalledDriver(
     string Version,
     DateOnly? DriverDate,
@@ -65,7 +64,6 @@ public sealed record InstalledDriver(
     SignatureType SignatureType,
     string? InfPath = null);
 
-// One enumerated device.
 public sealed record Device(
     IReadOnlyList<string> Hwids, // most-specific first
     string ClassGuid,
@@ -107,7 +105,6 @@ public sealed record Device(
     }
 }
 
-// A candidate driver offered by a source for one HWID.
 public sealed record DriverCandidate(
     string Hwid,
     string ClassGuid,
@@ -138,7 +135,7 @@ public sealed record DriverCandidate(
     }
 }
 
-// One device's triage result — feeds the GUI diff card and CLI JSON plan.
+// One device's triage result.
 public sealed class DeviceAssessment
 {
     public required Device Device { get; init; }

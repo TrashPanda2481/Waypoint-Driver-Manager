@@ -1,5 +1,4 @@
-// Standard on-disk locations. Centralized so CLI and GUI can't disagree
-// about where state lives. Ported from src/waypoint/paths.py.
+// On-disk locations, centralized so CLI and GUI agree. Ported from paths.py.
 
 namespace Waypoint.Core;
 

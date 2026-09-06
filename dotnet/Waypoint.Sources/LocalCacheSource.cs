@@ -1,5 +1,5 @@
-// Local, content-addressed driver cache. The one source that runs fully today
-// with no network. Ported from src/waypoint/sources/local_cache.py.
+// Local content-addressed driver cache — the one source that needs no
+// network. Ported from sources/local_cache.py.
 
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -36,8 +36,7 @@ public sealed class LocalCacheSource : IDriverSource
 
     public string SourceId => Id;
 
-    // Registers a package a technician has vetted, keyed by its content hash —
-    // the explicit opt-in alternative to trusting an opaque third-party archive.
+    // Registers a technician-vetted package, keyed by content hash.
     public DriverCandidate AddPackage(
         string sourceFile,
         string hwid,

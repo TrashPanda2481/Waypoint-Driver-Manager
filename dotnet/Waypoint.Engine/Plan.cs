@@ -1,5 +1,4 @@
-// The concrete install plan built from a scan. Ported from the PlanEntry/Plan
-// dataclasses in src/waypoint/engine/session.py.
+// The install plan built from a scan. Ported from engine/session.py.
 
 using System.Buffers;
 using System.Text;

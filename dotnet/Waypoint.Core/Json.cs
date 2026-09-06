@@ -1,5 +1,5 @@
-// Shared JSON policy. Keeps the on-disk format byte-compatible with the
-// Python implementation's manifest/audit records (snake_case keys, ISO dates).
+// Shared JSON policy: snake_case keys and ISO dates, keeping the on-disk
+// format byte-compatible with the Python manifest/audit records.
 
 using System.Text.Json;
 using System.Text.Json.Serialization;

@@ -1,16 +1,11 @@
-// HP platform support lookup — deliberately NOT a driver source.
-// Ported from src/waypoint/sources/oem/hp_platform.py.
+// HP platform lookup — deliberately NOT a driver source.
+// Ported from oem/hp_platform.py.
 //
-// HP's per-update feed (HpCatalogForSms.latest.cab) is a WSUS Software
-// Distribution Package feed: applicability is arbitrary WQL against
-// Win32_ComputerSystem / Win32_BaseBoard, combined via lar:And/lar:Or rules.
-// There is no flat HWID or model list to parse the way there is for Dell or
-// Lenovo, so "does update X apply to this machine" needs a WMI query
-// interpreter, not a catalog parser. Faking per-device matching on top of a
-// format that cannot express it would present guesses as fact, so this type
-// answers only the one question HP publishes declaratively: is this SystemID a
-// known HP platform, and for which OS versions.
-// Do not extend it into an IDriverSource or IModelDriverPackSource.
+// HP's per-update feed is a WSUS SDP: applicability is arbitrary WQL against
+// Win32_ComputerSystem/BaseBoard, so per-device matching would need a WMI
+// query interpreter, not a catalog parser. Faking it would present guesses as
+// fact. Answers only what HP publishes declaratively: is this SystemID known,
+// and for which OS versions. Do not extend into IDriverSource.
 
 using System.Xml.Linq;
 
