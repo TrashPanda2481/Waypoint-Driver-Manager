@@ -25,5 +25,8 @@ TestResults/
 # machine-local signing identity (setup-dev-signing.ps1)
 Directory.Build.local.props
 
+# build outputs
+dotnet/packaging/artifacts/
+
 # claude code worktrees
 .claude/worktrees/

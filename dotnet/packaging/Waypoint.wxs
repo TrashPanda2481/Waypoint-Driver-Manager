@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Per-machine MSI: Program Files, on PATH, removable from Add/Remove Programs.
+     UpgradeCode is permanent — changing it breaks upgrades from installed copies. -->
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+
+  <Package
+      Name="Waypoint Driver Manager"
+      Manufacturer="Waypoint"
+      Version="$(var.ProductVersion)"
+      UpgradeCode="D0A2A620-536C-4ACB-BECE-AA23905A5D5E"
+      Scope="perMachine"
+      Compressed="yes">
+
+    <SummaryInformation Description="Driver detection, sourcing and install manager for Windows" />
+
+    <MajorUpgrade DowngradeErrorMessage="A newer version of Waypoint Driver Manager is already installed." />
+    <MediaTemplate EmbedCab="yes" />
+
+    <Property Id="ARPURLINFOABOUT" Value="https://github.com/TrashPanda2481/Waypoint-Driver-Manager" />
+    <Property Id="ARPNOMODIFY" Value="1" />
+
+    <StandardDirectory Id="ProgramFiles64Folder">
+      <Directory Id="INSTALLFOLDER" Name="Waypoint" />
+    </StandardDirectory>
+
+    <Feature Id="Main" Title="Waypoint Driver Manager" Level="1">
+      <ComponentGroupRef Id="ProductComponents" />
+    </Feature>
+
+    <ComponentGroup Id="ProductComponents" Directory="INSTALLFOLDER">
+      <Component Id="CliExecutable">
+        <File Id="WaypointExe" Source="$(var.CliExe)" KeyPath="yes" />
+      </Component>
+
+      <!-- System PATH so `waypoint` resolves in any new shell. Part="last" appends
+           rather than replacing; Permanent="no" takes it back out on uninstall. -->
+      <Component Id="PathEntry" Guid="7E4B1A96-2C3D-4F58-9B01-6D5A8C2F41E7">
+        <CreateFolder />
+        <Environment
+            Id="WaypointPath"
+            Name="PATH"
+            Value="[INSTALLFOLDER]"
+            Part="last"
+            Action="set"
+            System="yes"
+            Permanent="no" />
+      </Component>
+    </ComponentGroup>
+
+  </Package>
+</Wix>

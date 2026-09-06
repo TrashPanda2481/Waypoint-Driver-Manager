@@ -351,7 +351,22 @@ waypoint/
 - Linux device-layer scope is moot under the .NET rewrite: the Windows-first
   target drops the Linux parity backend (was `platform/linux.py`). Revisit
   only if a genuine cross-platform requirement returns.
-- Distribution channel for the compiled Windows binary (GitHub Releases vs.
-  a signed installer) — deferred until v1 core is functional. Note: the
-  .NET move makes Authenticode signing first-class, so a signed artifact is
-  now the expected default either way.
+- ~~Distribution channel for the compiled Windows binary~~ — RESOLVED
+  (2026-09-06): ship **both** shapes from one build
+  (`dotnet/packaging/build-package.ps1`), matching how SDI-world tools are
+  actually used — a portable exe a technician carries on a USB stick, and a
+  per-machine installer for permanent workstations.
+  - **Portable zip** — unzip, run `waypoint.exe`. Nothing installed, nothing
+    on PATH, no elevation.
+  - **MSI (WiX)** — per-machine install to `C:\Program Files\Waypoint`,
+    added to the system PATH, removable from Add/Remove Programs. MSI
+    deliberately over an `.exe` installer because Intune/SCCM/GPO/PDQ
+    consume it natively, which is the point for the MSP/sysadmin audience in
+    section 2. Silent install/uninstall supported.
+  - Both artifacts are Authenticode-signed. No background service or
+    scheduled task: Waypoint runs when invoked. A scheduled catalog refresh
+    remains the separate open question above.
+  - State lives in `C:\ProgramData\Waypoint` for both shapes, and uninstall
+    leaves it, so a reinstall keeps the technician's driver cache.
+  - WiX is pinned to v5: v6+ requires accepting the Open Source Maintenance
+    Fee EULA, which is a licensing decision rather than a technical one.

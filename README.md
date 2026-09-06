@@ -120,6 +120,32 @@ Native AOT publish needs `vswhere.exe` on `PATH`
 (`C:\Program Files (x86)\Microsoft Visual Studio\Installer`) and the MSVC
 C++ toolchain.
 
+### Packaging
+
+```powershell
+pwsh dotnet/packaging/build-package.ps1
+```
+
+Produces both distribution shapes into `dotnet/packaging/artifacts/`:
+
+| Artifact | Use |
+|---|---|
+| `waypoint-<ver>-win-x64-portable.zip` | Unzip and run. Nothing installed, nothing on PATH. |
+| `waypoint-<ver>-win-x64.msi` | Per-machine install to `C:\Program Files\Waypoint`, added to system PATH, removable from Add/Remove Programs. |
+
+Installing (needs elevation, since it is per-machine):
+
+```powershell
+msiexec /i waypoint-0.1.0-win-x64.msi          # or just double-click it
+msiexec /i waypoint-0.1.0-win-x64.msi /qn      # silent, for Intune/SCCM/GPO/PDQ
+msiexec /x waypoint-0.1.0-win-x64.msi /qn      # uninstall
+```
+
+After installing, `waypoint` resolves in any **new** shell — PATH changes do
+not reach already-open ones. Both the exe and the MSI are signed. Either way
+state lives in `C:\ProgramData\Waypoint` (cache + audit log); the MSI leaves
+it in place on uninstall so a reinstall keeps the technician's driver cache.
+
 ### Signing
 
 One-time setup per machine — creates a self-signed development certificate
