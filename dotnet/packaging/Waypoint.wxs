@@ -68,7 +68,7 @@
 
     <!-- Hosted in cmd /k rather than launched directly: waypoint is a console
          app, so a bare shortcut would flash and vanish. Retarget this at
-         Waypoint.Gui.exe once the GUI exists (ADR-0001 step 4). -->
+         waypoint-desktop.exe once the GUI exists (ADR-0001 step 4). -->
     <ComponentGroup Id="StartMenuComponents" Directory="WaypointMenuFolder">
       <Component Id="StartMenuShortcut" Guid="B3F5C7A1-9D24-4E86-A0F3-1C8B5E7D2946">
         <Shortcut

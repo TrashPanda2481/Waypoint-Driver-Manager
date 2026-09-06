@@ -370,3 +370,39 @@ waypoint/
     leaves it, so a reinstall keeps the technician's driver cache.
   - WiX is pinned to v5: v6+ requires accepting the Open Source Maintenance
     Fee EULA, which is a licensing decision rather than a technical one.
+
+### Target installed layout
+
+Naming (settled 2026-09-06): `waypoint.exe` is the CLI, `waypoint-desktop.exe`
+is the GUI, and `waypoint-installer-*` is whatever ships them onto a machine —
+the format is an implementation detail of delivery, not part of the identity.
+
+```
+C:\Program Files\Waypoint\
+  waypoint.exe            CLI, Native AOT                ~3 MB   (on PATH)
+  waypoint-desktop.exe    GUI, WPF self-contained        ~30 MB  (Start Menu)
+  LICENSE.txt
+
+C:\ProgramData\Waypoint\                                 survives uninstall
+  cache\
+    manifest.json                                        content-addressed index
+    blobs\<sha256>\...                                   vetted driver packages
+    CatalogPC.xml, DriverPackCatalog.xml,                OEM catalogs, opt-in
+    catalogv2.xml, platformList.xml
+  backups\<instance-id>\<timestamp>\                     pnputil /export-driver
+  audit.jsonl                                            append-only JSON Lines
+
+Start Menu\Programs\Waypoint Driver Manager\
+  Waypoint Driver Manager.lnk  ->  waypoint-desktop.exe
+```
+
+Two binaries rather than one because the CLI is Native-AOT and the GUI cannot
+be (WPF), so they are separately deployed — the same split 7-Zip ships
+(`7z.exe` / `7zFM.exe`), and it preserves the Python entry-point names.
+
+Measured against comparable installed tools on a real Windows 11 machine
+(2026-09-06): HWiNFO64 is 6 files / 13.7 MB, 7-Zip 107 files / 5.6 MB, and
+Intel Driver & Support Assistant — the closest functional analogue — 142 files
+/ 20.7 MB **plus two always-running services**. Waypoint targets the lean end:
+a handful of files and no resident service, which single-file/AOT publishing
+makes achievable for a .NET application.

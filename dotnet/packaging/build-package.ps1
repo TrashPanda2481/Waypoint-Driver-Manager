@@ -1,6 +1,9 @@
 # Builds both distribution shapes from one publish:
-#   waypoint-<version>-win-x64-portable.zip   unzip and run, nothing installed
-#   waypoint-<version>-win-x64.msi            per-machine install, on PATH
+#   waypoint-portable-<version>-<rid>.zip    unzip and run, nothing installed
+#   waypoint-installer-<version>-<rid>.msi   per-machine install, on PATH
+#
+# Binaries inside: waypoint.exe (CLI) and, once it exists,
+# waypoint-desktop.exe (GUI).
 #
 # Native AOT needs vswhere.exe on PATH; this adds it if the standard Visual
 # Studio Installer location exists.
@@ -45,7 +48,7 @@ else {
 
 Write-Host ""
 Write-Host "== portable zip =="
-$zipPath = Join-Path $artifacts "waypoint-$Version-$Runtime-portable.zip"
+$zipPath = Join-Path $artifacts "waypoint-portable-$Version-$Runtime.zip"
 $staging = Join-Path ([System.IO.Path]::GetTempPath()) "waypoint-portable-$([guid]::NewGuid().ToString('N'))"
 New-Item -ItemType Directory -Path $staging -Force | Out-Null
 try {
@@ -85,7 +88,7 @@ if (-not (Get-Command wix -ErrorAction SilentlyContinue)) {
     throw "wix not found. Install it with: dotnet tool install --global wix --version 5.*"
 }
 
-$msiPath = Join-Path $artifacts "waypoint-$Version-$Runtime.msi"
+$msiPath = Join-Path $artifacts "waypoint-installer-$Version-$Runtime.msi"
 wix build (Join-Path $packagingDir 'Waypoint.wxs') `
     -arch x64 `
     -ext WixToolset.UI.wixext `

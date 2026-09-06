@@ -130,15 +130,18 @@ Produces both distribution shapes into `dotnet/packaging/artifacts/`:
 
 | Artifact | Use |
 |---|---|
-| `waypoint-<ver>-win-x64-portable.zip` | Unzip and run. Nothing installed, nothing on PATH. |
-| `waypoint-<ver>-win-x64.msi` | Per-machine install to `C:\Program Files\Waypoint`, added to system PATH, removable from Add/Remove Programs. |
+| `waypoint-portable-<ver>-<rid>.zip` | Unzip and run. Nothing installed, nothing on PATH. |
+| `waypoint-installer-<ver>-<rid>.msi` | Per-machine install to `C:\Program Files\Waypoint`, added to system PATH, Start Menu entry, removable from Add/Remove Programs. |
+
+Naming: `waypoint.exe` is the CLI, `waypoint-desktop.exe` is the GUI, and
+`waypoint-installer-*` is whatever carries them onto a machine.
 
 Installing (needs elevation, since it is per-machine):
 
 ```powershell
-msiexec /i waypoint-0.1.0-win-x64.msi          # or just double-click it
-msiexec /i waypoint-0.1.0-win-x64.msi /qn      # silent, for Intune/SCCM/GPO/PDQ
-msiexec /x waypoint-0.1.0-win-x64.msi /qn      # uninstall
+msiexec /i waypoint-installer-0.1.0-win-x64.msi          # or double-click for the wizard
+msiexec /i waypoint-installer-0.1.0-win-x64.msi /qn      # silent, for Intune/SCCM/GPO/PDQ
+msiexec /x waypoint-installer-0.1.0-win-x64.msi /qn      # uninstall
 ```
 
 After installing, `waypoint` resolves in any **new** shell — PATH changes do

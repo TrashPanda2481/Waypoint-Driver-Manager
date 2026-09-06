@@ -10,6 +10,8 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
+    <RootNamespace>Waypoint.Gui</RootNamespace>
+    <AssemblyName>waypoint-desktop</AssemblyName>
   </PropertyGroup>
 
 </Project>
