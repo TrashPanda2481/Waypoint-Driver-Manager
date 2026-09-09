@@ -1,0 +1,32 @@
+﻿Microsoft PnP Utility
+
+Published Name:     oem100.inf
+Original Name:      adsdrv.inf
+Provider Name:      Weblink USB
+Class Name:         Ports
+Class GUID:         {4d36e978-e325-11ce-bfc1-08002be10318}
+Driver Version:     06/19/2012 1.0.0.0
+Signer Name:        Automotive Data Solutions
+Attributes:         Legacy
+WHCP Version:       Unknown
+
+Published Name:     oem14.inf
+Original Name:      adshubdrv.inf
+Provider Name:      Weblink HUB
+Class Name:         Ports
+Class GUID:         {4d36e978-e325-11ce-bfc1-08002be10318}
+Driver Version:     01/26/2022 1.0.0.0
+Signer Name:        Automotive Data Solutions Inc
+Attributes:         Legacy
+WHCP Version:       Unknown
+
+Published Name:     oem40.inf
+Original Name:      amdacpbus.inf
+Provider Name:      AMD
+Class Name:         System
+Class GUID:         {4d36e97d-e325-11ce-bfc1-08002be10318}
+Driver Version:     06/18/2018 1.0.0.46
+Signer Name:        Advanced Micro Devices Inc.
+Attributes:         Legacy
+WHCP Version:       Unknown
+

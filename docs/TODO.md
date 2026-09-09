@@ -10,24 +10,37 @@ Nothing here is optional. The .NET port cannot replace Python until all four
 are done, because today it cannot enumerate a device, has no command line, and
 has no window.
 
-### 1. Windows device backend — ADR-0001 step 3
+### 1. Windows device backend — ADR-0001 step 3 — ENUMERATION DONE 2026-09-09
 
-Port `platform/windows.py` (127 lines) to `Waypoint.Platform`, against
-SetupAPI / CfgMgr32 and `System.Management` (`Win32_PnPEntity`,
-`Win32_PnPSignedDriver`). Replace the throw in
-`EngineFactory.BuildDefaultBackend()`.
+`WindowsDeviceBackend` reads the tree through **CfgMgr32 P/Invoke**, not WMI.
+`System.Management` is neither trim- nor AOT-safe and the CLI publishes with
+Native AOT; a bulk `Win32_PnPSignedDriver` query also costs 2.4s, and
+per-device CIM property reads take minutes across the tree. CfgMgr32 does the
+whole enumeration in **781ms**. `BuildDefaultBackend()` no longer throws.
 
-Treat this as **validation work, not porting work**. Neither implementation
-has ever enumerated a real device — Python's backend is written against
-documented APIs and explicitly unproven. This is the first time anyone
-confirms Waypoint can read a device tree at all.
+Validated on real Windows 11 hardware:
+- **233 devices, exact set match** against `Get-PnpDevice` — 0 missing, 0
+  extra. The 350-vs-233 gap is fully accounted for: 105 not present (excluded
+  by `CM_GETIDLIST_FILTER_PRESENT`) and 12 present with no hardware ID
+  (skipped, matching the Python).
+- 0 friendly-name and 0 class mismatches across all 233.
+- Driver version, date, provider and INF populated for all 233.
+- Signature agreed with WMI `IsSigned` on **233/233** — no false alarms, no
+  missed warnings.
+- The **Native AOT** binary produces the identical 233 with **0 IL warnings**,
+  confirmed by forcing the trimmer to analyse it (+356KB when reachable).
 
-Precedent for taking that seriously: `oem/cab.py` looked correct, was ported
-faithfully, and was broken on Windows because only the Linux path had ever
-run. Expect the same class of surprise here.
-
-Done when: a real scan on real Windows 11 hardware returns the machine's
-actual devices and bound drivers, cross-checked against Device Manager.
+**Still unverified — do not claim these work:**
+- The **unsigned** signature branch never fired. All 233 present devices are
+  signed; the machine's 3 WMI-unsigned drivers are non-present with no INF.
+  Needs a machine with a genuinely unsigned present driver.
+- `CreateRestorePoint` — needs elevation and System Restore enabled.
+- `InstallDriver` with `dryRun: false` — would modify the system.
+- `ExportDriverBackup` success path — only the no-INF refusal is covered.
+- **WHQL is unreachable by design.** WHQL and attestation share the signer
+  "Microsoft Windows Hardware Compatibility Publisher"; telling them apart
+  needs catalog inspection, so a signed driver reports `Attestation` rather
+  than asserting unverified trust. Architecture.md 3.2 already flags this.
 
 ### 2. Port the CLI
 

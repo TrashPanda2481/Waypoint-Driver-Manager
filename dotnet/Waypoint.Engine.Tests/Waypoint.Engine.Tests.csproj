@@ -27,4 +27,8 @@
     <ProjectReference Include="..\Waypoint.Engine\Waypoint.Engine.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="fixtures\*.txt" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>

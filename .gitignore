@@ -16,6 +16,7 @@ dotnet/**/obj/
 .vs/
 TestResults/
 *.user
+*_wpftmp.csproj
 
 # signing key material — never commit
 *.pfx

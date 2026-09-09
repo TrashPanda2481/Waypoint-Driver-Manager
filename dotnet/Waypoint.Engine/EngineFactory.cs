@@ -2,6 +2,7 @@
 // (Architecture.md 3.4). Ported from engine/factory.py.
 
 using Waypoint.Core;
+using Waypoint.Platform;
 using Waypoint.Sources;
 using Waypoint.Sources.Oem;
 
@@ -10,10 +11,10 @@ namespace Waypoint.Engine;
 public static class EngineFactory
 {
     public static IDeviceBackend BuildDefaultBackend()
-        => throw new PlatformNotSupportedException(
-            "The Windows device backend (SetupAPI/WMI) is ADR-0001 migration step 3 and does not " +
-            "exist yet. Construct WaypointEngine with an explicit backend until then — failing " +
-            "loudly rather than handing back a mock that would report fabricated devices.");
+        => OperatingSystem.IsWindows()
+            ? new WindowsDeviceBackend()
+            : throw new PlatformNotSupportedException(
+                "Waypoint is Windows-only (ADR-0001). No device backend exists for this platform.");
 
     public static List<IDriverSource> BuildDefaultSources(string? cacheDir = null)
     {
