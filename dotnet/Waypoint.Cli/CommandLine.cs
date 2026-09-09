@@ -9,6 +9,7 @@ namespace Waypoint.Cli;
 internal sealed class Options
 {
     public string? Command { get; set; }
+    public bool HelpRequested { get; set; }
     public string? CacheDir { get; set; }
     public string? AuditLogPath { get; set; }
     public SignatureType MinSignature { get; set; } = SignatureType.Attestation;
@@ -92,8 +93,9 @@ internal static class CommandLine
                     break;
                 case "-h":
                 case "--help":
-                    PrintUsage(Console.Out);
-                    return null;
+                    // Help is not a failure; Program turns this into exit 0.
+                    options.HelpRequested = true;
+                    return options;
                 default:
                     Console.Error.WriteLine($"error: unrecognized argument '{arg}'");
                     PrintUsage(Console.Error);

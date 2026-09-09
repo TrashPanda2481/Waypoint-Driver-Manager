@@ -12,6 +12,12 @@ if (options is null)
     return Commands.ExitError;
 }
 
+if (options.HelpRequested)
+{
+    CommandLine.PrintUsage(Console.Out);
+    return Commands.ExitClean;
+}
+
 try
 {
     return options.Command switch

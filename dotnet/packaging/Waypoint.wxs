@@ -76,7 +76,7 @@
             Name="Waypoint Driver Manager"
             Description="Driver detection, sourcing and install manager"
             Target="[System64Folder]cmd.exe"
-            Arguments="/k &quot;[INSTALLFOLDER]waypoint.exe&quot;"
+            Arguments="/k &quot;&quot;[INSTALLFOLDER]waypoint.exe&quot; --help&quot;"
             WorkingDirectory="INSTALLFOLDER"
             Icon="WaypointIcon" />
         <RemoveFolder Id="RemoveWaypointMenuFolder" Directory="WaypointMenuFolder" On="uninstall" />

@@ -134,6 +134,19 @@ public class CommandLineTests
         Assert.False(options.Oem);
     }
 
+    [Theory]
+    [InlineData("--help")]
+    [InlineData("-h")]
+    public void HelpIsNotAnError(string flag)
+    {
+        // Asking for help must exit 0, or every wrapper script treats a help
+        // call as a failure.
+        var options = CommandLine.Parse([flag]);
+
+        Assert.NotNull(options);
+        Assert.True(options!.HelpRequested);
+    }
+
     [Fact]
     public void ExitCodesMatchTheDocumentedContract()
     {
