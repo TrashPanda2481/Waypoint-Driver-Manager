@@ -135,14 +135,9 @@ by hand if you want a clean slate.
 
 ## Building from source
 
-The .NET port lives on the **`WDI-Rewrite`** branch — `main` is still the
-original Python implementation.
-
 ```powershell
 git clone https://github.com/TrashPanda2481/Waypoint-Driver-Manager.git
-cd Waypoint-Driver-Manager
-git checkout WDI-Rewrite
-cd dotnet
+cd Waypoint-Driver-Manager/dotnet
 dotnet test                # 97 tests
 dotnet run --project Waypoint.Cli -- scan
 ```
@@ -165,3 +160,6 @@ automatically if Visual Studio is in the standard location.
 
 Design rationale is in [`Architecture.md`](Architecture.md) and
 [`ADR-0001`](ADR-0001-language-migration-python-to-dotnet.md).
+
+The original Python implementation is preserved on the `python-reference`
+branch as a porting reference. It is not maintained.

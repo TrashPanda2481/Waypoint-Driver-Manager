@@ -1,14 +1,14 @@
 # Waypoint — TODO
 
-Working branch: `WDI-Rewrite`. The Python tree under `src/waypoint/` stays
-authoritative and untouched until the .NET port can replace it.
-Last reviewed 2026-09-06.
+The .NET implementation is `main`. The original Python is preserved unmaintained
+on `python-reference`; it is still the only working GUI and Windows Update
+source, so it stays as a porting reference until those land.
+Last reviewed 2026-09-09.
 
 ## Cutover gates
 
-Nothing here is optional. The .NET port cannot replace Python until all four
-are done, because today it cannot enumerate a device, has no command line, and
-has no window.
+Two of the four are done: it reads the device tree and has a working command
+line. What remains is a window and a certificate anyone can trust.
 
 ### 1. Windows device backend — ADR-0001 step 3 — ENUMERATION DONE 2026-09-09
 
