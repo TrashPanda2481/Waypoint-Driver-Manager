@@ -96,6 +96,60 @@ artifacts.
 Run .NET and Python side by side on the same machine and compare scan output
 device for device. That comparison authorizes the swap — not this checklist.
 
+## Recovered design: make the model-keyed driver packs reachable
+
+Salvaged from the abandoned `rust-rewrite` branch before it was archived
+(2026-09-09). That branch built this and it works there; nothing of it exists
+in the .NET tree. Read the real implementation at tag
+`archive/rust-rewrite` — `rust/crates/platform/src/model.rs` and
+`rust/crates/cli/src/lib.rs`.
+
+**The gap, verified against the current .NET code.** `DellDriverPackSource`,
+`LenovoDriverPackSource` and `HpPlatformCatalogSource` are implemented and
+tested, and **nothing can call them**: `BuildOemSources()` returns only
+`DellCatalogSource`, and grep finds no reference to `IModelDriverPackSource`
+or `PacksForModel` anywhere in `Waypoint.Engine` or `Waypoint.Cli`. Three
+working sources are dead library code.
+
+This matters because it is a *different* sourcing path from the per-device
+catalog. Per-device only helps on Dell; model-keyed driver packs are how
+MDT/SCCM injection actually works, and it is the sourcing answer we do not
+currently have for a generic machine.
+
+**What is missing to reach them:**
+
+1. **System model detection.** A `SystemModel` type and `DetectSystemModel()`.
+   Windows: `Win32_ComputerSystem.{Model,SystemSKUNumber}` plus
+   `Win32_BaseBoard.Product`. (Note our backend deliberately avoids WMI for
+   AOT reasons — this likely wants the SMBIOS table via
+   `GetSystemFirmwareTable`, or accept a subprocess.) The Rust branch also
+   had a Linux path reading `/sys/class/dmi/id/{product_name,product_sku,
+   board_name}`, which is moot for a Windows-only product.
+
+2. **Dell must also index by model name, not just systemID.** Dell's own KB
+   says systemID "is not readily accessible [via a] WMI query" and recommends
+   name-matching on Windows —
+   <https://www.dell.com/support/kbdoc/en-us/000122176/driver-pack-catalog>.
+   Ours indexes `systemID` only, so on Windows it is keyed on something the
+   machine cannot easily report. Index the uppercased model name alongside it
+   and try SKU first, falling back to name.
+
+3. **A factory companion,** `BuildOemModelPackSources()` next to
+   `BuildOemSources()`, returning the three model-keyed sources —
+   construction only, no download.
+
+4. **A CLI entry point,** `waypoint driverpack [--json] [--force-refresh]`,
+   with a DI seam so the detected model can be injected for tests. One
+   source failing `Refresh` should warn to stderr and continue with the
+   others rather than aborting — the same posture `Scan` already takes via
+   `LastSourceFailures`.
+
+The Rust branch covered this with 6 CLI integration tests and a unit test for
+the Dell name-fallback, using a real case in the existing fixture where two
+systemIDs share a display name. No test needed network: the partial-failure
+case used a corrupted cached file rather than going offline. Those fixtures
+are the same ones already in `Waypoint.Sources.Tests/fixtures/oem`.
+
 ## Known issues, deliberately deferred
 
 - **`DeviceAssessment` has reference equality** where Python's dataclass has
