@@ -95,7 +95,8 @@ Waypoint is being reimplemented in C# / .NET 8 — Windows-first, WPF GUI,
 signed self-contained binaries. Rationale and the phased plan are in
 [`docs/ADR-0001-language-migration-python-to-dotnet.md`](docs/ADR-0001-language-migration-python-to-dotnet.md);
 what is left before the port can replace Python is in
-[`docs/TODO.md`](docs/TODO.md).
+[`docs/TODO.md`](docs/TODO.md). To download and try a build, see
+[`docs/INSTALL.md`](docs/INSTALL.md).
 The Python tree above remains authoritative and runnable until each module
 has a validated .NET replacement.
 
