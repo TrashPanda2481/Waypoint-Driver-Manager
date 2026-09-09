@@ -104,9 +104,10 @@ dotnet/
   Waypoint.Core/       # models, matching, and the shared contracts
                        # (IDriverSource, IModelDriverPackSource, IDeviceBackend)
   Waypoint.Sources/    # local cache + Dell/Lenovo/HP OEM catalogs
-                       # + Windows Update (COM, unvalidated)
+                       # (Windows Update is present but not a default source:
+                       #  its COM interop cannot run under AOT, see docs/TODO.md)
   Waypoint.Engine/     # audit log, plan, scan/plan/apply orchestration, factory
-  Waypoint.Platform/   # OS backends — mock only; Windows backend is step 3
+  Waypoint.Platform/   # mock + the Windows backend (CfgMgr32, pnputil)
   Waypoint.Cli/        # scan / plan / apply, JSON out, documented exit codes
   Waypoint.Gui/        # WPF skeleton, not yet started
   *.Tests/             # xUnit, incl. the real vendor catalog fixtures
@@ -115,7 +116,7 @@ dotnet/
 ```bash
 cd dotnet
 dotnet test                                  # 95 tests
-dotnet publish Waypoint.Cli -c Release -r win-x64   # ~3MB standalone exe
+dotnet publish Waypoint.Cli -c Release -r win-x64   # ~7MB standalone exe
 ```
 
 Native AOT publish needs `vswhere.exe` on `PATH`
