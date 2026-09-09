@@ -87,6 +87,7 @@ waypoint scan --json                   # machine-readable
 waypoint --min-signature whql scan     # raise the trust bar, watch drivers fail it
 waypoint plan                          # what it would do, and what it gates
 waypoint apply                         # dry run — installs nothing
+waypoint driverpack                    # vendor driver packs for this model
 ```
 
 Exit codes are contract: **0** clean, **1** action needed, **2** error.
@@ -138,7 +139,7 @@ by hand if you want a clean slate.
 ```powershell
 git clone https://github.com/TrashPanda2481/Waypoint-Driver-Manager.git
 cd Waypoint-Driver-Manager/dotnet
-dotnet test                # 97 tests
+dotnet test                # 108 tests
 dotnet run --project Waypoint.Cli -- scan
 ```
 

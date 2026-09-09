@@ -25,7 +25,7 @@ internal sealed class Options
 
 internal static class CommandLine
 {
-    private static readonly string[] Verbs = ["scan", "plan", "apply"];
+    private static readonly string[] Verbs = ["scan", "plan", "apply", "driverpack"];
 
     // Returns null and writes to stderr when the arguments are unusable.
     public static Options? Parse(string[] args)
@@ -105,7 +105,7 @@ internal static class CommandLine
 
         if (options.Command is null)
         {
-            Console.Error.WriteLine("error: a command is required (scan, plan, apply)");
+            Console.Error.WriteLine("error: a command is required (scan, plan, apply, driverpack)");
             PrintUsage(Console.Error);
             return null;
         }
@@ -146,6 +146,7 @@ internal static class CommandLine
               scan     Enumerate devices and assess driver status
               plan     Build an install plan from a scan
               apply    Apply a plan (dry-run unless --apply is passed)
+              driverpack  Vendor driver packs published for this system model
 
             global options:
               --cache-dir <path>      Local driver cache (default: %ProgramData%\\Waypoint\\cache)
@@ -164,6 +165,10 @@ internal static class CommandLine
             plan options:
               --json                  Machine-readable output
               --out <path>            Write the plan JSON to a file
+
+            driverpack options:
+              --json                  Machine-readable output
+              --force-oem-refresh     Re-download the catalogs even if cached
 
             apply options:
               --apply                 Actually install. Without it, apply is a dry run.

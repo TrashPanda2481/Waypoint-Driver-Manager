@@ -31,6 +31,16 @@ public static class EngineFactory
     public static List<IDriverSource> BuildOemSources(string? cacheDir = null)
         => [new DellCatalogSource(cacheDir ?? WaypointPaths.DefaultCacheDir)];
 
+    // Companion to BuildOemSources for the model-keyed catalogs: these answer
+    // "what bundle fits this system model", not "what fits this hardware ID",
+    // so they never belonged in the engine's IDriverSource list. Construction
+    // only — the caller decides when to pay for a refresh.
+    public static List<IModelDriverPackSource> BuildOemModelPackSources(string? cacheDir = null)
+    {
+        var dir = cacheDir ?? WaypointPaths.DefaultCacheDir;
+        return [new DellDriverPackSource(dir), new LenovoDriverPackSource(dir)];
+    }
+
     public static WaypointEngine BuildDefaultEngine(
         IDeviceBackend backend,
         string? cacheDir = null,

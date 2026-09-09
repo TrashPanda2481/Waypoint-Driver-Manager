@@ -20,7 +20,7 @@ It reads your real device tree. It **cannot install a driver for you yet.**
 - Devices sharing a hardware ID are flagged and blocked pending per-device
   confirmation. On the test machine that is 103 of 233 — the failure mode
   behind SDI's ticket #108.
-- `scan` / `plan` / `apply` with JSON output and contract exit codes
+- `scan` / `plan` / `apply` / `driverpack` with JSON output and contract exit codes
   (0 clean, 1 action needed, 2 error). `apply` is a dry run unless `--apply`.
 - Signature policy gate, backup-before-replace, restore point required before
   a batch, append-only JSON Lines audit log.
@@ -48,6 +48,7 @@ waypoint scan                       # read the device tree
 waypoint scan | findstr AMBIGUOUS   # devices sharing a hardware ID
 waypoint plan                       # what it would do, and what it gates
 waypoint apply                      # dry run - installs nothing
+waypoint driverpack                 # vendor driver packs for this system model
 ```
 
 State lives in `C:\ProgramData\Waypoint`: the local driver cache and
@@ -74,7 +75,7 @@ Needs the .NET 8 SDK (or 9 — it targets `net8.0`).
 
 ```powershell
 cd dotnet
-dotnet test                                 # 97 tests
+dotnet test                                 # 108 tests
 dotnet run --project Waypoint.Cli -- scan
 ```
 

@@ -102,15 +102,16 @@ public sealed class DellDriverPackSource : IModelDriverPackSource
             foreach (var model in models)
             {
                 var systemId = (string?)model.Attribute("systemID") ?? "";
-                if (systemId.Length == 0)
+                var modelName = (string?)model.Attribute("name") ?? "";
+                if (systemId.Length == 0 && modelName.Length == 0)
                 {
                     continue;
                 }
 
                 var pack = new DriverPack(
                     PackId: (string?)package.Attribute("releaseID") ?? "",
-                    ModelName: (string?)model.Attribute("name") ?? "unknown",
-                    ModelKey: systemId,
+                    ModelName: modelName.Length == 0 ? "unknown" : modelName,
+                    ModelKey: systemId.Length == 0 ? modelName : systemId,
                     OsLabel: osLabel,
                     Version: (string?)package.Attribute("dellVersion") ?? "unknown",
                     ReleaseDate: releaseDate,
@@ -120,13 +121,21 @@ public sealed class DellDriverPackSource : IModelDriverPackSource
                     SizeBytes: sizeBytes,
                     SourceId: SourceId);
 
-                var key = systemId.ToUpperInvariant();
-                if (!index.TryGetValue(key, out var packs))
+                // Indexed by BOTH systemID and model name. Dell's own driver-pack
+                // KB says systemID "is not readily accessible [via a] WMI query"
+                // and recommends matching on name for Windows, and SMBIOS SKU is
+                // frequently an unset placeholder on real machines.
+                // https://www.dell.com/support/kbdoc/en-us/000122176/driver-pack-catalog
+                foreach (var key in Keys(systemId, modelName))
                 {
-                    packs = [];
-                    index[key] = packs;
+                    if (!index.TryGetValue(key, out var packs))
+                    {
+                        packs = [];
+                        index[key] = packs;
+                    }
+
+                    packs.Add(pack);
                 }
-                packs.Add(pack);
             }
         }
 
@@ -139,7 +148,27 @@ public sealed class DellDriverPackSource : IModelDriverPackSource
         {
             LoadFromXml(_catalogXmlPath);
         }
-        return _index!.TryGetValue(modelKey.ToUpperInvariant(), out var packs) ? packs.ToList() : [];
+        // Trimmed to match how Keys() normalizes the index. The Python did not
+        // trim here, but it did not index on names either.
+        return _index!.TryGetValue(modelKey.Trim().ToUpperInvariant(), out var packs) ? packs.ToList() : [];
+    }
+
+    // systemID and name, uppercased, skipping blanks and the case where the
+    // two are identical so a pack is never indexed twice under one key.
+    private static IEnumerable<string> Keys(string systemId, string modelName)
+    {
+        var id = systemId.Trim().ToUpperInvariant();
+        var name = modelName.Trim().ToUpperInvariant();
+
+        if (id.Length > 0)
+        {
+            yield return id;
+        }
+
+        if (name.Length > 0 && name != id)
+        {
+            yield return name;
+        }
     }
 
     // Equivalent of ElementTree's "{*}tag" wildcard: match regardless of namespace.

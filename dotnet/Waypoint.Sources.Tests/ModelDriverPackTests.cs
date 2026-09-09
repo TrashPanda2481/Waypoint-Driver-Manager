@@ -117,4 +117,53 @@ public sealed class ModelDriverPackTests : IDisposable
         Assert.NotNull(pack.ReleaseDate);
         Assert.True(pack.SizeBytes > 0);
     }
+    [Fact]
+    public void DellDriverPackAlsoMatchesOnModelName()
+    {
+        // Dell's KB says systemID is not readily available via WMI and
+        // recommends name-matching on Windows; SMBIOS SKU is also commonly an
+        // unset placeholder, so name is the key that actually works there.
+        var source = new DellDriverPackSource(_cacheDir);
+        source.LoadFromXml(Fixture("dell_driverpack_sample.xml"));
+
+        var packs = source.PacksForModel("OptiPlex 5070");
+
+        Assert.NotEmpty(packs);
+        Assert.All(packs, p => Assert.Equal("OptiPlex 5070", p.ModelName));
+    }
+
+    [Fact]
+    public void ModelNameSpansEverySystemIdSharingIt()
+    {
+        // "OptiPlex 5070" is published under both 092F and 0932 in the real
+        // catalog, so the name is the broader key of the two.
+        var source = new DellDriverPackSource(_cacheDir);
+        source.LoadFromXml(Fixture("dell_driverpack_sample.xml"));
+
+        var byName = source.PacksForModel("OptiPlex 5070");
+        var by092F = source.PacksForModel("092F");
+        var by0932 = source.PacksForModel("0932");
+
+        Assert.Equal(by092F.Count + by0932.Count, byName.Count);
+        Assert.True(byName.Count > by092F.Count);
+    }
+
+    [Fact]
+    public void ModelNameLookupIsCaseAndSpaceInsensitiveOnTheEdges()
+    {
+        var source = new DellDriverPackSource(_cacheDir);
+        source.LoadFromXml(Fixture("dell_driverpack_sample.xml"));
+
+        Assert.NotEmpty(source.PacksForModel("optiplex 5070"));
+        Assert.NotEmpty(source.PacksForModel("  OPTIPLEX 5070  "));
+    }
+
+    [Fact]
+    public void UnknownModelNameReturnsNothing()
+    {
+        var source = new DellDriverPackSource(_cacheDir);
+        source.LoadFromXml(Fixture("dell_driverpack_sample.xml"));
+
+        Assert.Empty(source.PacksForModel("Gigabyte B760M GAMING PLUS"));
+    }
 }

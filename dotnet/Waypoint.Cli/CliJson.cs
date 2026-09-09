@@ -20,9 +20,31 @@ internal sealed record ApplyRow(
     IReadOnlyList<string> Commands,
     string Message);
 
+internal sealed record DriverPackRow(
+    string SourceId,
+    string ModelName,
+    string ModelKey,
+    string OsLabel,
+    string Version,
+    string? ReleaseDate,
+    string Url,
+    string HashAlgorithm,
+    string HashValue,
+    long SizeBytes);
+
+internal sealed record DriverPackReport(
+    string Manufacturer,
+    string ProductName,
+    string Sku,
+    string BaseboardProduct,
+    IReadOnlyList<DriverPackRow> Packs,
+    string? HpPlatform,
+    IReadOnlyList<string> FailedSources);
+
 [JsonSourceGenerationOptions(
     PropertyNamingPolicy = JsonKnownNamingPolicy.SnakeCaseLower,
     WriteIndented = true)]
 [JsonSerializable(typeof(List<ScanRow>))]
 [JsonSerializable(typeof(List<ApplyRow>))]
+[JsonSerializable(typeof(DriverPackReport))]
 internal partial class CliJsonContext : JsonSerializerContext;

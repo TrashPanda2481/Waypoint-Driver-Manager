@@ -25,6 +25,7 @@ try
         "scan" => Commands.Scan(options),
         "plan" => Commands.Plan(options),
         "apply" => Commands.Apply(options),
+        "driverpack" => DriverPackCommand.Run(options),
         _ => Commands.ExitError,
     };
 }

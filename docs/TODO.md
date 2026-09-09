@@ -96,59 +96,47 @@ artifacts.
 Run .NET and Python side by side on the same machine and compare scan output
 device for device. That comparison authorizes the swap — not this checklist.
 
-## Recovered design: make the model-keyed driver packs reachable
+## Model-keyed driver packs — DONE 2026-09-09
 
-Salvaged from the abandoned `rust-rewrite` branch before it was archived
-(2026-09-09). That branch built this and it works there; nothing of it exists
-in the .NET tree. Read the real implementation at tag
-`archive/rust-rewrite` — `rust/crates/platform/src/model.rs` and
-`rust/crates/cli/src/lib.rs`.
+Recovered from the abandoned `rust-rewrite` branch (tag `archive/rust-rewrite`)
+and implemented. `waypoint driverpack [--json] [--force-oem-refresh]` answers
+"what bundle does the vendor publish for this system model" — a different
+question from `scan`, and how MDT/SCCM driver injection actually works.
 
-**The gap, verified against the current .NET code.** `DellDriverPackSource`,
-`LenovoDriverPackSource` and `HpPlatformCatalogSource` are implemented and
-tested, and **nothing can call them**: `BuildOemSources()` returns only
-`DellCatalogSource`, and grep finds no reference to `IModelDriverPackSource`
-or `PacksForModel` anywhere in `Waypoint.Engine` or `Waypoint.Cli`. Three
-working sources are dead library code.
+Before this, `DellDriverPackSource`, `LenovoDriverPackSource` and
+`HpPlatformCatalogSource` were implemented, tested and **unreachable**: nothing
+in the engine or CLI referenced `IModelDriverPackSource` at all.
 
-This matters because it is a *different* sourcing path from the per-device
-catalog. Per-device only helps on Dell; model-keyed driver packs are how
-MDT/SCCM injection actually works, and it is the sourcing answer we do not
-currently have for a generic machine.
+What landed:
 
-**What is missing to reach them:**
+- **`SystemModelDetector`** reads SMBIOS through `GetSystemFirmwareTable`
+  rather than WMI, so it stays AOT-clean. Parses Type 1 (system) and Type 2
+  (baseboard). Verified against this machine: identical values to
+  `Win32_ComputerSystem`, no WMI.
+- **Placeholder filtering.** Firmware ships `"Default string"`,
+  `"To be filled by O.E.M."` and friends instead of leaving fields blank —
+  this machine's `SystemSKUNumber` is literally `"Default string"`. Those
+  normalize to empty rather than being sent to a vendor catalog as a model name.
+- **Dell indexes on model name as well as systemID.** Dell's KB says systemID
+  "is not readily accessible [via a] WMI query" and recommends name matching on
+  Windows; combined with placeholder SKUs, name is the key that works on real
+  hardware. Lookup tries SKU first, then name, then baseboard.
+- **`EngineFactory.BuildOemModelPackSources()`**, companion to
+  `BuildOemSources()`. Construction only, no download.
+- **Partial-failure resilient.** One vendor's refresh failing warns to stderr
+  and continues with the others, the same posture `Scan` takes.
 
-1. **System model detection.** A `SystemModel` type and `DetectSystemModel()`.
-   Windows: `Win32_ComputerSystem.{Model,SystemSKUNumber}` plus
-   `Win32_BaseBoard.Product`. (Note our backend deliberately avoids WMI for
-   AOT reasons — this likely wants the SMBIOS table via
-   `GetSystemFirmwareTable`, or accept a subprocess.) The Rust branch also
-   had a Linux path reading `/sys/class/dmi/id/{product_name,product_sku,
-   board_name}`, which is moot for a Windows-only product.
+Validated against live vendor catalogs: Dell's `DriverPackCatalog.cab` and HP's
+`platformList.cab` both extracted correctly — the first time the CAB fix has run
+against real vendor cabs rather than a generated fixture — plus Lenovo's plain
+XML. Three catalogs fetched, parsed and queried in 3.4s.
 
-2. **Dell must also index by model name, not just systemID.** Dell's own KB
-   says systemID "is not readily accessible [via a] WMI query" and recommends
-   name-matching on Windows —
-   <https://www.dell.com/support/kbdoc/en-us/000122176/driver-pack-catalog>.
-   Ours indexes `systemID` only, so on Windows it is keyed on something the
-   machine cannot easily report. Index the uppercased model name alongside it
-   and try SKU first, falling back to name.
-
-3. **A factory companion,** `BuildOemModelPackSources()` next to
-   `BuildOemSources()`, returning the three model-keyed sources —
-   construction only, no download.
-
-4. **A CLI entry point,** `waypoint driverpack [--json] [--force-refresh]`,
-   with a DI seam so the detected model can be injected for tests. One
-   source failing `Refresh` should warn to stderr and continue with the
-   others rather than aborting — the same posture `Scan` already takes via
-   `LastSourceFailures`.
-
-The Rust branch covered this with 6 CLI integration tests and a unit test for
-the Dell name-fallback, using a real case in the existing fixture where two
-systemIDs share a display name. No test needed network: the partial-failure
-case used a corrupted cached file rather than going offline. Those fixtures
-are the same ones already in `Waypoint.Sources.Tests/fixtures/oem`.
+**Still unvalidated:** no driver pack has been *found* on real hardware, because
+this is a Gigabyte board and no vendor publishes packs for it. The lookup paths
+are covered by tests against the real trimmed fixtures (Dell by SKU, Dell by
+name-when-SKU-is-a-placeholder, Lenovo machine-type prefix, HP platform), but a
+Dell/Lenovo/HP machine — or a VM reporting one via SMBIOS — is needed to see it
+return a real pack.
 
 ## Known issues, deliberately deferred
 
