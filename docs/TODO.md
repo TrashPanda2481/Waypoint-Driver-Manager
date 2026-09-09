@@ -131,12 +131,45 @@ Validated against live vendor catalogs: Dell's `DriverPackCatalog.cab` and HP's
 against real vendor cabs rather than a generated fixture — plus Lenovo's plain
 XML. Three catalogs fetched, parsed and queried in 3.4s.
 
-**Still unvalidated:** no driver pack has been *found* on real hardware, because
-this is a Gigabyte board and no vendor publishes packs for it. The lookup paths
-are covered by tests against the real trimmed fixtures (Dell by SKU, Dell by
-name-when-SKU-is-a-placeholder, Lenovo machine-type prefix, HP platform), but a
-Dell/Lenovo/HP machine — or a VM reporting one via SMBIOS — is needed to see it
-return a real pack.
+### SMBIOS override — DONE 2026-09-09
+
+The lookup could not be exercised here: this is a Gigabyte board and no vendor
+publishes packs for it, so a real hit needed a Dell/Lenovo/HP machine or a VM
+spoofing SMBIOS. `--model-manufacturer / --model-product / --model-sku /
+--model-baseboard` remove that dependency — they ask the catalogs about another
+machine from this one.
+
+All-or-nothing by design: any one of them replaces every SMBIOS field, so a run
+can never blend real and supplied values into a system that does not exist. Each
+run prints a stderr note that the answer is not about this machine, and the
+flags are rejected outside `driverpack`, where a supplied model would not change
+the answer.
+
+Live results, this machine, against the real catalogs:
+
+| Query | Result |
+| --- | --- |
+| `--model-product "OptiPlex 5070"` | 2 packs, Win10 A10 + Win11 A00, real URLs and SHA-256 |
+| `--model-product "20HD0000US"` | ThinkPad T470, 6 releases 1703–1909 |
+| `--model-baseboard 8079` | HP EliteBook 840 G3 Notebook PC |
+| `--model-baseboard 8references` | correctly nothing |
+
+**One bug this caught.** Every Dell pack was listed twice. Indexing walks each
+`<Model>` under `SupportedSystems`, and release PPPRC covers the 5070 under both
+`092F` and `0932` — so the name key received the same download once per
+systemID. Fixed by de-duplicating on releaseID per key. A test asserted the old
+behaviour (`byName.Count == by092F.Count + by0932.Count`); the honest invariant
+is that the name key is the *union* of what each systemID reaches, not the sum,
+and it now asserts that instead.
+
+Also fixed: `--force-oem-refresh` warned "no effect without --oem" on
+`driverpack`, which does use it; and a machine identified in HP's platform list
+reported "no driver packs published for this model" — HP publishes those through
+Image Assistant, not this catalog, so it now says so.
+
+**Still unvalidated:** a real machine of each vendor confirming that SMBIOS
+reports the strings these overrides supply. The lookup is proven; the reading of
+firmware on Dell/Lenovo/HP hardware is not.
 
 ## Known issues, deliberately deferred
 

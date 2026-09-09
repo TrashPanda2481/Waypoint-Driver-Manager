@@ -154,4 +154,75 @@ public class CommandLineTests
         Assert.Equal(1, Commands.ExitActionNeeded);
         Assert.Equal(2, Commands.ExitError);
     }
+
+    [Fact]
+    public void ModelOverrideBuildsTheSuppliedModel()
+    {
+        var options = Parse(
+            "driverpack",
+            "--model-manufacturer", "Dell Inc.",
+            "--model-product", "OptiPlex 5070",
+            "--model-sku", "092F",
+            "--model-baseboard", "0A64");
+
+        Assert.True(options.HasModelOverride);
+        Assert.Equal(
+            SystemModel.From("Dell Inc.", "OptiPlex 5070", "092F", "0A64"),
+            options.OverriddenModel);
+    }
+
+    [Fact]
+    public void OneOverrideLeavesTheOthersEmptyRatherThanReal()
+    {
+        // All-or-nothing: a run must never blend this machine's real fields
+        // with supplied ones, because the output would describe no real system.
+        var options = Parse("driverpack", "--model-product", "OptiPlex 5070");
+
+        Assert.True(options.HasModelOverride);
+        Assert.Equal("OptiPlex 5070", options.OverriddenModel.ProductName);
+        Assert.Empty(options.OverriddenModel.Manufacturer);
+        Assert.Empty(options.OverriddenModel.Sku);
+    }
+
+    [Fact]
+    public void OverriddenFieldsGetThePlaceholderTreatment()
+    {
+        var options = Parse("driverpack", "--model-product", "OptiPlex 5070", "--model-sku", "Default string");
+
+        Assert.Empty(options.OverriddenModel.Sku);
+    }
+
+    [Fact]
+    public void ModelOverrideIsRejectedOutsideDriverpack()
+    {
+        // scan keys on hardware IDs read from the live device tree; a supplied
+        // model would not change its answer, so accepting it would mislead.
+        Assert.Null(CommandLine.Parse(["scan", "--model-product", "OptiPlex 5070"]));
+    }
+
+    [Fact]
+    public void NoOverrideMeansTheMachineAnswersForItself()
+    {
+        Assert.False(Parse("driverpack").HasModelOverride);
+    }
+
+    [Fact]
+    public void ForceOemRefreshIsNotWarnedAboutOnDriverpack()
+    {
+        // driverpack refreshes the model-keyed catalogs directly, so the flag
+        // does apply there even though --oem is absent.
+        var stderr = new StringWriter();
+        var prior = Console.Error;
+        try
+        {
+            Console.SetError(stderr);
+            Assert.NotNull(CommandLine.Parse(["driverpack", "--force-oem-refresh"]));
+        }
+        finally
+        {
+            Console.SetError(prior);
+        }
+
+        Assert.DoesNotContain("no effect", stderr.ToString());
+    }
 }

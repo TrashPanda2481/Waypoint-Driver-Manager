@@ -69,6 +69,10 @@ public sealed class DellDriverPackSource : IModelDriverPackSource
         var baseLocation = (string?)root.Attribute("baseLocation") ?? "downloads.dell.com";
 
         var index = new Dictionary<string, List<DriverPack>>(StringComparer.Ordinal);
+
+        // A package that supports one model under several systemIDs repeats the
+        // name on each, which would list the same download once per systemID.
+        var seen = new HashSet<(string Key, string Pack)>();
         foreach (var package in Children(root, "DriverPackage"))
         {
             var models = Children(package, "SupportedSystems")
@@ -128,6 +132,13 @@ public sealed class DellDriverPackSource : IModelDriverPackSource
                 // https://www.dell.com/support/kbdoc/en-us/000122176/driver-pack-catalog
                 foreach (var key in Keys(systemId, modelName))
                 {
+                    // releaseID is the catalog's own identity for a download;
+                    // url covers the entries that ship without one.
+                    if (!seen.Add((key, pack.PackId.Length > 0 ? pack.PackId : pack.Url)))
+                    {
+                        continue;
+                    }
+
                     if (!index.TryGetValue(key, out var packs))
                     {
                         packs = [];

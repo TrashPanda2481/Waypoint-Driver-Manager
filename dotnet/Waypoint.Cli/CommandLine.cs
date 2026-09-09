@@ -21,6 +21,21 @@ internal sealed class Options
     public bool ConfirmAll { get; set; }
     public string? BackupDir { get; set; }
     public HashSet<string> Confirmed { get; } = new(StringComparer.OrdinalIgnoreCase);
+
+    // SMBIOS overrides for driverpack. All-or-nothing on purpose: any one of
+    // them switches the whole model to what was passed, so a run never blends
+    // this machine's real fields with invented ones.
+    public string? ModelManufacturer { get; set; }
+    public string? ModelProduct { get; set; }
+    public string? ModelSku { get; set; }
+    public string? ModelBaseboard { get; set; }
+
+    public bool HasModelOverride =>
+        ModelManufacturer is not null || ModelProduct is not null
+        || ModelSku is not null || ModelBaseboard is not null;
+
+    public SystemModel OverriddenModel =>
+        SystemModel.From(ModelManufacturer, ModelProduct, ModelSku, ModelBaseboard);
 }
 
 internal static class CommandLine
@@ -79,6 +94,22 @@ internal static class CommandLine
                     if (!TakeValue(args, ref i, arg, out var instanceId)) return null;
                     options.Confirmed.Add(instanceId);
                     break;
+                case "--model-manufacturer":
+                    if (!TakeValue(args, ref i, arg, out var mfr)) return null;
+                    options.ModelManufacturer = mfr;
+                    break;
+                case "--model-product":
+                    if (!TakeValue(args, ref i, arg, out var product)) return null;
+                    options.ModelProduct = product;
+                    break;
+                case "--model-sku":
+                    if (!TakeValue(args, ref i, arg, out var sku)) return null;
+                    options.ModelSku = sku;
+                    break;
+                case "--model-baseboard":
+                    if (!TakeValue(args, ref i, arg, out var baseboard)) return null;
+                    options.ModelBaseboard = baseboard;
+                    break;
                 case "--min-signature":
                     if (!TakeValue(args, ref i, arg, out var tier)) return null;
                     if (!SignatureTypeExtensions.TryParseWire(tier, out var parsed))
@@ -112,11 +143,18 @@ internal static class CommandLine
 
         // Faithful to the Python: warn rather than fail, so a scheduled job
         // that always passes the flag is not broken by it.
-        if (options.ForceOemRefresh && !options.Oem)
+        if (options.ForceOemRefresh && !options.Oem && options.Command != "driverpack")
         {
             Console.Error.WriteLine(
                 "warning: --force-oem-refresh has no effect without --oem "
                 + "(no OEM sources are being used this run)");
+        }
+
+        if (options.HasModelOverride && options.Command != "driverpack")
+        {
+            Console.Error.WriteLine(
+                $"error: --model-* overrides apply to driverpack, not {options.Command}");
+            return null;
         }
 
         return options;
@@ -169,6 +207,11 @@ internal static class CommandLine
             driverpack options:
               --json                  Machine-readable output
               --force-oem-refresh     Re-download the catalogs even if cached
+              --model-manufacturer <s>  Ask the catalogs about another machine
+              --model-product <s>       instead of this one. Passing any of these
+              --model-sku <s>           replaces every SMBIOS field, so the run
+              --model-baseboard <s>     cannot mix real and supplied values.
+                                        e.g. --model-product "OptiPlex 5070"
 
             apply options:
               --apply                 Actually install. Without it, apply is a dry run.

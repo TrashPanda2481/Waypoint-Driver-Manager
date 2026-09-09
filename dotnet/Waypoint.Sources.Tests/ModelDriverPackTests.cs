@@ -135,8 +135,8 @@ public sealed class ModelDriverPackTests : IDisposable
     [Fact]
     public void ModelNameSpansEverySystemIdSharingIt()
     {
-        // "OptiPlex 5070" is published under both 092F and 0932 in the real
-        // catalog, so the name is the broader key of the two.
+        // "OptiPlex 5070" is published under both 092F and 0932, so the name is
+        // the broader key: it covers every release either systemID reaches.
         var source = new DellDriverPackSource(_cacheDir);
         source.LoadFromXml(Fixture("dell_driverpack_sample.xml"));
 
@@ -144,8 +144,24 @@ public sealed class ModelDriverPackTests : IDisposable
         var by092F = source.PacksForModel("092F");
         var by0932 = source.PacksForModel("0932");
 
-        Assert.Equal(by092F.Count + by0932.Count, byName.Count);
-        Assert.True(byName.Count > by092F.Count);
+        var covered = byName.Select(p => p.PackId).ToHashSet();
+        Assert.Superset(by092F.Select(p => p.PackId).ToHashSet(), covered);
+        Assert.Superset(by0932.Select(p => p.PackId).ToHashSet(), covered);
+    }
+
+    [Fact]
+    public void OneReleaseSpanningTwoSystemIdsIsListedOnce()
+    {
+        // Release PPPRC supports the 5070 under both 092F and 0932. Indexing
+        // walks each <Model>, so without dedup the name key gets it twice --
+        // the live catalog listed every 5070 pack twice.
+        var source = new DellDriverPackSource(_cacheDir);
+        source.LoadFromXml(Fixture("dell_driverpack_sample.xml"));
+
+        var ids = source.PacksForModel("OptiPlex 5070").Select(p => p.PackId).ToList();
+
+        Assert.Contains("PPPRC", ids);
+        Assert.Equal(ids.Distinct().Count(), ids.Count);
     }
 
     [Fact]

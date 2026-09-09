@@ -17,7 +17,26 @@ namespace Waypoint.Cli;
 internal static class DriverPackCommand
 {
     public static int Run(Options options)
-        => Run(options, OperatingSystem.IsWindows() ? SystemModelDetector.Detect() : SystemModel.Empty);
+    {
+        if (options.HasModelOverride)
+        {
+            var supplied = options.OverriddenModel;
+            if (supplied.IsEmpty)
+            {
+                Console.Error.WriteLine(
+                    "error: the --model-* values are all empty or firmware placeholders, "
+                    + "so there is nothing to look up");
+                return Commands.ExitError;
+            }
+
+            // Loud on stderr, every run. A pack listed for a machine you are
+            // only pretending to be must never be mistaken for a real result.
+            Console.Error.WriteLine("note: --model-* given; reporting for the supplied model, not this machine");
+            return Run(options, supplied);
+        }
+
+        return Run(options, OperatingSystem.IsWindows() ? SystemModelDetector.Detect() : SystemModel.Empty);
+    }
 
     // Seam: the model is injected so the lookup can be tested without
     // depending on whatever hardware the test happens to run on.
@@ -101,7 +120,11 @@ internal static class DriverPackCommand
 
             if (found.Count == 0)
             {
-                Console.WriteLine("  no driver packs published for this model");
+                // platformList.xml identifies the machine but carries no
+                // downloads; HP ships those through Image Assistant.
+                Console.WriteLine(platform is not null
+                    ? "  identified, but HP publishes no packs in this catalog"
+                    : "  no driver packs published for this model");
             }
 
             foreach (var (sourceId, pack) in found)

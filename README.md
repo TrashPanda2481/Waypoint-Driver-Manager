@@ -49,6 +49,7 @@ waypoint scan | findstr AMBIGUOUS   # devices sharing a hardware ID
 waypoint plan                       # what it would do, and what it gates
 waypoint apply                      # dry run - installs nothing
 waypoint driverpack                 # vendor driver packs for this system model
+waypoint driverpack --model-product "OptiPlex 5070"   # ask about another machine
 ```
 
 State lives in `C:\ProgramData\Waypoint`: the local driver cache and
