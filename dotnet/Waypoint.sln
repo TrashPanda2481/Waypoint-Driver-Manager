@@ -21,6 +21,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Waypoint.Sources.Tests", "W
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Waypoint.Engine.Tests", "Waypoint.Engine.Tests\Waypoint.Engine.Tests.csproj", "{77385B29-2B6A-49F3-8B5E-07D884D220AB}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Waypoint.Cli.Tests", "Waypoint.Cli.Tests\Waypoint.Cli.Tests.csproj", "{0C257594-671A-4183-9DE1-E198339A8A13}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -139,6 +141,18 @@ Global
 		{77385B29-2B6A-49F3-8B5E-07D884D220AB}.Release|x64.Build.0 = Release|Any CPU
 		{77385B29-2B6A-49F3-8B5E-07D884D220AB}.Release|x86.ActiveCfg = Release|Any CPU
 		{77385B29-2B6A-49F3-8B5E-07D884D220AB}.Release|x86.Build.0 = Release|Any CPU
+		{0C257594-671A-4183-9DE1-E198339A8A13}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0C257594-671A-4183-9DE1-E198339A8A13}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0C257594-671A-4183-9DE1-E198339A8A13}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{0C257594-671A-4183-9DE1-E198339A8A13}.Debug|x64.Build.0 = Debug|Any CPU
+		{0C257594-671A-4183-9DE1-E198339A8A13}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{0C257594-671A-4183-9DE1-E198339A8A13}.Debug|x86.Build.0 = Debug|Any CPU
+		{0C257594-671A-4183-9DE1-E198339A8A13}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0C257594-671A-4183-9DE1-E198339A8A13}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0C257594-671A-4183-9DE1-E198339A8A13}.Release|x64.ActiveCfg = Release|Any CPU
+		{0C257594-671A-4183-9DE1-E198339A8A13}.Release|x64.Build.0 = Release|Any CPU
+		{0C257594-671A-4183-9DE1-E198339A8A13}.Release|x86.ActiveCfg = Release|Any CPU
+		{0C257594-671A-4183-9DE1-E198339A8A13}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

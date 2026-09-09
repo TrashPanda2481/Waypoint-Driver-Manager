@@ -42,17 +42,29 @@ Validated on real Windows 11 hardware:
   needs catalog inspection, so a signed driver reports `Attestation` rather
   than asserting unverified trust. Architecture.md 3.2 already flags this.
 
-### 2. Port the CLI
+### 2. Port the CLI — DONE 2026-09-09
 
-`cli/main.py` (186 lines). The .NET CLI is a self-test that ignores its
-arguments entirely — `waypoint scan --json --oem` prints sample data and
-exits 0.
+`scan` / `plan` / `apply` with `--json`, `--out`, `--apply`, `--oem`,
+`--force-oem-refresh`, `--cache-dir`, `--audit-log`, `--min-signature`, plus
+`--confirm` / `--confirm-all` / `--backup-dir` for apply. Argument parsing is
+hand-rolled: the surface is three verbs and a handful of flags, and a parsing
+dependency would have to earn its place in an AOT binary.
 
-Needs: `scan` / `plan` / `apply` subcommands, `--json`, `--out`, `--apply`
-(dry-run is the default), `--oem`, `--force-oem-refresh`, `--cache-dir`, and
-the documented exit codes — 0 clean, 1 action needed, 2 error. RMM and
-scripting integration depends on those codes, so they are contract, not
-cosmetics.
+Verified on real hardware: `waypoint scan` returns 233 devices, flags 103 as
+ambiguous (shared hardware IDs — the SDI failure mode this exists to catch),
+`--json` emits the Python's exact key set, and the exit contract holds —
+0 clean, 1 action needed (forced with `--min-signature whql`, which nothing
+satisfies by design), 2 error. The signed Native AOT binary does the same
+scan with 0 IL warnings.
+
+**`apply` is implemented rather than ported.** `cli/main.py`'s `cmd_apply` is
+a stub that prints an error and returns 2; the engine's `Apply` has since
+been written and tested, and it enforces confirmation itself, so the CLI
+wires it up. Plan-file replay stays out of scope in both: a plan on disk
+carries no `Device` objects to install onto.
+
+Still untested end to end: `apply --apply` against a real driver, which needs
+a candidate in the local cache and would modify the machine.
 
 ### 3. WPF GUI — ADR-0001 step 4
 
@@ -101,6 +113,14 @@ device for device. That comparison authorizes the swap — not this checklist.
   always fires. Revisit in step 1 above, when that code first meets hardware.
 - **No `LICENSE` file**, though `pyproject.toml` declares MIT. The installer
   skips its license page for this reason.
+- **Windows Update Catalog source is unreachable under AOT.** `PublishAot`
+  sets `System.Runtime.InteropServices.BuiltInComInterop.IsSupported=false`,
+  so its `[ComImport]` activation throws "Built-in COM has been disabled" in
+  the configuration Waypoint ships — it was dropped from
+  `BuildDefaultSources` because every scan would otherwise report a failed
+  source. Reaching Windows Update needs a `ComWrappers` rewrite
+  (`[GeneratedComInterface]`). Note the source was never validated against
+  real hardware and its `Fetch` still throws, so nothing working was lost.
 - **`HpPlatformInfo` record equality** reference-compares its
   `SupportedOsDescriptions` list — same trap as `Device.Hwids`, not yet load-
   bearing.

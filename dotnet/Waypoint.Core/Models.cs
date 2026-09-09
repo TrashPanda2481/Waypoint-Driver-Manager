@@ -34,6 +34,23 @@ public static class SignatureTypeExtensions
         SignatureType.Unsigned => "unsigned",
         _ => throw new ArgumentOutOfRangeException(nameof(signatureType)),
     };
+
+    // Inverse of ToWireString. Rejects unknown input rather than defaulting —
+    // same fail-closed posture as the JSON converter.
+    public static bool TryParseWire(string? value, out SignatureType signatureType)
+    {
+        switch (value)
+        {
+            case "whql": signatureType = SignatureType.Whql; return true;
+            case "attestation": signatureType = SignatureType.Attestation; return true;
+            case "test_signed": signatureType = SignatureType.TestSigned; return true;
+            case "unsigned": signatureType = SignatureType.Unsigned; return true;
+            default: signatureType = SignatureType.Unsigned; return false;
+        }
+    }
+
+    public static IReadOnlyList<string> WireValues { get; } =
+        ["whql", "attestation", "test_signed", "unsigned"];
 }
 
 // UI triage tier. See docs/Architecture.md 3.1.

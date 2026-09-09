@@ -16,4 +16,8 @@
     <PublishAot>true</PublishAot>
   </PropertyGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="Waypoint.Cli.Tests" />
+  </ItemGroup>
+
 </Project>

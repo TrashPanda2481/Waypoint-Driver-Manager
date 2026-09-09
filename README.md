@@ -107,14 +107,14 @@ dotnet/
                        # + Windows Update (COM, unvalidated)
   Waypoint.Engine/     # audit log, plan, scan/plan/apply orchestration, factory
   Waypoint.Platform/   # OS backends — mock only; Windows backend is step 3
-  Waypoint.Cli/        # AOT smoke test only — not yet a port of cli/main.py
+  Waypoint.Cli/        # scan / plan / apply, JSON out, documented exit codes
   Waypoint.Gui/        # WPF skeleton, not yet started
   *.Tests/             # xUnit, incl. the real vendor catalog fixtures
 ```
 
 ```bash
 cd dotnet
-dotnet test                                  # 60 tests
+dotnet test                                  # 95 tests
 dotnet publish Waypoint.Cli -c Release -r win-x64   # ~3MB standalone exe
 ```
 

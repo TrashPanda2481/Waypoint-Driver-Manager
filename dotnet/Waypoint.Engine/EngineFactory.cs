@@ -16,16 +16,14 @@ public static class EngineFactory
             : throw new PlatformNotSupportedException(
                 "Waypoint is Windows-only (ADR-0001). No device backend exists for this platform.");
 
+    // WindowsUpdateCatalogSource is deliberately not here. PublishAot sets
+    // System.Runtime.InteropServices.BuiltInComInterop.IsSupported=false, so
+    // its [ComImport] activation throws "Built-in COM has been disabled" in
+    // the configuration Waypoint actually ships -- every scan would report a
+    // failed source. Reaching Windows Update needs a ComWrappers rewrite
+    // ([GeneratedComInterface]); tracked in docs/TODO.md.
     public static List<IDriverSource> BuildDefaultSources(string? cacheDir = null)
-    {
-        var sources = new List<IDriverSource> { new LocalCacheSource(cacheDir ?? WaypointPaths.DefaultCacheDir) };
-        if (OperatingSystem.IsWindows())
-        {
-            sources.Add(new WindowsUpdateCatalogSource());
-        }
-
-        return sources;
-    }
+        => [new LocalCacheSource(cacheDir ?? WaypointPaths.DefaultCacheDir)];
 
     // Opt-in: RefreshAsync pulls a ~57MB catalog, too costly for every scan.
     // Call RefreshAsync (or reuse a cacheDir that has) before Search.

@@ -6,6 +6,8 @@ using Waypoint.Core;
 namespace Waypoint.Engine;
 
 // One applied entry. Python returns a list of dicts with these four keys.
+public sealed record SourceFailure(string SourceId, string Message);
+
 public sealed record ApplyResult(
     string InstanceId,
     bool Success,
@@ -36,6 +38,10 @@ public sealed class WaypointEngine
 
     public SignatureType MinSignature { get; }
 
+    // Sources that threw during the last Scan. Empty means every source
+    // answered; anything here means the scan is incomplete.
+    public IReadOnlyList<SourceFailure> LastSourceFailures { get; private set; } = [];
+
     public List<DeviceAssessment> Scan()
     {
         var devices = Backend.EnumerateDevices();
@@ -53,10 +59,26 @@ public sealed class WaypointEngine
             candidatesByHwid[hwid] = [];
         }
 
+        var failures = new List<SourceFailure>();
         foreach (var source in Sources)
         {
-            // Search is metadata-only — no I/O here, downloads happen later per selected candidate.
-            var found = source.Search(allHwids);
+            IReadOnlyList<DriverCandidate> found;
+            try
+            {
+                // Search is metadata-only — no I/O here, downloads happen later per selected candidate.
+                found = source.Search(allHwids);
+            }
+            catch (Exception ex)
+            {
+                // One unavailable source must not lose the whole scan; the
+                // results are just incomplete, and saying so is the caller's
+                // job via LastSourceFailures. Swallowing it silently would
+                // present a partial scan as a complete one.
+                failures.Add(new SourceFailure(source.SourceId, ex.Message));
+                Audit.Record("source_search_failed", ("source_id", source.SourceId), ("error", ex.Message));
+                continue;
+            }
+
             Audit.Record("source_search", ("source_id", source.SourceId), ("candidates_found", found.Count));
             foreach (var candidate in found)
             {
@@ -70,6 +92,7 @@ public sealed class WaypointEngine
             }
         }
 
+        LastSourceFailures = failures;
         var assessments = Matching.AssessAll(devices, candidatesByHwid, MinSignature);
         Audit.Record(
             "assessment_complete",
