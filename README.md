@@ -80,7 +80,7 @@ Needs the .NET 8 SDK (or 9 — it targets `net8.0`).
 
 ```powershell
 cd dotnet
-dotnet test                                 # 131 tests
+dotnet test                                 # 134 tests
 dotnet run --project Waypoint.Cli -- scan
 dotnet run --project Waypoint.Gui           # the window
 ```

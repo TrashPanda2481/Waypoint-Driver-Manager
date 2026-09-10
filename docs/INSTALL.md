@@ -161,7 +161,7 @@ by hand if you want a clean slate.
 ```powershell
 git clone https://github.com/TrashPanda2481/Waypoint-Driver-Manager.git
 cd Waypoint-Driver-Manager/dotnet
-dotnet test                        # 131 tests
+dotnet test                        # 134 tests
 dotnet run --project Waypoint.Cli -- scan
 dotnet run --project Waypoint.Gui          # the window
 ```
