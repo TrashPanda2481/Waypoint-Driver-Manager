@@ -27,16 +27,16 @@
   <Target Name="WaypointSignAotPublish"
           AfterTargets="CopyNativeBinary"
           DependsOnTargets="WaypointSign"
-          Condition="'$(PublishAot)' == 'true' and '$(OutputType)' == 'Exe'" />
+          Condition="'$(PublishAot)' == 'true' and ('$(OutputType)' == 'Exe' or '$(OutputType)' == 'WinExe')" />
 
   <Target Name="WaypointSignPublish"
           AfterTargets="Publish"
           DependsOnTargets="WaypointSign"
-          Condition="'$(PublishAot)' != 'true' and '$(OutputType)' == 'Exe'" />
+          Condition="'$(PublishAot)' != 'true' and ('$(OutputType)' == 'Exe' or '$(OutputType)' == 'WinExe')" />
 
   <Target Name="WaypointSignSkipped"
           AfterTargets="Publish"
-          Condition="'$(OutputType)' == 'Exe' and '$(WaypointSignThumbprint)' == ''">
+          Condition="('$(OutputType)' == 'Exe' or '$(OutputType)' == 'WinExe') and '$(WaypointSignThumbprint)' == ''">
     <Message Importance="high" Text="Publish not signed: run dotnet/setup-dev-signing.ps1 (or set WAYPOINT_SIGN_THUMBPRINT)." />
   </Target>
 

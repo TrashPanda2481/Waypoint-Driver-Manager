@@ -2,8 +2,8 @@
 
 A driver detection, sourcing, and install manager for Windows, built to fix the
 structural problems in tools like Snappy Driver Installer rather than give them
-a new coat of paint. CLI-first for IT-toolchain automation; GUI-first for the
-technician, once the GUI exists.
+a new coat of paint. CLI-first for IT-toolchain automation, GUI-first for the
+technician.
 
 [`docs/Architecture.md`](docs/Architecture.md) maps SDI's known failure modes —
 sourced from public reviews, forums and issue trackers — to specific design
@@ -24,14 +24,18 @@ It reads your real device tree. It **cannot install a driver for you yet.**
   (0 clean, 1 action needed, 2 error). `apply` is a dry run unless `--apply`.
 - Signature policy gate, backup-before-replace, restore point required before
   a batch, append-only JSON Lines audit log.
-- Ships as a signed MSI or portable zip. Native AOT, no runtime install.
+- A window that groups devices by tier and PnP setup class, and compares the
+  installed driver against the candidate field by field before anything runs.
+- Ships as a signed MSI or portable zip, each in a bundled-runtime and a
+  smaller `requires-dotnet8` build. `waypoint.exe` is Native AOT and needs no
+  runtime in either.
 
 **Not working yet:**
 
+- **The window scans and inspects; it does not install.** `apply` is CLI-only.
 - **No driver sources for a generic machine.** Every device reports
   `candidate_count: 0` unless you are on Dell/Lenovo/HP with `--oem`, or you
   populate the local cache yourself. Open question, not an oversight.
-- **No GUI.** The WPF project is an empty window.
 - **`apply --apply` has never run** against a live driver.
 - **Self-signed.** SmartScreen and AV reputation are unvalidated.
 
@@ -64,7 +68,7 @@ dotnet/
   Waypoint.Engine/     # audit log, plan, scan/plan/apply orchestration, factory
   Waypoint.Platform/   # mock + the Windows backend (CfgMgr32, pnputil)
   Waypoint.Cli/        # scan / plan / apply
-  Waypoint.Gui/        # WPF, not started
+  Waypoint.Gui/        # WPF window: triage tree + installed-vs-candidate card
   *.Tests/             # xUnit, incl. real trimmed vendor catalog fixtures
   packaging/           # WiX installer + build script
 docs/                  # architecture, ADR, install, TODO
@@ -76,8 +80,9 @@ Needs the .NET 8 SDK (or 9 — it targets `net8.0`).
 
 ```powershell
 cd dotnet
-dotnet test                                 # 108 tests
+dotnet test                                 # 131 tests
 dotnet run --project Waypoint.Cli -- scan
+dotnet run --project Waypoint.Gui           # the window
 ```
 
 Native AOT publish additionally needs the MSVC C++ toolchain and `vswhere.exe`
@@ -93,14 +98,23 @@ dotnet publish Waypoint.Cli -c Release -r win-x64   # ~7MB standalone exe
 pwsh dotnet/packaging/build-package.ps1
 ```
 
-Produces both shapes into `dotnet/packaging/artifacts/`:
+Produces four artifacts into `dotnet/packaging/artifacts/`. Portable unzips and
+runs with nothing installed; the installer is per-machine, on PATH, in the Start
+Menu and Add/Remove Programs, and installs silently for Intune/SCCM/GPO/PDQ.
 
-| Artifact | Use |
-|---|---|
-| `waypoint-portable-<ver>-<rid>.zip` | Unzip and run. Nothing installed. |
-| `waypoint-installer-<ver>-<rid>.msi` | Per-machine install, on PATH, Start Menu, Add/Remove Programs, silent install for Intune/SCCM/GPO/PDQ. |
+| Artifact | Size | Needs |
+|---|---|---|
+| `waypoint-installer-<ver>-<rid>.msi` | 67 MB | nothing |
+| `waypoint-installer-<ver>-<rid>-requires-dotnet8.msi` | 11 MB | .NET 8 Desktop Runtime |
+| `waypoint-portable-<ver>-<rid>.zip` | 70 MB | nothing |
+| `waypoint-portable-<ver>-<rid>-requires-dotnet8.zip` | 4 MB | same runtime |
 
-Naming: `waypoint.exe` is the CLI, `waypoint-desktop.exe` will be the GUI, and
+WPF has no Native AOT story, so the GUI ships on the runtime and the filename
+says whether that runtime is bundled. `waypoint.exe` is Native AOT and identical
+in all four, so the command line works on a machine with no runtime and no
+network — which is exactly the machine a driver tool is for.
+
+Naming: `waypoint.exe` is the CLI, `waypoint-desktop.exe` the GUI, and
 `waypoint-installer-*` is whatever carries them onto a machine.
 
 Requires WiX 5 — v6+ demands accepting the Open Source Maintenance Fee EULA,
@@ -126,9 +140,10 @@ Precedence is `/p:WaypointSignThumbprint` > `WAYPOINT_SIGN_THUMBPRINT` > the
 generated, gitignored `Directory.Build.local.props`, so a real certificate can
 override the dev one per invocation without editing anything.
 
-Signatures are SHA-256 and RFC3161-timestamped. Signing hooks AOT's
-`CopyNativeBinary` step rather than `Publish`: that target replaces the apphost
-in the publish directory, so signing on `Publish` is silently overwritten.
+Signatures are SHA-256 and RFC3161-timestamped. For the AOT CLI, signing hooks
+`CopyNativeBinary` rather than `Publish`: that target replaces the apphost in
+the publish directory, so signing on `Publish` is silently overwritten. The GUI
+is not AOT and hooks `Publish` normally.
 
 The development certificate proves the pipeline, not distribution trust — the
 chain reports `UntrustedRoot`. Moving to a real OV/EV certificate is a
@@ -142,5 +157,5 @@ are in [`ADR-0001`](docs/ADR-0001-language-migration-python-to-dotnet.md),
 including the deliberate behavioural divergences from the original.
 
 The Python tree is preserved on the **`python-reference`** branch. It remains
-the only working GUI and the only working Windows Update Catalog source, so it
-stays as a porting reference until those land. It is not maintained.
+the only working Windows Update Catalog source, so it stays as a porting
+reference until that lands. It is not maintained.

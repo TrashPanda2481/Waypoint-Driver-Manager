@@ -1,14 +1,14 @@
 # Waypoint — TODO
 
 The .NET implementation is `main`. The original Python is preserved unmaintained
-on `python-reference`; it is still the only working GUI and Windows Update
-source, so it stays as a porting reference until those land.
+on `python-reference`; it is still the only Windows Update source, so it stays
+as a porting reference until that lands.
 Last reviewed 2026-09-09.
 
 ## Cutover gates
 
-Two of the four are done: it reads the device tree and has a working command
-line. What remains is a window and a certificate anyone can trust.
+Three of the four are done: it reads the device tree, has a working command
+line, and has a window. What remains is a certificate anyone can trust.
 
 ### 1. Windows device backend — ADR-0001 step 3 — ENUMERATION DONE 2026-09-09
 
@@ -66,19 +66,72 @@ carries no `Device` objects to install onto.
 Still untested end to end: `apply --apply` against a real driver, which needs
 a candidate in the local cache and would modify the machine.
 
-### 3. WPF GUI — ADR-0001 step 4
+### 3. WPF GUI — ADR-0001 step 4 — DONE 2026-09-09
 
-`gui/app.py` + `gui/workers.py` (326 lines) to `waypoint-desktop.exe`, which
-is currently a 66-line empty template. Waypoint is GUI-first by requirement
-(Architecture.md 2).
+`waypoint-desktop.exe` is built and scanning. Structure follows
+Architecture.md 3.1 rather than the Python, which had implemented only part
+of it: tier → setup class → device, and a diff card comparing installed
+against candidate field by field, where the Python grouped by tier alone and
+showed one flat row.
 
-Must carry over: OEM catalogs opt-in checkbox with the force-refresh
-checkbox gated behind it, catalog refresh on a background thread so a
-first-run ~57MB download cannot freeze the window, and the three-tier triage
-tree from Architecture.md 3.1.
+Scanning runs through `Task.Run`, so the worker and thread lifetime
+bookkeeping `gui/workers.py` warns about has no equivalent. OEM sources build
+a second engine for the one scan rather than being pushed onto the live
+engine and stripped again in a `finally`, matching what `Commands.Build`
+already does and removing the duplicate-source hazard.
 
-Then retarget the Start Menu shortcut in `packaging/Waypoint.wxs` from
-`cmd /k waypoint.exe` to `waypoint-desktop.exe`.
+Two additions the Python did not have. **Show up-to-date devices**, because
+without it a healthy machine renders a blank pane — every device here is up
+to date, so all three tiers read (0) — and because it is the only route to
+the ambiguous devices, which are the clearest advantage over SDI. And
+**source failures in the status bar**, so an incomplete scan cannot read as a
+complete one.
+
+Driving it through UI Automation caught two bugs a screenshot would not: tree
+rows exposed `Waypoint.Gui.TreeNode` as their accessible name, and
+`IsExpanded` was bound nowhere, so the tiers 3.1 wants open stayed shut.
+
+Validated on real hardware: 233 devices, 24 setup classes, 103 ambiguous,
+matching `waypoint scan` exactly. 16 tests, 131 across the solution.
+
+**Not done in the window:** applying a plan. Scan and inspect only; `apply`
+stays CLI-only until a real install has been performed at least once.
+
+#### Packaging — two variants
+
+WPF has no Native AOT story and its binding stack is reflection-based, so the
+GUI ships on the runtime while `waypoint.exe` stays AOT. That is a real
+size decision, so both shapes ship and the filename says which is which:
+
+| Artifact | Size | Needs |
+| --- | --- | --- |
+| `waypoint-installer-<v>-win-x64.msi` | 67 MB | nothing |
+| `waypoint-installer-<v>-win-x64-requires-dotnet8.msi` | 11 MB | .NET 8 Desktop Runtime |
+| `waypoint-portable-<v>-win-x64.zip` | 70 MB | nothing |
+| `waypoint-portable-<v>-win-x64-requires-dotnet8.zip` | 4 MB | same runtime |
+
+`waypoint.exe` is byte-identical across all four and depends on nothing, so
+the command line works on a bare machine either way — which matters, because
+the machine that needs a driver tool most is the one whose NIC has no driver
+and cannot go fetch a runtime.
+
+GUI files are harvested with WiX's `<Files Include>` rather than listed: the
+bundled build is ~150 files of .NET and a hand-maintained list would rot on
+every SDK bump. `Exclude` is not an attribute in WiX 5, so `build-package.ps1`
+clears PDBs out of the staging directory before harvesting.
+
+Two signing fixes went with it. `Directory.Build.targets` matched only
+`OutputType == Exe`, so the GUI — a `WinExe` — would have shipped unsigned.
+And `MajorUpgrade` now sets `AllowSameVersionUpgrades`, so switching between
+the two variants of one version replaces rather than stacking.
+
+Start Menu now carries two entries: **Waypoint Driver Manager** →
+`waypoint-desktop.exe`, and **Waypoint Command Line** → `cmd /k waypoint.exe
+--help`. Verified by administrative extract and by reading the MSI's Shortcut
+table; neither variant has been installed on a live machine yet.
+
+**Next:** cut a release with the four artifacts and publish their hashes.
+`docs/INSTALL.md` now describes them but no release ships them yet.
 
 ### 4. Real code-signing certificate
 

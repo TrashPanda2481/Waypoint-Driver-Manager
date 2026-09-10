@@ -4,7 +4,7 @@ Pre-alpha. This installs and runs, and it reads your real device tree — but it
 cannot install a driver for you yet. See [What works](#what-works) before you
 judge it.
 
-Windows 10 or 11, x64. No .NET runtime needed.
+Windows 10 or 11, x64.
 
 ---
 
@@ -14,15 +14,29 @@ Download from the repo's **Releases** page. The repo is private, so be signed in
 to GitHub, or use the CLI:
 
 ```powershell
-gh release download v0.1.0-alpha.1 --repo TrashPanda2481/Waypoint-Driver-Manager
+gh release download --repo TrashPanda2481/Waypoint-Driver-Manager
 ```
 
-Two files, pick one:
+Pick one row, then pick installer or portable:
 
-| File | Use |
-|---|---|
-| `waypoint-installer-0.1.0-win-x64.msi` | Installs to Program Files, adds to PATH, Start Menu entry |
-| `waypoint-portable-0.1.0-win-x64.zip` | Unzip and run. Nothing installed, nothing on PATH |
+| Build | Size | Needs |
+|---|---|---|
+| `waypoint-installer-<version>-win-x64.msi` | ~67 MB | nothing |
+| `waypoint-installer-<version>-win-x64-requires-dotnet8.msi` | ~11 MB | [.NET 8 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0), x64 |
+| `waypoint-portable-<version>-win-x64.zip` | ~70 MB | nothing |
+| `waypoint-portable-<version>-win-x64-requires-dotnet8.zip` | ~4 MB | same runtime |
+
+The difference is the window, not the tool. `waypoint.exe` is compiled ahead of
+time and depends on nothing in either build, so the command line works on a bare
+machine regardless. Only `waypoint-desktop.exe` needs .NET, and the larger build
+carries its own copy.
+
+Take the big one if you are handing this to someone else or putting it on a
+machine with no network — a fresh install with no NIC driver cannot go and fetch
+a runtime. Take the small one for your own machine if you already have .NET 8.
+
+**Installer or portable?** The installer puts `waypoint` on PATH for every shell
+and adds Start Menu entries. The portable zip touches nothing outside its folder.
 
 ## 2. Verify what you downloaded
 
@@ -30,13 +44,11 @@ The tool's whole premise is not trusting unverified binaries, so it would be odd
 not to offer the hashes.
 
 ```powershell
-Get-FileHash .\waypoint-installer-0.1.0-win-x64.msi -Algorithm SHA256
+Get-FileHash .\waypoint-installer-<version>-win-x64.msi -Algorithm SHA256
 ```
 
-```
-msi  b37a1befb096709097d2ccdf91e743d9fb8a362fbc17dc2be7588af81a534e71
-zip  74249a88ccc2f15ffab46d42550e5a990fbd35979b821233e904d975dbf46fde
-```
+Compare it against the hashes published on that release. Every release lists the
+SHA-256 of each file it ships.
 
 ## 3. Expect Windows to warn you
 
@@ -63,17 +75,23 @@ the product name and detection name.
 Double-click the MSI and click through, or silently:
 
 ```powershell
-msiexec /i waypoint-installer-0.1.0-win-x64.msi /qn
+msiexec /i waypoint-installer-<version>-win-x64.msi /qn
 ```
 
 Portable instead: unzip anywhere and run `waypoint.exe` from that folder.
 
 ## 5. Open it
 
-**Start → type "Waypoint" → Waypoint Driver Manager.** A console opens on the
-command list with `waypoint` ready to use.
+**Start → type "Waypoint".** Two entries:
+
+- **Waypoint Driver Manager** — the window. Click *Scan*.
+- **Waypoint Command Line** — a console on the command list, `waypoint` ready.
 
 Or from any terminal, just `waypoint`.
+
+If you took a `requires-dotnet8` build and the runtime is missing, the window
+will not open; Windows shows a dialog naming the runtime with a download link.
+The command line is unaffected.
 
 > Already had a terminal open before installing? PATH changes only reach *new*
 > shells. Close it and open a fresh one.
@@ -106,6 +124,9 @@ append-only `audit.jsonl` of every scan and decision.
   per-device confirmation.
 - Signature policy gate, dry-run default, confirmation enforced by the engine.
 - JSON output, documented exit codes, silent MSI install.
+- A window that groups devices by tier and PnP setup class, and compares the
+  installed driver against the candidate field by field before anything is
+  installed.
 
 ## What does not work yet
 
@@ -113,7 +134,8 @@ append-only `audit.jsonl` of every scan and decision.
   unless you are on a Dell, Lenovo or HP machine *and* pass `--oem`, or you have
   populated the local cache yourself. It detects and gates correctly; it has
   nothing to install. This is the main open question, not an oversight.
-- **No GUI.** CLI only.
+- **The window scans and inspects; it does not install.** Applying a plan is
+  CLI-only for now.
 - **A real install has never been performed.** `apply --apply` is untested
   against a live driver. Do not run it on a machine you care about.
 - **Self-signed.** See step 3.
@@ -125,7 +147,7 @@ Full list: [`TODO.md`](TODO.md).
 Add/Remove Programs → Waypoint Driver Manager, or:
 
 ```powershell
-msiexec /x waypoint-installer-0.1.0-win-x64.msi /qn
+msiexec /x waypoint-installer-<version>-win-x64.msi /qn
 ```
 
 Files and the PATH entry are removed. `C:\ProgramData\Waypoint` is left in
@@ -139,8 +161,9 @@ by hand if you want a clean slate.
 ```powershell
 git clone https://github.com/TrashPanda2481/Waypoint-Driver-Manager.git
 cd Waypoint-Driver-Manager/dotnet
-dotnet test                # 108 tests
+dotnet test                        # 131 tests
 dotnet run --project Waypoint.Cli -- scan
+dotnet run --project Waypoint.Gui          # the window
 ```
 
 Needs the .NET 8 SDK (or 9 — it targets `net8.0`).

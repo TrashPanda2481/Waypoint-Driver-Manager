@@ -25,7 +25,12 @@
       <Publish Dialog="InstallDirDlg" Control="Back" Event="NewDialog" Value="WelcomeDlg" Order="2" />
     </UI>
 
-    <MajorUpgrade DowngradeErrorMessage="A newer version of Waypoint Driver Manager is already installed." />
+    <!-- AllowSameVersionUpgrades so switching between the bundled-runtime and
+         requires-dotnet8 builds of the same version replaces rather than
+         stacking: they are one product in two packagings. -->
+    <MajorUpgrade
+        AllowSameVersionUpgrades="yes"
+        DowngradeErrorMessage="A newer version of Waypoint Driver Manager is already installed." />
     <MediaTemplate EmbedCab="yes" />
 
     <Property Id="ARPURLINFOABOUT" Value="https://github.com/TrashPanda2481/Waypoint-Driver-Manager" />
@@ -43,8 +48,18 @@
 
     <Feature Id="Main" Title="Waypoint Driver Manager" Level="1">
       <ComponentGroupRef Id="ProductComponents" />
+      <ComponentGroupRef Id="GuiComponents" />
       <ComponentGroupRef Id="StartMenuComponents" />
     </Feature>
+
+    <!-- Harvested rather than listed: the bundled-runtime build is ~150 files
+         of .NET, and hand-maintaining that list would rot on every SDK bump.
+         The requires-dotnet8 build resolves to a handful through the same
+         glob. Whatever is in GuiDir ships, so build-package.ps1 clears the
+         PDBs out of it first. -->
+    <ComponentGroup Id="GuiComponents" Directory="INSTALLFOLDER">
+      <Files Include="$(var.GuiDir)\**" />
+    </ComponentGroup>
 
     <ComponentGroup Id="ProductComponents" Directory="INSTALLFOLDER">
       <Component Id="CliExecutable">
@@ -66,19 +81,26 @@
       </Component>
     </ComponentGroup>
 
-    <!-- Hosted in cmd /k rather than launched directly: waypoint is a console
-         app, so a bare shortcut would flash and vanish. Retarget this at
-         waypoint-desktop.exe once the GUI exists (ADR-0001 step 4). -->
     <ComponentGroup Id="StartMenuComponents" Directory="WaypointMenuFolder">
       <Component Id="StartMenuShortcut" Guid="B3F5C7A1-9D24-4E86-A0F3-1C8B5E7D2946">
         <Shortcut
             Id="WaypointShortcut"
             Name="Waypoint Driver Manager"
             Description="Driver detection, sourcing and install manager"
+            Target="[INSTALLFOLDER]waypoint-desktop.exe"
+            WorkingDirectory="INSTALLFOLDER" />
+
+        <!-- Hosted in cmd /k: waypoint.exe is a console app, so a bare
+             shortcut would flash and vanish. -->
+        <Shortcut
+            Id="WaypointCliShortcut"
+            Name="Waypoint Command Line"
+            Description="Waypoint CLI — scan, plan, apply, driverpack"
             Target="[System64Folder]cmd.exe"
             Arguments="/k &quot;&quot;[INSTALLFOLDER]waypoint.exe&quot; --help&quot;"
             WorkingDirectory="INSTALLFOLDER"
             Icon="WaypointIcon" />
+
         <RemoveFolder Id="RemoveWaypointMenuFolder" Directory="WaypointMenuFolder" On="uninstall" />
         <RegistryValue
             Root="HKLM"
