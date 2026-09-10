@@ -130,8 +130,13 @@ Start Menu now carries two entries: **Waypoint Driver Manager** →
 --help`. Verified by administrative extract and by reading the MSI's Shortcut
 table; neither variant has been installed on a live machine yet.
 
-**Next:** cut a release with the four artifacts and publish their hashes.
-`docs/INSTALL.md` now describes them but no release ships them yet.
+Released as **v0.2.0-alpha.1** on 2026-09-09, all four artifacts attached with
+their SHA-256 in the notes. GitHub's own asset digests were checked against the
+published hashes, and a download of one asset was verified back to its hash.
+Both binaries were run out of the shipped zip: the CLI scans, the window opens.
+
+Every release so far is a prerelease, so GitHub marks none of them "Latest" and
+`gh release download` without a tag fails. INSTALL.md names the tag.
 
 ### 4. Real code-signing certificate
 

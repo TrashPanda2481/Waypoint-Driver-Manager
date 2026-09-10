@@ -14,17 +14,18 @@ Download from the repo's **Releases** page. The repo is private, so be signed in
 to GitHub, or use the CLI:
 
 ```powershell
-gh release download --repo TrashPanda2481/Waypoint-Driver-Manager
+# every build is a prerelease, so name the tag -- there is no "latest"
+gh release download v0.2.0-alpha.1 --repo TrashPanda2481/Waypoint-Driver-Manager
 ```
 
 Pick one row, then pick installer or portable:
 
 | Build | Size | Needs |
 |---|---|---|
-| `waypoint-installer-<version>-win-x64.msi` | ~67 MB | nothing |
-| `waypoint-installer-<version>-win-x64-requires-dotnet8.msi` | ~11 MB | [.NET 8 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0), x64 |
-| `waypoint-portable-<version>-win-x64.zip` | ~70 MB | nothing |
-| `waypoint-portable-<version>-win-x64-requires-dotnet8.zip` | ~4 MB | same runtime |
+| `waypoint-installer-0.2.0-win-x64.msi` | ~67 MB | nothing |
+| `waypoint-installer-0.2.0-win-x64-requires-dotnet8.msi` | ~11 MB | [.NET 8 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0), x64 |
+| `waypoint-portable-0.2.0-win-x64.zip` | ~70 MB | nothing |
+| `waypoint-portable-0.2.0-win-x64-requires-dotnet8.zip` | ~4 MB | same runtime |
 
 The difference is the window, not the tool. `waypoint.exe` is compiled ahead of
 time and depends on nothing in either build, so the command line works on a bare
@@ -44,7 +45,7 @@ The tool's whole premise is not trusting unverified binaries, so it would be odd
 not to offer the hashes.
 
 ```powershell
-Get-FileHash .\waypoint-installer-<version>-win-x64.msi -Algorithm SHA256
+Get-FileHash .\waypoint-installer-0.2.0-win-x64.msi -Algorithm SHA256
 ```
 
 Compare it against the hashes published on that release. Every release lists the
@@ -75,7 +76,7 @@ the product name and detection name.
 Double-click the MSI and click through, or silently:
 
 ```powershell
-msiexec /i waypoint-installer-<version>-win-x64.msi /qn
+msiexec /i waypoint-installer-0.2.0-win-x64.msi /qn
 ```
 
 Portable instead: unzip anywhere and run `waypoint.exe` from that folder.
@@ -147,7 +148,7 @@ Full list: [`TODO.md`](TODO.md).
 Add/Remove Programs → Waypoint Driver Manager, or:
 
 ```powershell
-msiexec /x waypoint-installer-<version>-win-x64.msi /qn
+msiexec /x waypoint-installer-0.2.0-win-x64.msi /qn
 ```
 
 Files and the PATH entry are removed. `C:\ProgramData\Waypoint` is left in
