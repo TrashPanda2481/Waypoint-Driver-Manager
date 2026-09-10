@@ -47,20 +47,26 @@
 
                 <StackPanel>
                     <TextBlock x:Name="BackendLabel" Text="Backend: —" FontWeight="SemiBold" />
-                    <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
-                        <CheckBox x:Name="OemCheckBox"
+                    <!-- Wraps rather than clips: four options do not fit one
+                         line at the minimum window width, and the Scan button
+                         was cutting the last label in half. -->
+                    <WrapPanel Margin="0,8,-16,-6">
+                        <CheckBox x:Name="OemCheckBox" Margin="0,0,16,6"
                                   Content="Include OEM catalogs (Dell — downloads a real catalog on first use)"
                                   Checked="OnOemToggled" Unchecked="OnOemToggled" />
-                        <CheckBox x:Name="ForceRefreshCheckBox" Margin="18,0,0,0" IsEnabled="False"
+                        <CheckBox x:Name="ForceRefreshCheckBox" Margin="0,0,16,6" IsEnabled="False"
                                   Content="Force refresh (ignore cached catalog)" />
-                        <CheckBox x:Name="ShowUpToDateCheckBox" Margin="18,0,0,0"
+                        <CheckBox x:Name="ShowUpToDateCheckBox" Margin="0,0,16,6"
                                   Content="Show up-to-date devices"
-                                  Checked="OnShowUpToDateToggled" Unchecked="OnShowUpToDateToggled" />
-                    </StackPanel>
+                                  Checked="OnFilterToggled" Unchecked="OnFilterToggled" />
+                        <CheckBox x:Name="OnlyAmbiguousCheckBox" Margin="0,0,16,6"
+                                  Content="Only shared hardware IDs"
+                                  Checked="OnFilterToggled" Unchecked="OnFilterToggled" />
+                    </WrapPanel>
                 </StackPanel>
 
                 <Button x:Name="ScanButton" Grid.Column="1" Content="Scan" Click="OnScanClick"
-                        Width="104" Height="34" VerticalAlignment="Top" />
+                        MinWidth="104" Height="34" Margin="14,0,0,0" VerticalAlignment="Top" />
             </Grid>
         </Border>
 
@@ -94,9 +100,16 @@
                         </Style>
                     </TreeView.ItemContainerStyle>
                 </TreeView>
-                <!-- Otherwise a healthy machine shows a blank pane and reads as broken. -->
-                <TextBlock x:Name="EmptyTreeLabel" Margin="26" TextWrapping="Wrap"
-                           Foreground="{StaticResource Muted}" Visibility="Collapsed" />
+                <!-- Alternative to the tree, never alongside it: the tier rows
+                     render even when every count is zero, so sharing this cell
+                     drew the two on top of each other. -->
+                <StackPanel x:Name="EmptyState" MaxWidth="360" Margin="24"
+                            VerticalAlignment="Center" HorizontalAlignment="Center">
+                    <TextBlock x:Name="EmptyTitle" FontSize="15" FontWeight="SemiBold"
+                               TextAlignment="Center" TextWrapping="Wrap" />
+                    <TextBlock x:Name="EmptyHint" Margin="0,8,0,0" TextAlignment="Center"
+                               TextWrapping="Wrap" Foreground="{StaticResource Muted}" />
+                </StackPanel>
             </Grid>
 
             <GridSplitter Grid.Column="1" Width="4" HorizontalAlignment="Stretch"

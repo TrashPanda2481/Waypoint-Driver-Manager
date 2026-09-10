@@ -25,6 +25,7 @@ public partial class MainWindow : Window
         {
             _engine = EngineFactory.BuildDefaultEngine(EngineFactory.BuildDefaultBackend());
             BackendLabel.Text = $"Backend: {_engine.Backend.GetType().Name}";
+            ShowEmptyState("No scan yet", "Click Scan to read this machine's device tree.");
         }
         catch (Exception ex)
         {
@@ -33,7 +34,24 @@ public partial class MainWindow : Window
             BackendLabel.Text = "Backend: unavailable";
             StatusLabel.Text = ScanRunner.Describe(ex);
             ScanButton.IsEnabled = false;
+            ShowEmptyState("No device backend", ScanRunner.Describe(ex));
         }
+    }
+
+    // The tree and the message are alternatives, never both. Sharing the cell
+    // drew them on top of each other, because a tier row renders at count 0.
+    private void ShowEmptyState(string title, string hint)
+    {
+        EmptyTitle.Text = title;
+        EmptyHint.Text = hint;
+        EmptyState.Visibility = Visibility.Visible;
+        DeviceTree.Visibility = Visibility.Collapsed;
+    }
+
+    private void ShowTree()
+    {
+        EmptyState.Visibility = Visibility.Collapsed;
+        DeviceTree.Visibility = Visibility.Visible;
     }
 
     private void OnOemToggled(object sender, RoutedEventArgs e)
@@ -48,8 +66,12 @@ public partial class MainWindow : Window
         }
     }
 
-    private void OnShowUpToDateToggled(object sender, RoutedEventArgs e)
+    private void OnFilterToggled(object sender, RoutedEventArgs e)
     {
+        // The ambiguity filter spans every tier, so the up-to-date toggle has
+        // nothing left to decide while it is on.
+        ShowUpToDateCheckBox.IsEnabled = !_scanning && OnlyAmbiguousCheckBox.IsChecked != true;
+
         if (_lastScan is not null)
         {
             RenderTree(_lastScan);
@@ -67,7 +89,7 @@ public partial class MainWindow : Window
         var forceRefresh = ForceRefreshCheckBox.IsChecked == true;
 
         _scanning = true;
-        ScanButton.IsEnabled = false;
+        SetBusy(true);
         SourceFailureLabel.Visibility = Visibility.Collapsed;
         StatusLabel.Text = (includeOem, forceRefresh) switch
         {
@@ -75,6 +97,13 @@ public partial class MainWindow : Window
             (true, false) => "Scanning… including OEM catalogs, first use downloads a real catalog.",
             _ => "Scanning…",
         };
+
+        // A re-scan keeps the previous results on screen; only a first scan has
+        // an empty pane to fill.
+        if (_lastScan is null)
+        {
+            ShowEmptyState("Scanning…", "Reading the device tree and checking each driver.");
+        }
 
         try
         {
@@ -86,29 +115,75 @@ public partial class MainWindow : Window
             // Status bar, not a modal. Waypoint is meant to slot into
             // unattended workflows too, and a blocking popup fights that.
             StatusLabel.Text = $"Scan failed: {ScanRunner.Describe(ex)}";
+            if (_lastScan is null)
+            {
+                ShowEmptyState("Scan failed", ScanRunner.Describe(ex));
+            }
         }
         finally
         {
             _scanning = false;
-            ScanButton.IsEnabled = true;
+            SetBusy(false);
         }
+    }
+
+    // Toggling a source option mid-scan would describe a run that never happened.
+    private void SetBusy(bool busy)
+    {
+        ScanButton.IsEnabled = !busy;
+        ScanButton.Content = busy ? "Scanning…" : "Scan";
+        OemCheckBox.IsEnabled = !busy;
+        OnlyAmbiguousCheckBox.IsEnabled = !busy;
+        ShowUpToDateCheckBox.IsEnabled = !busy && OnlyAmbiguousCheckBox.IsChecked != true;
+        ForceRefreshCheckBox.IsEnabled = !busy && OemCheckBox.IsChecked == true;
     }
 
     private void RenderTree(ScanOutcome outcome)
     {
-        var showUpToDate = ShowUpToDateCheckBox.IsChecked == true;
-        var nodes = TreeBuilder.Build(outcome.Assessments, showUpToDate);
+        var onlyAmbiguous = OnlyAmbiguousCheckBox.IsChecked == true;
+        var nodes = TreeBuilder.Build(
+            outcome.Assessments, ShowUpToDateCheckBox.IsChecked == true, onlyAmbiguous);
         DeviceTree.ItemsSource = nodes;
         DataContext = DetailCard.Empty;
 
         var shown = nodes.Sum(tier => tier.Children.Sum(cls => cls.Children.Count));
-        var upToDate = outcome.Assessments.Count(a => a.Status == DeviceStatus.UpToDate);
+        if (shown > 0)
+        {
+            ShowTree();
+            return;
+        }
 
-        EmptyTreeLabel.Text = upToDate == outcome.Assessments.Count && outcome.Assessments.Count > 0
-            ? $"Nothing needs attention. All {upToDate} devices are up to date — "
-                + "tick “Show up-to-date devices” to inspect them anyway."
-            : "No devices to show.";
-        EmptyTreeLabel.Visibility = shown == 0 ? Visibility.Visible : Visibility.Collapsed;
+        var total = outcome.Assessments.Count;
+        var upToDate = outcome.Assessments.Count(a => a.Status == DeviceStatus.UpToDate);
+        var ambiguous = outcome.Assessments.Count(a => a.Ambiguous);
+
+        if (total == 0)
+        {
+            ShowEmptyState("No devices returned", "The scan completed but reported nothing. That is unusual.");
+        }
+        else if (onlyAmbiguous)
+        {
+            ShowEmptyState("No shared hardware IDs", $"Every one of the {total} devices matched on its own ID.");
+        }
+        else if (upToDate == total && ambiguous > 0)
+        {
+            // "Nothing needs attention" would be a lie while this many devices
+            // are gated behind manual confirmation.
+            ShowEmptyState(
+                "No driver problems found",
+                $"All {total} devices have a current driver, but {ambiguous} share a hardware ID "
+                + "with another device and would need confirming one by one before any install.");
+        }
+        else if (upToDate == total)
+        {
+            ShowEmptyState(
+                "Nothing needs attention",
+                $"All {total} devices have a current driver. Tick Show up-to-date devices to inspect them anyway.");
+        }
+        else
+        {
+            ShowEmptyState("Nothing to show", "The current filters hide every device this scan returned.");
+        }
     }
 
     private void Render(ScanOutcome outcome)

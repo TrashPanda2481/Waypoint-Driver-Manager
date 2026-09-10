@@ -123,6 +123,51 @@ public class TreeBuilderTests
     }
 
     [Fact]
+    public void AmbiguityFilterKeepsOnlyTheFlaggedDevices()
+    {
+        // Without this, reviewing them means hunting badges across every class
+        // group; on the test machine that is 103 devices among 233.
+        var nodes = TreeBuilder.Build(
+            [
+                Assess("Core 0", "Processor", DeviceStatus.UpToDate, ambiguous: true),
+                Assess("Core 1", "Processor", DeviceStatus.UpToDate, ambiguous: true),
+                Assess("NIC", "Net", DeviceStatus.UpToDate),
+                Assess("GPU", "Display", DeviceStatus.Missing),
+            ],
+            includeUpToDate: true,
+            onlyAmbiguous: true);
+
+        var devices = nodes.SelectMany(t => t.Children).SelectMany(c => c.Children).ToList();
+
+        Assert.Equal(2, devices.Count);
+        Assert.All(devices, d => Assert.True(d.IsFlagged));
+    }
+
+    [Fact]
+    public void AmbiguityFilterOverridesTheUpToDateToggle()
+    {
+        // A shared hardware ID is worth reviewing whatever the driver's state.
+        // Intersecting the two filters would hide what was just asked for.
+        var nodes = TreeBuilder.Build(
+            [Assess("Core 0", "Processor", DeviceStatus.UpToDate, ambiguous: true)],
+            includeUpToDate: false,
+            onlyAmbiguous: true);
+
+        Assert.Single(Devices(Tier(nodes, "Up to date")));
+    }
+
+    [Fact]
+    public void AmbiguityFilterOnACleanMachineShowsNothing()
+    {
+        var nodes = TreeBuilder.Build(
+            [Assess("NIC", "Net", DeviceStatus.UpToDate)],
+            includeUpToDate: true,
+            onlyAmbiguous: true);
+
+        Assert.Empty(nodes.SelectMany(t => t.Children).SelectMany(c => c.Children));
+    }
+
+    [Fact]
     public void DevicesWithNoClassNameStillAppear()
     {
         var nodes = TreeBuilder.Build(

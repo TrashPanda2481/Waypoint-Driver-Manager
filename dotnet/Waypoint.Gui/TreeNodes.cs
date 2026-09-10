@@ -35,8 +35,20 @@ internal static class TreeBuilder
         (DeviceStatus.UpToDate, "Up to date", false),
     ];
 
-    public static List<TreeNode> Build(IReadOnlyList<DeviceAssessment> assessments, bool includeUpToDate)
+    public static List<TreeNode> Build(
+        IReadOnlyList<DeviceAssessment> assessments,
+        bool includeUpToDate,
+        bool onlyAmbiguous = false)
     {
+        if (onlyAmbiguous)
+        {
+            assessments = [.. assessments.Where(a => a.Ambiguous)];
+            // A shared hardware ID is worth reviewing whatever the driver's
+            // state, so this filter overrides the up-to-date one rather than
+            // intersecting with it and hiding most of what was asked for.
+            includeUpToDate = true;
+        }
+
         var nodes = new List<TreeNode>();
 
         foreach (var (status, label, expanded) in Tiers)
@@ -86,7 +98,8 @@ internal static class TreeBuilder
         return new TreeNode
         {
             Title = assessment.Device.FriendlyName,
-            Detail = assessment.Ambiguous ? $"{detail}  ·  ambiguous" : detail,
+            // Ambiguity is not spelled out here; the confirm badge says it.
+            Detail = detail,
             // Ambiguous matches need explicit per-device confirmation and are
             // never auto-resolved, so they have to be visible in the list.
             IsFlagged = assessment.Ambiguous,
