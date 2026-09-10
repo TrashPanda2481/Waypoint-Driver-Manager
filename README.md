@@ -1,5 +1,7 @@
 # Waypoint Driver Manager
 
+[![build](https://github.com/TrashPanda2481/Waypoint-Driver-Manager/actions/workflows/build.yml/badge.svg)](https://github.com/TrashPanda2481/Waypoint-Driver-Manager/actions/workflows/build.yml)
+
 A driver detection, sourcing, and install manager for Windows, built to fix the
 structural problems in tools like Snappy Driver Installer rather than give them
 a new coat of paint. CLI-first for IT-toolchain automation, GUI-first for the
