@@ -138,6 +138,40 @@ Both binaries were run out of the shipped zip: the CLI scans, the window opens.
 Every release so far is a prerelease, so GitHub marks none of them "Latest" and
 `gh release download` without a tag fails. INSTALL.md names the tag.
 
+### Public repository - DONE 2026-09-10
+
+The repo is public under **GPL-3.0**. Copyleft on purpose: this exists because
+the tool people reach for is closed and abandoned, so a fork must publish its
+source rather than becoming the next uninspectable binary.
+
+**One thing had to be purged first.** `dotnet/demo-scan.json` was a 233-device
+inventory of the development machine, committed 2026-09-09 and carried in 11
+commits, referenced by nothing. It held real identifiers: the Bluetooth MAC of
+a paired device, a webcam serial, a USB storage serial, and adapter IDs. A
+`filter-branch` removed it and the history was force-pushed - and that was not
+enough. **A force-push does not delete the objects on GitHub:** the orphaned
+commit was still fetchable by SHA through the API, and returned the full 75KB
+file. The repository was deleted and recreated from the purged history, which
+is the only way to destroy the object store. Verified afterwards: the commit
+404s and all four identifiers return zero hits across every ref.
+
+Cost of the recreate was the 30 August creation date and nothing else - zero
+issues, PRs, forks and stars. Both branches, both tags and the release were
+restored, and the four release assets were re-uploaded from disk with hashes
+matching the published notes byte for byte.
+
+**Protections in place.** Rulesets on `main` (no deletion, no force-push,
+pull request required with code-owner review) and on `v*` / `archive/*` tags
+(no deletion, no force-update), both with an admin bypass so the owner still
+works normally. Secret scanning with push protection, Dependabot alerts and
+automated security fixes, default Actions token permissions read-only, branches
+deleted on merge. `LICENSE`, `SECURITY.md` and `.github/CODEOWNERS` added.
+
+Worth remembering: **branch protection and rulesets are public-repo-only on a
+free account**, so the repo went public a minute before the rules landed. That
+gap is harmless - nobody outside the collaborator list can push to a GitHub repo
+regardless of visibility - but the ordering surprises people.
+
 ### 4. Real code-signing certificate
 
 Self-signed proves the pipeline only. The chain reports `UntrustedRoot`, UAC
