@@ -1,12 +1,180 @@
-﻿<Window x:Class="Waypoint.Gui.MainWindow"
+<Window x:Class="Waypoint.Gui.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Waypoint.Gui"
-        mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
-    <Grid>
+        Title="Waypoint Driver Manager" Height="700" Width="1100"
+        MinHeight="480" MinWidth="820"
+        Background="{StaticResource Surface}"
+        TextOptions.TextFormattingMode="Display">
 
-    </Grid>
+    <Window.Resources>
+        <HierarchicalDataTemplate DataType="{x:Type local:TreeNode}" ItemsSource="{Binding Children}">
+            <StackPanel Orientation="Horizontal" Margin="0,2">
+                <TextBlock Text="{Binding Title}" />
+                <TextBlock Text="{Binding Detail}" Margin="10,0,0,0">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Foreground" Value="{StaticResource Muted}" />
+                            <Style.Triggers>
+                                <!-- Muted grey on the selection highlight is unreadable. -->
+                                <DataTrigger Value="True" Binding="{Binding IsSelected,
+                                             RelativeSource={RelativeSource AncestorType=TreeViewItem}}">
+                                    <Setter Property="Foreground"
+                                            Value="{DynamicResource {x:Static SystemColors.HighlightTextBrushKey}}" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+                <Border Background="{StaticResource FlagFill}" CornerRadius="3" Padding="5,0" Margin="8,0,0,0"
+                        Visibility="{Binding IsFlagged, Converter={StaticResource BoolToVisible}}">
+                    <TextBlock Text="confirm" FontSize="10" Foreground="{StaticResource FlagInk}" />
+                </Border>
+            </StackPanel>
+        </HierarchicalDataTemplate>
+    </Window.Resources>
+
+    <DockPanel>
+
+        <!-- Command bar -->
+        <Border DockPanel.Dock="Top" Background="{StaticResource Panel}" BorderBrush="{StaticResource Line}"
+                BorderThickness="0,0,0,1" Padding="14,11">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel>
+                    <TextBlock x:Name="BackendLabel" Text="Backend: —" FontWeight="SemiBold" />
+                    <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                        <CheckBox x:Name="OemCheckBox"
+                                  Content="Include OEM catalogs (Dell — downloads a real catalog on first use)"
+                                  Checked="OnOemToggled" Unchecked="OnOemToggled" />
+                        <CheckBox x:Name="ForceRefreshCheckBox" Margin="18,0,0,0" IsEnabled="False"
+                                  Content="Force refresh (ignore cached catalog)" />
+                        <CheckBox x:Name="ShowUpToDateCheckBox" Margin="18,0,0,0"
+                                  Content="Show up-to-date devices"
+                                  Checked="OnShowUpToDateToggled" Unchecked="OnShowUpToDateToggled" />
+                    </StackPanel>
+                </StackPanel>
+
+                <Button x:Name="ScanButton" Grid.Column="1" Content="Scan" Click="OnScanClick"
+                        Width="104" Height="34" VerticalAlignment="Top" />
+            </Grid>
+        </Border>
+
+        <!-- Status bar -->
+        <Border DockPanel.Dock="Bottom" Background="{StaticResource Panel}" BorderBrush="{StaticResource Line}"
+                BorderThickness="0,1,0,0" Padding="14,8">
+            <StackPanel>
+                <TextBlock x:Name="StatusLabel" Text="No scan run yet." TextWrapping="Wrap" />
+                <TextBlock x:Name="SourceFailureLabel" Foreground="{StaticResource Warn}" TextWrapping="Wrap"
+                           Margin="0,4,0,0" Visibility="Collapsed" />
+            </StackPanel>
+        </Border>
+
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1.15*" MinWidth="320" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="1*" MinWidth="300" />
+            </Grid.ColumnDefinitions>
+
+            <Grid>
+                <TreeView x:Name="DeviceTree" BorderThickness="0" Background="Transparent" Padding="8"
+                          SelectedItemChanged="OnDeviceSelected"
+                          ScrollViewer.HorizontalScrollBarVisibility="Auto">
+                    <TreeView.ItemContainerStyle>
+                        <Style TargetType="TreeViewItem">
+                            <!-- Without this the tiers 3.1 wants open stay shut. -->
+                            <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
+                            <!-- Otherwise a screen reader announces the type name. -->
+                            <Setter Property="AutomationProperties.Name" Value="{Binding Title}" />
+                        </Style>
+                    </TreeView.ItemContainerStyle>
+                </TreeView>
+                <!-- Otherwise a healthy machine shows a blank pane and reads as broken. -->
+                <TextBlock x:Name="EmptyTreeLabel" Margin="26" TextWrapping="Wrap"
+                           Foreground="{StaticResource Muted}" Visibility="Collapsed" />
+            </Grid>
+
+            <GridSplitter Grid.Column="1" Width="4" HorizontalAlignment="Stretch"
+                          Background="{StaticResource Line}" />
+
+            <!-- Diff card -->
+            <ScrollViewer Grid.Column="2" VerticalScrollBarVisibility="Auto" Background="{StaticResource Panel}">
+                <Grid Margin="16">
+                    <TextBlock Text="Select a device to compare its installed driver against the candidate."
+                               Foreground="{StaticResource Muted}" TextWrapping="Wrap"
+                               Visibility="{Binding HasSelection, Converter={StaticResource BoolToCollapsed}}" />
+
+                    <StackPanel Visibility="{Binding HasSelection, Converter={StaticResource BoolToVisible}}">
+                        <TextBlock Text="{Binding DeviceName}" FontSize="16" FontWeight="SemiBold" TextWrapping="Wrap" />
+                        <TextBlock Margin="0,3,0,0" Foreground="{StaticResource Muted}">
+                            <Run Text="{Binding ClassName, Mode=OneWay}" /><Run Text="  ·  " /><Run Text="{Binding Status, Mode=OneWay}" />
+                        </TextBlock>
+
+                        <Border Margin="0,14,0,0" Padding="11,9" CornerRadius="4"
+                                Background="{StaticResource WarnFill}" BorderBrush="{StaticResource Warn}" BorderThickness="1"
+                                Visibility="{Binding HasWarnings, Converter={StaticResource BoolToVisible}}">
+                            <TextBlock Text="{Binding Warnings}" TextWrapping="Wrap" Foreground="{StaticResource WarnInk}" />
+                        </Border>
+
+                        <Grid Margin="0,16,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Row="0" Grid.Column="1" Text="Installed" FontWeight="SemiBold" Margin="0,0,10,7" />
+                            <TextBlock Grid.Row="0" Grid.Column="2" Text="{Binding CandidateHeader}" FontWeight="SemiBold" Margin="0,0,0,7" />
+
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Version" Style="{StaticResource FieldLabel}" />
+                            <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding InstalledVersion}" Style="{StaticResource FieldValue}" />
+                            <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding CandidateVersion}" Style="{StaticResource FieldValue}" />
+
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Date" Style="{StaticResource FieldLabel}" />
+                            <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding InstalledDate}" Style="{StaticResource FieldValue}" />
+                            <TextBlock Grid.Row="2" Grid.Column="2" Text="{Binding CandidateDate}" Style="{StaticResource FieldValue}" />
+
+                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Publisher" Style="{StaticResource FieldLabel}" />
+                            <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding InstalledPublisher}" Style="{StaticResource FieldValue}" />
+                            <TextBlock Grid.Row="3" Grid.Column="2" Text="{Binding CandidatePublisher}" Style="{StaticResource FieldValue}" />
+
+                            <TextBlock Grid.Row="4" Grid.Column="0" Text="Signature" Style="{StaticResource FieldLabel}" />
+                            <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding InstalledSignature}" Style="{StaticResource FieldValue}" />
+                            <TextBlock Grid.Row="4" Grid.Column="2" Text="{Binding CandidateSignature}" Style="{StaticResource FieldValue}" />
+
+                            <TextBlock Grid.Row="5" Grid.Column="0" Text="Source" Style="{StaticResource FieldLabel}" />
+                            <TextBlock Grid.Row="5" Grid.Column="1" Text="—" Style="{StaticResource FieldValue}" />
+                            <TextBlock Grid.Row="5" Grid.Column="2" Text="{Binding CandidateSource}" Style="{StaticResource FieldValue}" />
+
+                            <TextBlock Grid.Row="6" Grid.Column="0" Text="Size" Style="{StaticResource FieldLabel}" />
+                            <TextBlock Grid.Row="6" Grid.Column="1" Text="—" Style="{StaticResource FieldValue}" />
+                            <TextBlock Grid.Row="6" Grid.Column="2" Text="{Binding CandidateSize}" Style="{StaticResource FieldValue}" />
+                        </Grid>
+
+                        <TextBlock Text="Hardware IDs" FontWeight="SemiBold" Margin="0,20,0,5" />
+                        <TextBlock Text="{Binding Hwids}" FontFamily="Consolas, Courier New" FontSize="11"
+                                   TextWrapping="Wrap" Foreground="{StaticResource Muted}" />
+
+                        <TextBlock Text="Instance ID" FontWeight="SemiBold" Margin="0,16,0,5" />
+                        <TextBlock Text="{Binding InstanceId}" FontFamily="Consolas, Courier New" FontSize="11"
+                                   TextWrapping="Wrap" Foreground="{StaticResource Muted}" />
+                    </StackPanel>
+                </Grid>
+            </ScrollViewer>
+        </Grid>
+    </DockPanel>
 </Window>

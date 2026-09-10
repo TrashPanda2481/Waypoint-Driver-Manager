@@ -23,6 +23,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Waypoint.Engine.Tests", "Wa
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Waypoint.Cli.Tests", "Waypoint.Cli.Tests\Waypoint.Cli.Tests.csproj", "{0C257594-671A-4183-9DE1-E198339A8A13}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Waypoint.Gui.Tests", "Waypoint.Gui.Tests\Waypoint.Gui.Tests.csproj", "{305810E8-B2A3-4AB2-A0E6-FC6DBADD3069}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -153,6 +155,18 @@ Global
 		{0C257594-671A-4183-9DE1-E198339A8A13}.Release|x64.Build.0 = Release|Any CPU
 		{0C257594-671A-4183-9DE1-E198339A8A13}.Release|x86.ActiveCfg = Release|Any CPU
 		{0C257594-671A-4183-9DE1-E198339A8A13}.Release|x86.Build.0 = Release|Any CPU
+		{305810E8-B2A3-4AB2-A0E6-FC6DBADD3069}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{305810E8-B2A3-4AB2-A0E6-FC6DBADD3069}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{305810E8-B2A3-4AB2-A0E6-FC6DBADD3069}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{305810E8-B2A3-4AB2-A0E6-FC6DBADD3069}.Debug|x64.Build.0 = Debug|Any CPU
+		{305810E8-B2A3-4AB2-A0E6-FC6DBADD3069}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{305810E8-B2A3-4AB2-A0E6-FC6DBADD3069}.Debug|x86.Build.0 = Debug|Any CPU
+		{305810E8-B2A3-4AB2-A0E6-FC6DBADD3069}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{305810E8-B2A3-4AB2-A0E6-FC6DBADD3069}.Release|Any CPU.Build.0 = Release|Any CPU
+		{305810E8-B2A3-4AB2-A0E6-FC6DBADD3069}.Release|x64.ActiveCfg = Release|Any CPU
+		{305810E8-B2A3-4AB2-A0E6-FC6DBADD3069}.Release|x64.Build.0 = Release|Any CPU
+		{305810E8-B2A3-4AB2-A0E6-FC6DBADD3069}.Release|x86.ActiveCfg = Release|Any CPU
+		{305810E8-B2A3-4AB2-A0E6-FC6DBADD3069}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

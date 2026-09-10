@@ -1,7 +1,14 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Waypoint.Gui.Tests" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Waypoint.Core\Waypoint.Core.csproj" />
+    <ProjectReference Include="..\Waypoint.Engine\Waypoint.Engine.csproj" />
+    <ProjectReference Include="..\Waypoint.Platform\Waypoint.Platform.csproj" />
+    <ProjectReference Include="..\Waypoint.Sources\Waypoint.Sources.csproj" />
   </ItemGroup>
 
   <PropertyGroup>
@@ -12,6 +19,9 @@
     <UseWPF>true</UseWPF>
     <RootNamespace>Waypoint.Gui</RootNamespace>
     <AssemblyName>waypoint-desktop</AssemblyName>
+    <!-- WPF has no Native AOT story and its binding stack is reflection-based,
+         so this one ships on the runtime while waypoint.exe stays AOT. -->
+    <PublishAot>false</PublishAot>
   </PropertyGroup>
 
 </Project>
