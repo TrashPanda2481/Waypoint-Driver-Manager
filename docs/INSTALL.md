@@ -10,8 +10,7 @@ Windows 10 or 11, x64.
 
 ## 1. Get the build
 
-Download from the repo's **Releases** page. The repo is private, so be signed in
-to GitHub, or use the CLI:
+Download from the repo's **Releases** page, or use the CLI:
 
 ```powershell
 # every build is a prerelease, so name the tag -- there is no "latest"

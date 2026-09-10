@@ -159,3 +159,21 @@ including the deliberate behavioural divergences from the original.
 The Python tree is preserved on the **`python-reference`** branch. It remains
 the only working Windows Update Catalog source, so it stays as a porting
 reference until that lands. It is not maintained.
+
+## Contributing
+
+Issues and pull requests are welcome. `main` is protected: it takes pull
+requests, not direct pushes, and force-pushes and deletions are blocked.
+
+If you are reporting something that could be used against a machine before
+there is a fix, use a private security advisory instead of an issue. See
+[`SECURITY.md`](SECURITY.md).
+
+## Licence
+
+GPL-3.0-or-later. See [`LICENSE`](LICENSE).
+
+Waypoint installs drivers, and the reason it exists is that the tool people
+currently reach for is closed and abandoned. Copyleft is the point: anyone who
+distributes a modified version has to publish their source, so a fork cannot
+become the next unmaintained binary nobody can inspect.
