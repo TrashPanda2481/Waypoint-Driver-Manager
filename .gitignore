@@ -31,3 +31,8 @@ dotnet/packaging/artifacts/
 
 # claude code worktrees
 .claude/worktrees/
+
+# Generated icon artwork - regenerate with packaging/branding/make-icons.ps1
+dotnet/packaging/branding/out/
+dotnet/packaging/branding/*.ico
+dotnet/packaging/branding/*.png
