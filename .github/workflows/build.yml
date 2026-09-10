@@ -1,0 +1,64 @@
+# Runs on every push to main and every pull request. The repo is public and
+# pull requests are the only way in for anyone but the owner, so this is what
+# stands between a contribution and main.
+name: build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Least privilege: this workflow reads the code and nothing else. A fork's
+# pull request gets no write access and no secrets regardless, but saying so
+# here means a later change has to be deliberate.
+permissions:
+  contents: read
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    # Windows only. Waypoint targets net8.0-windows for the GUI, calls
+    # CfgMgr32 directly, and has no other platform to run on.
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore
+        run: dotnet restore dotnet/Waypoint.sln
+
+      - name: Build
+        run: dotnet build dotnet/Waypoint.sln -c Release --no-restore -warnaserror
+
+      - name: Test
+        run: dotnet test dotnet/Waypoint.sln -c Release --no-build --verbosity normal
+
+  # Separate job: Native AOT needs the C++ toolchain and takes minutes, and a
+  # trim warning is a shipping defect rather than a test failure. Publishing
+  # here is what proves the binary that ships is the one that was tested.
+  aot:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Publish the CLI with Native AOT
+        run: dotnet publish dotnet/Waypoint.Cli -c Release -r win-x64 -warnaserror
+
+      - name: Report the binary size
+        shell: pwsh
+        run: |
+          $exe = 'dotnet/Waypoint.Cli/bin/Release/net8.0/win-x64/publish/waypoint.exe'
+          if (-not (Test-Path $exe)) { throw "No published binary at $exe" }
+          '{0:N0} bytes' -f (Get-Item $exe).Length

@@ -1,3 +1,11 @@
+// UNREACHABLE IN THE SHIPPING BUILD. PublishAot sets
+// BuiltInComInterop.IsSupported=false, so the [ComImport] activation below
+// throws "Built-in COM has been disabled" under Native AOT -- which is how the
+// CLI publishes. EngineFactory therefore leaves it out of BuildDefaultSources,
+// nothing constructs it, and FetchAsync was never implemented. Kept because the
+// WUA interface declarations are the expensive part and a ComWrappers rewrite
+// ([GeneratedComInterface]) would reuse them; see docs/TODO.md.
+
 // Windows Update Catalog driver source. Ported from sources/windows_update.py.
 // Queries the official channel — Microsoft.Update.Session / IUpdateSearcher
 // with "IsInstalled=0 and Type='Driver'" — not a third-party aggregator.

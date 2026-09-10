@@ -14,7 +14,7 @@ public class DetailCardTests
             ClassGuid: "{4d36e968-e325-11ce-bfc1-08002be10318}",
             ClassName: "Display",
             FriendlyName: "NVIDIA GeForce RTX 3060",
-            InstanceId: "PCI\\VEN_10DE&DEV_2504\\4&8bd6e8d&0&0008",
+            InstanceId: "PCI\\VEN_10DE&DEV_2504\\3&11583659&0&0010",
             ProblemCode: problemCode,
             Installed: installed);
 

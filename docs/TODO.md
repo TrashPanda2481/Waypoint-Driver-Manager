@@ -278,8 +278,11 @@ firmware on Dell/Lenovo/HP hardware is not.
 - **Windows Update `Version` is always `"unknown"`** in both implementations:
   `DriverVerVersion` is not a WUA property, so Python's `getattr` default
   always fires. Revisit in step 1 above, when that code first meets hardware.
-- **No `LICENSE` file**, though `pyproject.toml` declares MIT. The installer
-  skips its license page for this reason.
+- **`python-reference` still declares MIT** in its `pyproject.toml`, while
+  `main` is GPL-3.0. Both branches are public. The copyright is the same
+  either way, but someone could take the Python tree under the weaker terms.
+  Decide whether to relicense that branch or leave it as a historical
+  artefact; it is abandoned code either way.
 - **Windows Update Catalog source is unreachable under AOT.** `PublishAot`
   sets `System.Runtime.InteropServices.BuiltInComInterop.IsSupported=false`,
   so its `[ComImport]` activation throws "Built-in COM has been disabled" in
@@ -291,6 +294,62 @@ firmware on Dell/Lenovo/HP hardware is not.
 - **`HpPlatformInfo` record equality** reference-compares its
   `SupportedOsDescriptions` list — same trap as `Device.Hwids`, not yet load-
   bearing.
+
+## Audit 2026-09-10, before opening the repo further
+
+A pass for dead ends, defects, missing parts and PII. Fixed in the same pass
+unless noted.
+
+**Native DLL resolution was unpinned - the one that mattered.** Not one
+P/Invoke carried `DefaultDllImportSearchPaths`, so `cfgmgr32`, `srclient` and
+`kernel32` resolved by unqualified name. Neither cfgmgr32 nor srclient is a
+KnownDLL, so the loader tries the application directory first. Waypoint runs
+elevated to install drivers and the portable build unzips wherever the user
+likes, which makes "drop a same-named DLL beside the exe" a route into an
+admin process. Pinned assembly-wide to System32; all three live there.
+
+**Two process captures could deadlock.** `WindowsDeviceBackend.RunCapture` and
+`CabExtractor` both read stdout to the end before starting on stderr. A child
+that fills the pipe it is not being read from blocks writing while we block
+reading, and there is no timeout, so the CLI would hang for good. It never
+fired because `pnputil` and `expand.exe` keep stderr near-empty. Both drain
+concurrently now.
+
+**One machine-derived identifier was left in test data.** `DetailCardTests`
+used the development machine's real PCI instance path. Low sensitivity - it is
+bus topology, not a serial - but inconsistent with having just rebuilt the
+repository to purge exactly this class of data. Replaced with a synthetic path.
+Everything else is clean: no emails, no IPs, no key material in any commit on
+any branch, and the vendor fixtures are genuine public catalog data. Product
+model names like "RTX 3060" stay; a model is not an identifier.
+
+**`WindowsUpdateCatalogSource` is dead code and now says so.** 9.4KB that
+cannot run under AOT, constructed by nothing, with an unimplemented
+`FetchAsync`. The only thing referencing it was a comment in `EngineFactory`
+explaining its absence. Kept - the WUA interface declarations are the
+expensive part of a future `ComWrappers` rewrite - but labelled at the top of
+the file so a reader is not misled into thinking it works.
+
+**Nothing was checking pull requests.** The repo is public and pull requests
+are the only way in for anyone but the owner, and no workflow existed. Added
+one: build with `-warnaserror` and run all 134 tests on Windows, plus a
+separate job that publishes with Native AOT so a trim warning fails the build
+rather than shipping. `permissions: contents: read`.
+
+**Still missing, not fixed here:** there is no `Waypoint.Platform.Tests`. The
+layer holding every P/Invoke, the restore point, the driver export and the
+install path is the only one with no test project, and it is also the layer
+with no real-hardware evidence. `ExportDriverBackup` and `CreateRestorePoint`
+can both be exercised safely - export is read-only and a restore point is
+reversible - so two of the three unproven pieces could be closed without
+installing anything.
+
+**Checked and clean:** no empty catch blocks, no `.Result` or `.Wait()`, every
+`Process.Start` in a `using`, the one `async void` is a WPF event handler where
+that is correct, and every broad catch sits on a documented boundary. Running
+every analyzer at `AnalysisMode=All` surfaced nothing else of substance; the
+rest is API-shape opinion (`List<T>` in public surface, `string` rather than
+`Uri`) that does not apply to an application.
 
 ## Bugs left in the Python on purpose
 

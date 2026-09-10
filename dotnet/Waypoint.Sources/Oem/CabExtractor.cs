@@ -100,10 +100,12 @@ public static class CabExtractor
                 $"Could not start expand.exe to unpack {cabPath}. On Windows this should never " +
                 "happen — expand.exe ships with the OS, so something is wrong with PATH.");
 
-        var stdOut = process.StandardOutput.ReadToEnd();
-        var stdErr = process.StandardError.ReadToEnd();
+        // Concurrent drain: reading one pipe to the end first deadlocks the
+        // moment the child fills the other one.
+        var stdOut = process.StandardOutput.ReadToEndAsync();
+        var stdErr = process.StandardError.ReadToEndAsync();
         process.WaitForExit();
 
-        return $"{stdOut.Trim()} {stdErr.Trim()}".Trim();
+        return $"{stdOut.GetAwaiter().GetResult().Trim()} {stdErr.GetAwaiter().GetResult().Trim()}".Trim();
     }
 }

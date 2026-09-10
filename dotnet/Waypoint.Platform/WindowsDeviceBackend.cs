@@ -155,9 +155,12 @@ public sealed class WindowsDeviceBackend : IDeviceBackend
         using var process = Process.Start(startInfo)
             ?? throw new InvalidOperationException($"Could not start {fileName}.");
 
-        var stdOut = process.StandardOutput.ReadToEnd();
-        var stdErr = process.StandardError.ReadToEnd();
+        // Both pipes are drained concurrently. Reading one to the end before
+        // starting the other deadlocks as soon as the child fills the pipe it
+        // is not being read from: it blocks writing, we block reading.
+        var stdOut = process.StandardOutput.ReadToEndAsync();
+        var stdErr = process.StandardError.ReadToEndAsync();
         process.WaitForExit();
-        return (process.ExitCode, stdOut, stdErr);
+        return (process.ExitCode, stdOut.GetAwaiter().GetResult(), stdErr.GetAwaiter().GetResult());
     }
 }
