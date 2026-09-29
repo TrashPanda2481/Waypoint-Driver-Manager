@@ -27,7 +27,7 @@
     <WixVariable Id="WixUILicenseRtf" Value="LICENSE.rtf" />
 
     <!-- AllowSameVersionUpgrades so switching between the bundled-runtime and
-         requires-dotnet8 builds of the same version replaces rather than
+         requires-dotnet10 builds of the same version replaces rather than
          stacking: they are one product in two packagings. -->
     <MajorUpgrade
         AllowSameVersionUpgrades="yes"
@@ -55,7 +55,7 @@
 
     <!-- Harvested rather than listed: the bundled-runtime build is ~150 files
          of .NET, and hand-maintaining that list would rot on every SDK bump.
-         The requires-dotnet8 build resolves to a handful through the same
+         The requires-dotnet10 build resolves to a handful through the same
          glob. Whatever is in GuiDir ships, so build-package.ps1 clears the
          PDBs out of it first. -->
     <ComponentGroup Id="GuiComponents" Directory="INSTALLFOLDER">

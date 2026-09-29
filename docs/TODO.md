@@ -408,6 +408,19 @@ verbatim across five `.csproj` files (matches the already-known lack of a
 since centralizing package versions is a separate refactor from bumping
 them, and wasn't asked for.
 
+## .NET 10 migration, 2026-09-29
+
+.NET 8 and 9 go out of support on 2026-11-10, so every project now targets
+.NET 10 (LTS to 2028-11-14). Rationale and evidence:
+[`ADR-0002`](ADR-0002-dotnet8-to-dotnet10.md). The small builds are now
+`requires-dotnet10`.
+
+Still open after the merge:
+
+- Build the packages with `build-package.ps1` and cut a release. The README
+  artifact sizes are .NET 8 numbers until then.
+- The README's "~7MB standalone exe" has not been re-measured on Windows.
+
 ## Bugs left in the Python on purpose
 
 The .NET port fixed these; Python keeps them until it is retired. Both are

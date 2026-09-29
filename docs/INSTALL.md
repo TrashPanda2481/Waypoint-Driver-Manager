@@ -26,6 +26,10 @@ Pick one row, then pick installer or portable:
 | `waypoint-portable-0.2.0-win-x64.zip` | ~70 MB | nothing |
 | `waypoint-portable-0.2.0-win-x64-requires-dotnet8.zip` | ~4 MB | same runtime |
 
+That table is the v0.2.0-alpha.1 release, which targets .NET 8. Builds after it
+target .NET 10 and the small ones are named `requires-dotnet10` instead
+([ADR-0002](ADR-0002-dotnet8-to-dotnet10.md)).
+
 The difference is the window, not the tool. `waypoint.exe` is compiled ahead of
 time and depends on nothing in either build, so the command line works on a bare
 machine regardless. Only `waypoint-desktop.exe` needs .NET, and the larger build
@@ -166,7 +170,7 @@ dotnet run --project Waypoint.Cli -- scan
 dotnet run --project Waypoint.Gui          # the window
 ```
 
-Needs the .NET 8 SDK (or 9 — it targets `net8.0`).
+Needs the .NET 10 SDK (it targets `net10.0`).
 
 To produce the installer yourself you also need the **MSVC C++ toolchain** for
 Native AOT and **WiX 5**:

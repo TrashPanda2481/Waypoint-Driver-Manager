@@ -21,7 +21,7 @@ concurrency:
 
 jobs:
   test:
-    # Windows only. Waypoint targets net8.0-windows for the GUI, calls
+    # Windows only. Waypoint targets net10.0-windows for the GUI, calls
     # CfgMgr32 directly, and has no other platform to run on.
     runs-on: windows-latest
 
@@ -30,7 +30,7 @@ jobs:
 
       - uses: actions/setup-dotnet@v6
         with:
-          dotnet-version: '8.0.x'
+          dotnet-version: '10.0.x'
 
       - name: Restore
         run: dotnet restore dotnet/Waypoint.sln
@@ -51,7 +51,7 @@ jobs:
 
       - uses: actions/setup-dotnet@v6
         with:
-          dotnet-version: '8.0.x'
+          dotnet-version: '10.0.x'
 
       - name: Publish the CLI with Native AOT
         run: dotnet publish dotnet/Waypoint.Cli -c Release -r win-x64 -warnaserror
@@ -59,6 +59,6 @@ jobs:
       - name: Report the binary size
         shell: pwsh
         run: |
-          $exe = 'dotnet/Waypoint.Cli/bin/Release/net8.0/win-x64/publish/waypoint.exe'
+          $exe = 'dotnet/Waypoint.Cli/bin/Release/net10.0/win-x64/publish/waypoint.exe'
           if (-not (Test-Path $exe)) { throw "No published binary at $exe" }
           '{0:N0} bytes' -f (Get-Item $exe).Length

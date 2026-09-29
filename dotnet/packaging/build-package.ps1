@@ -2,8 +2,8 @@
 # carries .NET, because WPF has no Native AOT story and waypoint.exe does:
 #
 #   waypoint-*-<version>-<rid>.{zip,msi}                  ~170MB, runs anywhere
-#   waypoint-*-<version>-<rid>-requires-dotnet8.{zip,msi} ~8MB, needs the
-#                                                         .NET 8 Desktop Runtime
+#   waypoint-*-<version>-<rid>-requires-dotnet10.{zip,msi} ~8MB, needs the
+#                                                         .NET 10 Desktop Runtime
 #
 # waypoint.exe is identical in both: Native AOT, no runtime dependency ever.
 # Only waypoint-desktop.exe differs, so on a machine with no runtime and no
@@ -18,7 +18,7 @@ param(
     [string]$Configuration = 'Release',
     [string]$Runtime = 'win-x64',
     [switch]$SkipMsi,
-    [ValidateSet('both', 'bundled', 'requires-dotnet8')]
+    [ValidateSet('both', 'bundled', 'requires-dotnet10')]
     [string]$Variant = 'both'
 )
 
@@ -27,7 +27,7 @@ $ErrorActionPreference = 'Stop'
 $packagingDir = $PSScriptRoot
 $dotnetDir = Split-Path $packagingDir -Parent
 $artifacts = Join-Path $packagingDir 'artifacts'
-$cliPublishDir = Join-Path $dotnetDir "Waypoint.Cli\bin\$Configuration\net8.0\$Runtime\publish"
+$cliPublishDir = Join-Path $dotnetDir "Waypoint.Cli\bin\$Configuration\net10.0\$Runtime\publish"
 
 $vsInstaller = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer"
 if ((Test-Path $vsInstaller) -and ($env:PATH -notlike "*$vsInstaller*")) {
@@ -71,13 +71,13 @@ if (-not $thumbprint) {
 }
 
 $variants = switch ($Variant) {
-    'both' { @('bundled', 'requires-dotnet8') }
+    'both' { @('bundled', 'requires-dotnet10') }
     default { @($Variant) }
 }
 
 foreach ($v in $variants) {
     $selfContained = $v -eq 'bundled'
-    $suffix = if ($selfContained) { '' } else { '-requires-dotnet8' }
+    $suffix = if ($selfContained) { '' } else { '-requires-dotnet10' }
     $guiDir = Join-Path ([System.IO.Path]::GetTempPath()) "waypoint-gui-$v-$([guid]::NewGuid().ToString('N'))"
 
     Write-Host ""
@@ -103,8 +103,8 @@ This build carries its own copy of .NET. Nothing else to install.
         }
         else {
             @"
-This build needs the .NET 8 Desktop Runtime for waypoint-desktop.exe:
-https://dotnet.microsoft.com/download/dotnet/8.0 (x64 Desktop Runtime)
+This build needs the .NET 10 Desktop Runtime for waypoint-desktop.exe:
+https://dotnet.microsoft.com/download/dotnet/10.0 (x64 Desktop Runtime)
 
 waypoint.exe does NOT need it. The CLI is self-contained in both builds,
 so it still works on a machine with no runtime and no network.
