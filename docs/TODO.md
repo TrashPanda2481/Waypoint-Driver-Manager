@@ -377,6 +377,37 @@ best-effort temp-directory cleanup in a `finally`/`Dispose`, narrowly catching
 directory delete lost a race with something else holding the file would be
 worse — but the record should say that instead of "none."
 
+**Test packages were stale, and this was actually verified rather than
+guessed at.** `xunit` 2.5.3, `xunit.runner.visualstudio` 2.5.3,
+`Microsoft.NET.Test.Sdk` 17.8.0 and `coverlet.collector` 6.0.0 were all
+several versions behind current (checked against the live NuGet API, not a
+search snippet). `xunit` 2.x is now officially deprecated/legacy upstream
+(security fixes only, all feature work moved to `xunit.v3`) — bumped to
+2.9.3, its last release, rather than migrating to v3, which is a separate,
+bigger breaking change out of scope here. Bumped the other three to current:
+`xunit.runner.visualstudio` 4.0.0, `Microsoft.NET.Test.Sdk` 18.10.1,
+`coverlet.collector` 10.1.0.
+
+Installed the .NET 8 SDK in the Linux sandbox to check this for real instead
+of editing version numbers on faith: `Waypoint.Core`, `Waypoint.Engine`,
+`Waypoint.Platform`, `Waypoint.Sources`, `Waypoint.Cli`, and their four
+cross-platform test projects target plain `net8.0` (only `Waypoint.Gui` and
+`Waypoint.Gui.Tests` are `net8.0-windows`/WPF), so all of them actually
+build and run here. Ran the full 115 cross-platform tests both before and
+after the bump: identical result both times, 110 passed / 5 failed, `-warnaserror`
+clean throughout. The 5 failures are `Waypoint.Sources.Tests` cases that shell
+out to `expand.exe`/`makecab.exe` — Windows-only tools this Linux sandbox
+doesn't have (`Win32Exception: ... No such file or directory`), not a code
+defect and not something the package bump touched. `Waypoint.Gui.Tests` was
+bumped identically for consistency but, being WPF-only, is **unverified** —
+nobody has built it since.
+
+Found no `Directory.Packages.props`, so all four versions are repeated
+verbatim across five `.csproj` files (matches the already-known lack of a
+`Directory.Build.props` for `Nullable`/`ImplicitUsings`, above) — left as is,
+since centralizing package versions is a separate refactor from bumping
+them, and wasn't asked for.
+
 ## Bugs left in the Python on purpose
 
 The .NET port fixed these; Python keeps them until it is retired. Both are
