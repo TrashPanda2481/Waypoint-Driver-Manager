@@ -18,12 +18,13 @@
 
     <!-- A wizard, not a silent drop: an installer that never names itself
          leaves the user with no idea what they just approved at the UAC
-         prompt. License page is skipped — the project ships no LICENSE file. -->
+         prompt. The repo has shipped a GPL-3.0 LICENSE since 2026-09-10;
+         the license page uses the default WixUI_InstallDir sequence
+         (Welcome -> License -> InstallDir -> ...) rather than skipping it,
+         and LICENSE.rtf here is a direct RTF rendering of that same file
+         (WiX's license control only accepts RTF, not plain text). -->
     <ui:WixUI Id="WixUI_InstallDir" InstallDirectory="INSTALLFOLDER" />
-    <UI>
-      <Publish Dialog="WelcomeDlg" Control="Next" Event="NewDialog" Value="InstallDirDlg" Order="2" />
-      <Publish Dialog="InstallDirDlg" Control="Back" Event="NewDialog" Value="WelcomeDlg" Order="2" />
-    </UI>
+    <WixVariable Id="WixUILicenseRtf" Value="LICENSE.rtf" />
 
     <!-- AllowSameVersionUpgrades so switching between the bundled-runtime and
          requires-dotnet8 builds of the same version replaces rather than
@@ -64,6 +65,13 @@
     <ComponentGroup Id="ProductComponents" Directory="INSTALLFOLDER">
       <Component Id="CliExecutable">
         <File Id="WaypointExe" Source="$(var.CliExe)" KeyPath="yes" />
+      </Component>
+
+      <!-- Same GPL-3.0 text as the license page and the repo root, so an
+           installed copy still carries its own license without a network
+           round trip back to GitHub. -->
+      <Component Id="LicenseFile" Guid="DF47417A-0A9B-4AD5-8483-465437BEC2B7">
+        <File Id="LicenseTxt" Name="LICENSE.txt" Source="..\..\LICENSE" KeyPath="yes" />
       </Component>
 
       <!-- System PATH so `waypoint` resolves in any new shell. Part="last" appends

@@ -351,6 +351,32 @@ every analyzer at `AnalysisMode=All` surfaced nothing else of substance; the
 rest is API-shape opinion (`List<T>` in public surface, `string` rather than
 `Uri`) that does not apply to an application.
 
+## Audit follow-up, 2026-09-28
+
+**Installer skipped the license page on a stale premise.** `Waypoint.wxs`'s
+comment said the license page was skipped because "the project ships no
+LICENSE file" — true on 2026-09-09 when the packaging script was written, not
+true since 2026-09-10 when GPL-3.0 landed at the repo root. The `<Publish>`
+overrides that jumped `WelcomeDlg` straight to `InstallDirDlg` are removed, so
+the installer now uses `WixUI_InstallDir`'s default sequence
+(Welcome -> License -> InstallDir -> ...). `dotnet/packaging/LICENSE.rtf` is a
+direct RTF rendering of the repo's `LICENSE` (WiX's license control only
+accepts RTF) — round-tripped through LibreOffice back to plain text to check
+it renders as the same document, not just that it parses. The installed
+product also now carries its own `LICENSE.txt` (a new `ProductComponents`
+entry sourced straight from the repo-root file, not a copy that can drift),
+so a machine with Waypoint installed has the license on disk without a trip
+back to GitHub.
+
+**Correction to the 2026-09-10 audit's "no empty catch blocks" line: not
+accurate.** There are 5 empty `catch` blocks (`DellCatalogSource.cs`,
+`CabExtractor.cs`, three test `Dispose()` methods), all the same pattern —
+best-effort temp-directory cleanup in a `finally`/`Dispose`, narrowly catching
+`IOException`/`UnauthorizedAccessException` only, never a bare
+`catch (Exception)`. Not a defect — failing the real operation because a temp
+directory delete lost a race with something else holding the file would be
+worse — but the record should say that instead of "none."
+
 ## Bugs left in the Python on purpose
 
 The .NET port fixed these; Python keeps them until it is retired. Both are
