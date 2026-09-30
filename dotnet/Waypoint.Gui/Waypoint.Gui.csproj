@@ -22,6 +22,9 @@
     <!-- WPF has no Native AOT story and its binding stack is reflection-based,
          so this one ships on the runtime while waypoint.exe stays AOT. -->
     <PublishAot>false</PublishAot>
+    <!-- Releases get the real version from build-package.ps1 (-p:Version).
+         0.0.0 marks a dev build to the update check. -->
+    <Version>0.0.0</Version>
   </PropertyGroup>
 
 </Project>

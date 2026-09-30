@@ -4,7 +4,8 @@
         xmlns:local="clr-namespace:Waypoint.Gui"
         Title="Waypoint Driver Manager" Height="700" Width="1100"
         MinHeight="480" MinWidth="820"
-        Background="{StaticResource Surface}"
+        Background="{DynamicResource Surface}" Foreground="{DynamicResource Ink}"
+        FontFamily="{StaticResource UiFont}"
         TextOptions.TextFormattingMode="Display">
 
     <Window.Resources>
@@ -14,7 +15,7 @@
                 <TextBlock Text="{Binding Detail}" Margin="10,0,0,0">
                     <TextBlock.Style>
                         <Style TargetType="TextBlock">
-                            <Setter Property="Foreground" Value="{StaticResource Muted}" />
+                            <Setter Property="Foreground" Value="{DynamicResource Muted}" />
                             <Style.Triggers>
                                 <!-- Muted grey on the selection highlight is unreadable. -->
                                 <DataTrigger Value="True" Binding="{Binding IsSelected,
@@ -26,9 +27,9 @@
                         </Style>
                     </TextBlock.Style>
                 </TextBlock>
-                <Border Background="{StaticResource FlagFill}" CornerRadius="3" Padding="5,0" Margin="8,0,0,0"
+                <Border Background="{DynamicResource FlagFill}" CornerRadius="3" Padding="5,0" Margin="8,0,0,0"
                         Visibility="{Binding IsFlagged, Converter={StaticResource BoolToVisible}}">
-                    <TextBlock Text="confirm" FontSize="10" Foreground="{StaticResource FlagInk}" />
+                    <TextBlock Text="confirm" FontSize="10" Foreground="{DynamicResource FlagInk}" />
                 </Border>
             </StackPanel>
         </HierarchicalDataTemplate>
@@ -37,7 +38,8 @@
     <DockPanel>
 
         <!-- Command bar -->
-        <Border DockPanel.Dock="Top" Background="{StaticResource Panel}" BorderBrush="{StaticResource Line}"
+        <Border DockPanel.Dock="Top" BorderBrush="{DynamicResource Accent}" BorderThickness="0,3,0,0">
+        <Border Background="{DynamicResource Panel}" BorderBrush="{DynamicResource Line}"
                 BorderThickness="0,0,0,1" Padding="14,11">
             <Grid>
                 <Grid.ColumnDefinitions>
@@ -46,7 +48,13 @@
                 </Grid.ColumnDefinitions>
 
                 <StackPanel>
-                    <TextBlock x:Name="BackendLabel" Text="Backend: —" FontWeight="SemiBold" />
+                    <StackPanel Orientation="Horizontal">
+                        <Path Data="{StaticResource WaypointGlyph}" Fill="{DynamicResource Accent}"
+                              Width="14" Height="14" Margin="0,0,8,0" VerticalAlignment="Center" />
+                        <TextBlock Text="Waypoint" FontWeight="Bold" Foreground="{DynamicResource AccentInk}"
+                                   Margin="0,0,12,0" />
+                        <TextBlock x:Name="BackendLabel" Text="Backend: —" FontWeight="SemiBold" />
+                    </StackPanel>
                     <!-- Wraps rather than clips: four options do not fit one
                          line at the minimum window width, and the Scan button
                          was cutting the last label in half. -->
@@ -66,18 +74,32 @@
                 </StackPanel>
 
                 <Button x:Name="ScanButton" Grid.Column="1" Content="Scan" Click="OnScanClick"
+                        Style="{StaticResource AccentButton}"
                         MinWidth="104" Height="34" Margin="14,0,0,0" VerticalAlignment="Top" />
             </Grid>
         </Border>
+        </Border>
 
         <!-- Status bar -->
-        <Border DockPanel.Dock="Bottom" Background="{StaticResource Panel}" BorderBrush="{StaticResource Line}"
+        <Border DockPanel.Dock="Bottom" Background="{DynamicResource Panel}" BorderBrush="{DynamicResource Line}"
                 BorderThickness="0,1,0,0" Padding="14,8">
-            <StackPanel>
-                <TextBlock x:Name="StatusLabel" Text="No scan run yet." TextWrapping="Wrap" />
-                <TextBlock x:Name="SourceFailureLabel" Foreground="{StaticResource Warn}" TextWrapping="Wrap"
-                           Margin="0,4,0,0" Visibility="Collapsed" />
-            </StackPanel>
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Top" Margin="16,0,0,0">
+                    <TextBlock x:Name="UpdateStatus" Foreground="{DynamicResource Muted}" Margin="0,0,12,0" />
+                    <TextBlock Margin="0,0,16,0">
+                        <Hyperlink x:Name="CheckUpdatesLink" Click="OnCheckUpdatesClick"
+                                   ToolTip="Look for a newer release on GitHub. Nothing is downloaded.">Check for updates</Hyperlink>
+                    </TextBlock>
+                    <CheckBox x:Name="WindowsThemeCheckBox" Content="Match Windows colors"
+                              ToolTip="Follow the Windows light/dark mode and accent color"
+                              Checked="OnThemeToggled" Unchecked="OnThemeToggled" />
+                </StackPanel>
+                <StackPanel>
+                    <TextBlock x:Name="StatusLabel" Text="No scan run yet." TextWrapping="Wrap" />
+                    <TextBlock x:Name="SourceFailureLabel" Foreground="{DynamicResource Warn}" TextWrapping="Wrap"
+                               Margin="0,4,0,0" Visibility="Collapsed" />
+                </StackPanel>
+            </DockPanel>
         </Border>
 
         <Grid>
@@ -108,30 +130,30 @@
                     <TextBlock x:Name="EmptyTitle" FontSize="15" FontWeight="SemiBold"
                                TextAlignment="Center" TextWrapping="Wrap" />
                     <TextBlock x:Name="EmptyHint" Margin="0,8,0,0" TextAlignment="Center"
-                               TextWrapping="Wrap" Foreground="{StaticResource Muted}" />
+                               TextWrapping="Wrap" Foreground="{DynamicResource Muted}" />
                 </StackPanel>
             </Grid>
 
             <GridSplitter Grid.Column="1" Width="4" HorizontalAlignment="Stretch"
-                          Background="{StaticResource Line}" />
+                          Background="{DynamicResource Line}" />
 
             <!-- Diff card -->
-            <ScrollViewer Grid.Column="2" VerticalScrollBarVisibility="Auto" Background="{StaticResource Panel}">
+            <ScrollViewer Grid.Column="2" VerticalScrollBarVisibility="Auto" Background="{DynamicResource Panel}">
                 <Grid Margin="16">
                     <TextBlock Text="Select a device to compare its installed driver against the candidate."
-                               Foreground="{StaticResource Muted}" TextWrapping="Wrap"
+                               Foreground="{DynamicResource Muted}" TextWrapping="Wrap"
                                Visibility="{Binding HasSelection, Converter={StaticResource BoolToCollapsed}}" />
 
                     <StackPanel Visibility="{Binding HasSelection, Converter={StaticResource BoolToVisible}}">
                         <TextBlock Text="{Binding DeviceName}" FontSize="16" FontWeight="SemiBold" TextWrapping="Wrap" />
-                        <TextBlock Margin="0,3,0,0" Foreground="{StaticResource Muted}">
+                        <TextBlock Margin="0,3,0,0" Foreground="{DynamicResource Muted}">
                             <Run Text="{Binding ClassName, Mode=OneWay}" /><Run Text="  ·  " /><Run Text="{Binding Status, Mode=OneWay}" />
                         </TextBlock>
 
                         <Border Margin="0,14,0,0" Padding="11,9" CornerRadius="4"
-                                Background="{StaticResource WarnFill}" BorderBrush="{StaticResource Warn}" BorderThickness="1"
+                                Background="{DynamicResource WarnFill}" BorderBrush="{DynamicResource Warn}" BorderThickness="1"
                                 Visibility="{Binding HasWarnings, Converter={StaticResource BoolToVisible}}">
-                            <TextBlock Text="{Binding Warnings}" TextWrapping="Wrap" Foreground="{StaticResource WarnInk}" />
+                            <TextBlock Text="{Binding Warnings}" TextWrapping="Wrap" Foreground="{DynamicResource WarnInk}" />
                         </Border>
 
                         <Grid Margin="0,16,0,0">
@@ -178,13 +200,11 @@
                             <TextBlock Grid.Row="6" Grid.Column="2" Text="{Binding CandidateSize}" Style="{StaticResource FieldValue}" />
                         </Grid>
 
-                        <TextBlock Text="Hardware IDs" FontWeight="SemiBold" Margin="0,20,0,5" />
-                        <TextBlock Text="{Binding Hwids}" FontFamily="Consolas, Courier New" FontSize="11"
-                                   TextWrapping="Wrap" Foreground="{StaticResource Muted}" />
+                        <TextBlock Text="Hardware IDs" Style="{StaticResource SectionHeading}" />
+                        <TextBlock Text="{Binding Hwids}" Style="{StaticResource MonoValue}" />
 
-                        <TextBlock Text="Instance ID" FontWeight="SemiBold" Margin="0,16,0,5" />
-                        <TextBlock Text="{Binding InstanceId}" FontFamily="Consolas, Courier New" FontSize="11"
-                                   TextWrapping="Wrap" Foreground="{StaticResource Muted}" />
+                        <TextBlock Text="Instance ID" Style="{StaticResource SectionHeading}" Margin="0,16,0,5" />
+                        <TextBlock Text="{Binding InstanceId}" Style="{StaticResource MonoValue}" />
                     </StackPanel>
                 </Grid>
             </ScrollViewer>

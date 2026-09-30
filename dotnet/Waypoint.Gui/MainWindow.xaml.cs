@@ -1,8 +1,12 @@
 // Ported from gui/app.py. Same engine construction path the CLI uses, so the
 // GUI can't silently disagree with `waypoint scan`.
 
+using System.Diagnostics;
+using System.Net.Http;
+using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Documents;
 using Waypoint.Core;
 using Waypoint.Engine;
 
@@ -16,9 +20,78 @@ public partial class MainWindow : Window
     // Kept so the up-to-date toggle re-renders instead of re-scanning.
     private ScanOutcome? _lastScan;
 
+    protected override void OnSourceInitialized(EventArgs e)
+    {
+        base.OnSourceInitialized(e);
+        ThemeManager.ApplyTitleBar(this);
+    }
+
+    private async void OnCheckUpdatesClick(object sender, RoutedEventArgs e)
+    {
+        CheckUpdatesLink.IsEnabled = false;
+        UpdateStatus.Inlines.Clear();
+        UpdateStatus.Text = "Checking…";
+        try
+        {
+            ShowUpdateResult(await UpdateChecker.CheckAsync());
+        }
+        catch (Exception ex) when (ex is HttpRequestException
+                                       or TaskCanceledException or JsonException)
+        {
+            UpdateStatus.Text = "Couldn't reach GitHub.";
+            UpdateStatus.ToolTip = ex.Message;
+        }
+        finally
+        {
+            CheckUpdatesLink.IsEnabled = true;
+        }
+    }
+
+    private void ShowUpdateResult(UpdateResult r)
+    {
+        UpdateStatus.Inlines.Clear();
+        UpdateStatus.ToolTip = null;
+        switch (r.State)
+        {
+            case UpdateState.UpToDate:
+                UpdateStatus.Text = $"Up to date ({r.Current}).";
+                break;
+            case UpdateState.NoReleases:
+                UpdateStatus.Text = "No releases published yet.";
+                break;
+            case UpdateState.Available:
+                UpdateStatus.Inlines.Add($"Version {r.Latest!.Version} is available: ");
+                UpdateStatus.Inlines.Add(ReleaseLink("download", r.Latest.Page));
+                break;
+            case UpdateState.DevBuild:
+                UpdateStatus.Inlines.Add($"Dev build. Latest release is {r.Latest!.Version}: ");
+                UpdateStatus.Inlines.Add(ReleaseLink("view", r.Latest.Page));
+                break;
+        }
+    }
+
+    private static Hyperlink ReleaseLink(string text, Uri page)
+    {
+        var link = new Hyperlink(new Run(text))
+        {
+            NavigateUri = page,
+            ToolTip = page.AbsoluteUri,
+        };
+        link.RequestNavigate += (_, e) =>
+        {
+            Process.Start(new ProcessStartInfo(e.Uri.AbsoluteUri) { UseShellExecute = true });
+            e.Handled = true;
+        };
+        return link;
+    }
+
+    private void OnThemeToggled(object sender, RoutedEventArgs e)
+        => ThemeManager.Apply(WindowsThemeCheckBox.IsChecked == true ? AppTheme.Windows : AppTheme.Waypoint);
+
     public MainWindow()
     {
         InitializeComponent();
+        WindowsThemeCheckBox.IsChecked = ThemeManager.Current == AppTheme.Windows;
         DataContext = DetailCard.Empty;
 
         try

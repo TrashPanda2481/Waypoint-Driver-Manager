@@ -3,31 +3,104 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:Waypoint.Gui"
              StartupUri="MainWindow.xaml">
+    <!-- Colors come from Palette.cs via ThemeManager, merged in at startup.
+         Reference them with DynamicResource so a theme switch reaches them. -->
     <Application.Resources>
 
         <local:BoolToVisibilityConverter x:Key="BoolToVisible" />
         <local:BoolToVisibilityConverter x:Key="BoolToCollapsed" Invert="True" />
 
-        <SolidColorBrush x:Key="Surface" Color="#FFFFFF" />
-        <SolidColorBrush x:Key="Panel" Color="#F6F7F9" />
-        <SolidColorBrush x:Key="Line" Color="#DFE3E8" />
-        <SolidColorBrush x:Key="Muted" Color="#5C6570" />
+        <!-- Type -->
+        <FontFamily x:Key="UiFont">Segoe UI Variable Text, Segoe UI</FontFamily>
+        <FontFamily x:Key="MonoFont">Cascadia Mono, Consolas, Courier New</FontFamily>
 
-        <!-- Warning, not the accent: reserved for things the technician must read. -->
-        <SolidColorBrush x:Key="Warn" Color="#C9820A" />
-        <SolidColorBrush x:Key="WarnFill" Color="#FFF7E6" />
-        <SolidColorBrush x:Key="WarnInk" Color="#6B4708" />
-        <SolidColorBrush x:Key="FlagFill" Color="#FFE9C7" />
-        <SolidColorBrush x:Key="FlagInk" Color="#6B4708" />
+        <!-- Waypoint mark -->
+        <Geometry x:Key="WaypointGlyph">M 7,0 L 14,7 L 7,14 L 0,7 Z M 7,4 L 10,7 L 7,10 L 4,7 Z</Geometry>
 
         <Style x:Key="FieldLabel" TargetType="TextBlock">
-            <Setter Property="Foreground" Value="{StaticResource Muted}" />
+            <Setter Property="Foreground" Value="{DynamicResource Muted}" />
             <Setter Property="Margin" Value="0,0,18,6" />
         </Style>
 
         <Style x:Key="FieldValue" TargetType="TextBlock">
             <Setter Property="Margin" Value="0,0,10,6" />
             <Setter Property="TextWrapping" Value="Wrap" />
+        </Style>
+
+        <Style x:Key="SectionHeading" TargetType="TextBlock">
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="{DynamicResource AccentInk}" />
+            <Setter Property="Margin" Value="0,20,0,5" />
+        </Style>
+
+        <Style x:Key="MonoValue" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="{StaticResource MonoFont}" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="Foreground" Value="{DynamicResource Muted}" />
+        </Style>
+
+        <!-- Stock CheckBox pins its own foreground. -->
+        <Style TargetType="CheckBox">
+            <Setter Property="Foreground" Value="{DynamicResource Ink}" />
+            <Style.Triggers>
+                <Trigger Property="IsEnabled" Value="False">
+                    <Setter Property="Foreground" Value="{DynamicResource Muted}" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Links take the accent, not stock blue. -->
+        <Style TargetType="Hyperlink">
+            <Setter Property="Foreground" Value="{DynamicResource AccentInk}" />
+            <Style.Triggers>
+                <Trigger Property="IsEnabled" Value="False">
+                    <Setter Property="Foreground" Value="{DynamicResource Muted}" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Primary action -->
+        <Style x:Key="AccentButton" TargetType="Button">
+            <Setter Property="Background" Value="{DynamicResource Accent}" />
+            <Setter Property="Foreground" Value="{DynamicResource OnAccent}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentPressed}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Padding" Value="16,0" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Chrome" CornerRadius="4" SnapsToDevicePixels="True"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}">
+                            <ContentPresenter Margin="{TemplateBinding Padding}"
+                                              HorizontalAlignment="Center" VerticalAlignment="Center"
+                                              RecognizesAccessKey="True" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource AccentHover}" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource AccentPressed}" />
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="Chrome" Property="BorderBrush" Value="{DynamicResource Ink}" />
+                                <Setter TargetName="Chrome" Property="BorderThickness" Value="2" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource Line}" />
+                                <Setter TargetName="Chrome" Property="BorderBrush" Value="{DynamicResource Line}" />
+                                <Setter Property="Foreground" Value="{DynamicResource Muted}" />
+                                <Setter Property="Cursor" Value="Arrow" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
 
     </Application.Resources>
