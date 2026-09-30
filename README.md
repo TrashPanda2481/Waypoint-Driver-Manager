@@ -69,7 +69,7 @@ dotnet/
   Waypoint.Sources/    # local cache + Dell/Lenovo/HP OEM catalogs
   Waypoint.Engine/     # audit log, plan, scan/plan/apply orchestration, factory
   Waypoint.Platform/   # mock + the Windows backend (CfgMgr32, pnputil)
-  Waypoint.Cli/        # scan / plan / apply
+  Waypoint.Cli/        # scan / plan / apply / driverpack
   Waypoint.Gui/        # WPF window: triage tree + installed-vs-candidate card
   *.Tests/             # xUnit, incl. real trimmed vendor catalog fixtures
   packaging/           # WiX installer + build script
@@ -106,10 +106,10 @@ Menu and Add/Remove Programs, and installs silently for Intune/SCCM/GPO/PDQ.
 
 | Artifact | Size | Needs |
 |---|---|---|
-| `waypoint-installer-<ver>-<rid>.msi` | 67 MB | nothing |
-| `waypoint-installer-<ver>-<rid>-requires-dotnet10.msi` | 11 MB | .NET 10 Desktop Runtime |
-| `waypoint-portable-<ver>-<rid>.zip` | 70 MB | nothing |
-| `waypoint-portable-<ver>-<rid>-requires-dotnet10.zip` | 4 MB | same runtime |
+| `waypoint-installer-<ver>-<rid>.msi` | 61 MB | nothing |
+| `waypoint-installer-<ver>-<rid>-requires-dotnet10.msi` | 10 MB | .NET 10 Desktop Runtime |
+| `waypoint-portable-<ver>-<rid>.zip` | 63 MB | nothing |
+| `waypoint-portable-<ver>-<rid>-requires-dotnet10.zip` | 3 MB | same runtime |
 
 WPF has no Native AOT story, so the GUI ships on the runtime and the filename
 says whether that runtime is bundled. `waypoint.exe` is Native AOT and identical
@@ -164,8 +164,9 @@ reference until that lands. It is not maintained.
 
 ## Contributing
 
-Issues and pull requests are welcome. `main` is protected: it takes pull
-requests, not direct pushes, and force-pushes and deletions are blocked.
+Issues and pull requests are welcome. `main` is protected: changes land
+through pull requests, and force-pushes and deletions are blocked. The repo
+owner can bypass the pull-request rule.
 
 If you are reporting something that could be used against a machine before
 there is a fix, use a private security advisory instead of an issue. See

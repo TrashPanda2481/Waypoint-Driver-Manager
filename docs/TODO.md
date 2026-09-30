@@ -417,9 +417,11 @@ them, and wasn't asked for.
 
 Still open after the merge:
 
-- Build the packages with `build-package.ps1` and cut a release. The README
-  artifact sizes are .NET 8 numbers until then.
-- The README's "~7MB standalone exe" has not been re-measured on Windows.
+- ~~Build the packages and cut a release.~~ Done 2026-09-30: v0.2.1-alpha.1,
+  built on Windows 11 with `build-package.ps1`. The bundled MSI was installed
+  (license page shown, `LICENSE.txt` present) and the window scanned 234
+  devices. The `requires-dotnet10` MSI and both zips were not installed.
+- ~~Re-measure the AOT exe.~~ CI reports 7,747,072 bytes, so "~7MB" stands.
 
 **Correction to the 2026-09-28 license fix.** It pointed WiX at
 `..\..\LICENSE` and `LICENSE.rtf` as relative paths, on the belief that

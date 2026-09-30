@@ -14,20 +14,21 @@ Download from the repo's **Releases** page, or use the CLI:
 
 ```powershell
 # every build is a prerelease, so name the tag -- there is no "latest"
-gh release download v0.2.0-alpha.1 --repo TrashPanda2481/Waypoint-Driver-Manager
+gh release download v0.2.1-alpha.1 --repo TrashPanda2481/Waypoint-Driver-Manager
 ```
 
 Pick one row, then pick installer or portable:
 
 | Build | Size | Needs |
 |---|---|---|
-| `waypoint-installer-0.2.0-win-x64.msi` | ~67 MB | nothing |
-| `waypoint-installer-0.2.0-win-x64-requires-dotnet8.msi` | ~11 MB | [.NET 8 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0), x64 |
-| `waypoint-portable-0.2.0-win-x64.zip` | ~70 MB | nothing |
-| `waypoint-portable-0.2.0-win-x64-requires-dotnet8.zip` | ~4 MB | same runtime |
+| `waypoint-installer-0.2.1-win-x64.msi` | ~61 MB | nothing |
+| `waypoint-installer-0.2.1-win-x64-requires-dotnet10.msi` | ~10 MB | [.NET 10 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/10.0), x64 |
+| `waypoint-portable-0.2.1-win-x64.zip` | ~63 MB | nothing |
+| `waypoint-portable-0.2.1-win-x64-requires-dotnet10.zip` | ~3 MB | same runtime |
 
-That table is the v0.2.0-alpha.1 release, which targets .NET 8. Builds after it
-target .NET 10 and the small ones are named `requires-dotnet10` instead
+Use v0.2.1-alpha.1 or later, not v0.2.0-alpha.1. v0.2.0 loads native DLLs by
+bare name, which lets a DLL planted beside the exe run elevated. v0.2.1 also
+moved from .NET 8 to .NET 10
 ([ADR-0002](ADR-0002-dotnet8-to-dotnet10.md)).
 
 The difference is the window, not the tool. `waypoint.exe` is compiled ahead of
@@ -37,7 +38,7 @@ carries its own copy.
 
 Take the big one if you are handing this to someone else or putting it on a
 machine with no network — a fresh install with no NIC driver cannot go and fetch
-a runtime. Take the small one for your own machine if you already have .NET 8.
+a runtime. Take the small one for your own machine if you already have .NET 10.
 
 **Installer or portable?** The installer puts `waypoint` on PATH for every shell
 and adds Start Menu entries. The portable zip touches nothing outside its folder.
@@ -48,7 +49,7 @@ The tool's whole premise is not trusting unverified binaries, so it would be odd
 not to offer the hashes.
 
 ```powershell
-Get-FileHash .\waypoint-installer-0.2.0-win-x64.msi -Algorithm SHA256
+Get-FileHash .\waypoint-installer-0.2.1-win-x64.msi -Algorithm SHA256
 ```
 
 Compare it against the hashes published on that release. Every release lists the
@@ -79,7 +80,7 @@ the product name and detection name.
 Double-click the MSI and click through, or silently:
 
 ```powershell
-msiexec /i waypoint-installer-0.2.0-win-x64.msi /qn
+msiexec /i waypoint-installer-0.2.1-win-x64.msi /qn
 ```
 
 Portable instead: unzip anywhere and run `waypoint.exe` from that folder.
@@ -93,7 +94,7 @@ Portable instead: unzip anywhere and run `waypoint.exe` from that folder.
 
 Or from any terminal, just `waypoint`.
 
-If you took a `requires-dotnet8` build and the runtime is missing, the window
+If you took a `requires-dotnet10` build and the runtime is missing, the window
 will not open; Windows shows a dialog naming the runtime with a download link.
 The command line is unaffected.
 
@@ -151,7 +152,7 @@ Full list: [`TODO.md`](TODO.md).
 Add/Remove Programs → Waypoint Driver Manager, or:
 
 ```powershell
-msiexec /x waypoint-installer-0.2.0-win-x64.msi /qn
+msiexec /x waypoint-installer-0.2.1-win-x64.msi /qn
 ```
 
 Files and the PATH entry are removed. `C:\ProgramData\Waypoint` is left in

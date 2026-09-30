@@ -1,6 +1,6 @@
 # ADR-0002: Move from .NET 8 to .NET 10
 
-- **Status:** Proposed (2026-09-29), pending the Windows CI run on its PR
+- **Status:** Accepted (2026-09-30). Windows CI passed on PR #1; the packaged build was installed and run on Windows 11 and shipped as v0.2.1-alpha.1.
 - **Amends:** [ADR-0001](ADR-0001-language-migration-python-to-dotnet.md), which chose C# / .NET 8. The language and design choices there stand; only the runtime version changes.
 
 ## Context
