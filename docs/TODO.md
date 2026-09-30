@@ -183,6 +183,13 @@ Swap is a thumbprint change: rerun `dotnet/setup-dev-signing.ps1 -Thumbprint
 the Defender/Bitdefender comparison against the Mark-of-the-Web-tagged
 artifacts.
 
+**Blocked on this: in-app update install.** Since 0.2.2 the window's
+"Check for updates" is notify-only (`UpdateChecker.cs`): it compares against
+GitHub Releases and links the release page. Downloading and running the MSI
+from the app needs the real cert first. The MSI is per-machine and elevated,
+so the updater must verify the Authenticode chain and pin the publisher before
+it runs anything, and a self-signed cert gives it nothing worth pinning.
+
 ### Then: authorize the cutover
 
 Run .NET and Python side by side on the same machine and compare scan output

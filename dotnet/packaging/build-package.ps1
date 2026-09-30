@@ -58,7 +58,7 @@ function Assert-Signed([string]$Path) {
 }
 
 Write-Host "== publishing waypoint.exe ($Runtime, $Configuration, Native AOT) =="
-dotnet publish (Join-Path $dotnetDir 'Waypoint.Cli') -c $Configuration -r $Runtime
+dotnet publish (Join-Path $dotnetDir 'Waypoint.Cli') -c $Configuration -r $Runtime -p:Version=$Version
 if ($LASTEXITCODE -ne 0) { throw "dotnet publish (CLI) failed with exit code $LASTEXITCODE." }
 
 $cliExe = Join-Path $cliPublishDir 'waypoint.exe'
@@ -83,7 +83,7 @@ foreach ($v in $variants) {
     Write-Host ""
     Write-Host "== $v =="
     dotnet publish (Join-Path $dotnetDir 'Waypoint.Gui') `
-        -c $Configuration -r $Runtime `
+        -c $Configuration -r $Runtime -p:Version=$Version `
         --self-contained $(if ($selfContained) { 'true' } else { 'false' }) `
         -o $guiDir
     if ($LASTEXITCODE -ne 0) { throw "dotnet publish (GUI, $v) failed with exit code $LASTEXITCODE." }

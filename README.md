@@ -1,6 +1,13 @@
 # Waypoint Driver Manager
 
 [![build](https://github.com/TrashPanda2481/Waypoint-Driver-Manager/actions/workflows/build.yml/badge.svg)](https://github.com/TrashPanda2481/Waypoint-Driver-Manager/actions/workflows/build.yml)
+[![release](https://img.shields.io/github/v/release/TrashPanda2481/Waypoint-Driver-Manager?include_prereleases&label=release)](https://github.com/TrashPanda2481/Waypoint-Driver-Manager/releases)
+
+> **[Download the latest release →](https://github.com/TrashPanda2481/Waypoint-Driver-Manager/releases)**
+> MSI installer (runtime bundled, or a smaller build that needs .NET 10) and a
+> portable zip. Setup and hash verification: [`docs/INSTALL.md`](docs/INSTALL.md).
+> Already installed? **Check for updates** in the window's status bar looks for a
+> newer release. It only links to it and never downloads or installs anything.
 
 A driver detection, sourcing, and install manager for Windows, built to fix the
 structural problems in tools like Snappy Driver Installer rather than give them
