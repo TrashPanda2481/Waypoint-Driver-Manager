@@ -24,10 +24,13 @@
          and LICENSE.rtf here is a direct RTF rendering of that same file
          (WiX's license control only accepts RTF, not plain text). -->
     <ui:WixUI Id="WixUI_InstallDir" InstallDirectory="INSTALLFOLDER" />
-    <WixVariable Id="WixUILicenseRtf" Value="LICENSE.rtf" />
+    <!-- Both license paths come in as absolute -d variables from
+         build-package.ps1, like CliExe and GuiDir. wix resolves relative
+         paths against the working directory, not this file. -->
+    <WixVariable Id="WixUILicenseRtf" Value="$(var.LicenseRtf)" />
 
     <!-- AllowSameVersionUpgrades so switching between the bundled-runtime and
-         requires-dotnet8 builds of the same version replaces rather than
+         requires-dotnet10 builds of the same version replaces rather than
          stacking: they are one product in two packagings. -->
     <MajorUpgrade
         AllowSameVersionUpgrades="yes"
@@ -55,7 +58,7 @@
 
     <!-- Harvested rather than listed: the bundled-runtime build is ~150 files
          of .NET, and hand-maintaining that list would rot on every SDK bump.
-         The requires-dotnet8 build resolves to a handful through the same
+         The requires-dotnet10 build resolves to a handful through the same
          glob. Whatever is in GuiDir ships, so build-package.ps1 clears the
          PDBs out of it first. -->
     <ComponentGroup Id="GuiComponents" Directory="INSTALLFOLDER">
@@ -71,7 +74,7 @@
            installed copy still carries its own license without a network
            round trip back to GitHub. -->
       <Component Id="LicenseFile" Guid="DF47417A-0A9B-4AD5-8483-465437BEC2B7">
-        <File Id="LicenseTxt" Name="LICENSE.txt" Source="..\..\LICENSE" KeyPath="yes" />
+        <File Id="LicenseTxt" Name="LICENSE.txt" Source="$(var.LicenseTxt)" KeyPath="yes" />
       </Component>
 
       <!-- System PATH so `waypoint` resolves in any new shell. Part="last" appends

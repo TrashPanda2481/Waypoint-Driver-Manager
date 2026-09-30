@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <!-- Matches Waypoint.Gui: its types live in a WPF assembly. -->
-    <TargetFramework>net8.0-windows</TargetFramework>
+    <TargetFramework>net10.0-windows</TargetFramework>
     <UseWPF>true</UseWPF>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>

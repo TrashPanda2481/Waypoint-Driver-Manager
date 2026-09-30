@@ -285,7 +285,8 @@ waypoint/
 > Priority driving the change: a small, signable, AV-clean native binary —
 > a trust requirement, not a cosmetic one, for a driver tool (see §1).
 
-- **Language:** C# / .NET 8 for `core`/`engine`/`sources`/`cli`. Windows-first.
+- **Language:** C# / .NET 10 for `core`/`engine`/`sources`/`cli`. Windows-first.
+  (.NET 8 until 2026-09-29, see [`ADR-0002`](ADR-0002-dotnet8-to-dotnet10.md).)
   Core + CLI are Native-AOT-friendly (small, dependency-free native exe for
   the automation use case).
 - **GUI:** WPF, deployed self-contained + trimmed + single-file (one signable

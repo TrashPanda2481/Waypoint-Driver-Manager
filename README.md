@@ -29,7 +29,7 @@ It reads your real device tree. It **cannot install a driver for you yet.**
 - A window that groups devices by tier and PnP setup class, and compares the
   installed driver against the candidate field by field before anything runs.
 - Ships as a signed MSI or portable zip, each in a bundled-runtime and a
-  smaller `requires-dotnet8` build. `waypoint.exe` is Native AOT and needs no
+  smaller `requires-dotnet10` build. `waypoint.exe` is Native AOT and needs no
   runtime in either.
 
 **Not working yet:**
@@ -78,7 +78,7 @@ docs/                  # architecture, ADR, install, TODO
 
 ## Build
 
-Needs the .NET 8 SDK (or 9 — it targets `net8.0`).
+Needs the .NET 10 SDK (it targets `net10.0`).
 
 ```powershell
 cd dotnet
@@ -107,9 +107,9 @@ Menu and Add/Remove Programs, and installs silently for Intune/SCCM/GPO/PDQ.
 | Artifact | Size | Needs |
 |---|---|---|
 | `waypoint-installer-<ver>-<rid>.msi` | 67 MB | nothing |
-| `waypoint-installer-<ver>-<rid>-requires-dotnet8.msi` | 11 MB | .NET 8 Desktop Runtime |
+| `waypoint-installer-<ver>-<rid>-requires-dotnet10.msi` | 11 MB | .NET 10 Desktop Runtime |
 | `waypoint-portable-<ver>-<rid>.zip` | 70 MB | nothing |
-| `waypoint-portable-<ver>-<rid>-requires-dotnet8.zip` | 4 MB | same runtime |
+| `waypoint-portable-<ver>-<rid>-requires-dotnet10.zip` | 4 MB | same runtime |
 
 WPF has no Native AOT story, so the GUI ships on the runtime and the filename
 says whether that runtime is bundled. `waypoint.exe` is Native AOT and identical
@@ -153,7 +153,7 @@ thumbprint change.
 
 ## The Python implementation
 
-Waypoint began as Python 3.12 and was reimplemented in C#/.NET 8 for a small,
+Waypoint began as Python 3.12 and was reimplemented in C#/.NET (8, now 10) for a small,
 signable, AV-clean native binary. Rationale, alternatives and the phased plan
 are in [`ADR-0001`](docs/ADR-0001-language-migration-python-to-dotnet.md),
 including the deliberate behavioural divergences from the original.
