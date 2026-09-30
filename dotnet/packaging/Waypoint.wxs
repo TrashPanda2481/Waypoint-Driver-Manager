@@ -24,7 +24,10 @@
          and LICENSE.rtf here is a direct RTF rendering of that same file
          (WiX's license control only accepts RTF, not plain text). -->
     <ui:WixUI Id="WixUI_InstallDir" InstallDirectory="INSTALLFOLDER" />
-    <WixVariable Id="WixUILicenseRtf" Value="LICENSE.rtf" />
+    <!-- Both license paths come in as absolute -d variables from
+         build-package.ps1, like CliExe and GuiDir. wix resolves relative
+         paths against the working directory, not this file. -->
+    <WixVariable Id="WixUILicenseRtf" Value="$(var.LicenseRtf)" />
 
     <!-- AllowSameVersionUpgrades so switching between the bundled-runtime and
          requires-dotnet10 builds of the same version replaces rather than
@@ -71,7 +74,7 @@
            installed copy still carries its own license without a network
            round trip back to GitHub. -->
       <Component Id="LicenseFile" Guid="DF47417A-0A9B-4AD5-8483-465437BEC2B7">
-        <File Id="LicenseTxt" Name="LICENSE.txt" Source="..\..\LICENSE" KeyPath="yes" />
+        <File Id="LicenseTxt" Name="LICENSE.txt" Source="$(var.LicenseTxt)" KeyPath="yes" />
       </Component>
 
       <!-- System PATH so `waypoint` resolves in any new shell. Part="last" appends

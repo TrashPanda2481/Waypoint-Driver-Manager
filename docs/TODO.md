@@ -421,6 +421,14 @@ Still open after the merge:
   artifact sizes are .NET 8 numbers until then.
 - The README's "~7MB standalone exe" has not been re-measured on Windows.
 
+**Correction to the 2026-09-28 license fix.** It pointed WiX at
+`..\..\LICENSE` and `LICENSE.rtf` as relative paths, on the belief that
+wix resolves them against the `.wxs` file. It resolves them against the
+working directory, so the first real `build-package.ps1` run failed with
+WIX0103 on both. CI never runs packaging, so nothing caught it. Both paths
+are now absolute `-d` variables from `build-package.ps1`, the same way
+`CliExe` and `GuiDir` already were.
+
 ## Bugs left in the Python on purpose
 
 The .NET port fixed these; Python keeps them until it is retired. Both are

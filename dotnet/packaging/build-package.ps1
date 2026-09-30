@@ -157,6 +157,8 @@ https://github.com/TrashPanda2481/Waypoint-Driver-Manager
             -d "ProductVersion=$Version" `
             -d "CliExe=$cliExe" `
             -d "GuiDir=$guiDir" `
+            -d "LicenseTxt=$(Join-Path (Split-Path $dotnetDir -Parent) 'LICENSE')" `
+            -d "LicenseRtf=$(Join-Path $packagingDir 'LICENSE.rtf')" `
             -o $msiPath
         if ($LASTEXITCODE -ne 0) { throw "wix build ($v) failed with exit code $LASTEXITCODE." }
 
