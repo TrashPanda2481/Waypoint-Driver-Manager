@@ -36,8 +36,13 @@ public partial class MainWindow : Window
             ShowUpdateResult(await UpdateChecker.CheckAsync());
         }
         catch (Exception ex) when (ex is HttpRequestException
-                                       or TaskCanceledException or JsonException)
+                                       or TaskCanceledException or JsonException
+                                       or InvalidOperationException)
         {
+            // InvalidOperationException covers an unexpected field type in an
+            // otherwise-valid JSON response (e.g. GetBoolean/GetString on the
+            // wrong kind) — without it such a response would escape this
+            // async void handler and crash the window instead of reporting here.
             UpdateStatus.Text = "Couldn't reach GitHub.";
             UpdateStatus.ToolTip = ex.Message;
         }

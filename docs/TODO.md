@@ -3,7 +3,7 @@
 The .NET implementation is `main`. The original Python is preserved unmaintained
 on `python-reference`; it is still the only Windows Update source, so it stays
 as a porting reference until that lands.
-Last reviewed 2026-09-09.
+Last reviewed 2026-10-06.
 
 ## Cutover gates
 
@@ -437,6 +437,51 @@ working directory, so the first real `build-package.ps1` run failed with
 WIX0103 on both. CI never runs packaging, so nothing caught it. Both paths
 are now absolute `-d` variables from `build-package.ps1`, the same way
 `CliExe` and `GuiDir` already were.
+
+## Audit 2026-10-06, the GUI update-check + theming delta
+
+Scoped to what changed since the 2026-09-10 audit — PR #3 (GUI themes and the
+notify-only update check); the .NET 10 retarget needed no code change. The
+deferred known-issues below were not re-derived. Both findings fixed in the
+same pass; solution builds `-warnaserror` clean (0/0) and the 47
+`Waypoint.Gui.Tests` pass.
+
+**The System32 DLL-search pin was missing on `Waypoint.Gui` — the 2026-09-10
+fix, regressed by a new assembly.** That audit pinned native resolution to
+System32 so a planted DLL beside the exe could not be loaded; the pin lives in
+`Waypoint.Platform/AssemblyInfo.cs`. PR #3 added the first native call in the
+GUI, `[DllImport("dwmapi.dll")]` in `ThemeManager` (dark title bar), but
+`Waypoint.Gui/AssemblyInfo.cs` carried only `ThemeInfo`, no
+`DefaultDllImportSearchPaths`. `dwmapi.dll` is not a KnownDLL, so it resolved by
+unqualified name with the application directory searched first, and it loads
+unconditionally at startup (`App.OnStartup` → `ThemeManager.Initialize` →
+`ApplyTitleBar`). The portable zip unzips wherever the user likes, so a
+same-named DLL dropped there would load into the process — exactly the scenario
+the earlier fix addressed. Lower severity than the original: the GUI is not the
+elevated install path today (scan/inspect only), so this is code execution in
+the user's context rather than an automatic escalation — but it is a regression
+of a deliberate control and it worsens the moment the window can install.
+Fixed: `[assembly: DefaultDllImportSearchPaths(DllImportSearchPath.System32)]`
+added to `Waypoint.Gui/AssemblyInfo.cs`, matching Platform.
+
+**The update check could crash the window on an unexpected GitHub response.**
+`OnCheckUpdatesClick` (`MainWindow.xaml.cs`) caught only `HttpRequestException`,
+`TaskCanceledException` and `JsonException`, but `UpdateChecker.PickLatest`'s
+`GetBoolean()`/`GetString()` throw `InvalidOperationException` on a response
+that parses yet has a field of the wrong type. The handler is `async void` and
+there is no `DispatcherUnhandledException` handler, so such a response would
+crash the window instead of reporting "Couldn't reach GitHub" — and the scan
+handler right below it already catches broadly, so the two were inconsistent.
+Low likelihood over HTTPS to a stable API, no security impact. Fixed by adding
+`InvalidOperationException` to the filter.
+
+**Checked and clean.** `UpdateChecker` opens only a URL built from the
+hardcoded repo plus `Uri.EscapeDataString(tag)` — never the API's `html_url` —
+so the `Process.Start(UseShellExecute=true)` target cannot be steered off
+`github.com` (no scheme/host injection, no path traversal); it parses with
+`JsonDocument` (no type deserialization), uses a static `HttpClient` with a 15s
+timeout over HTTPS. The two process-capture diffs in `WindowsDeviceBackend` and
+`CabExtractor` are the 2026-09-10 pipe-drain fix landing, not new work.
 
 ## Bugs left in the Python on purpose
 
