@@ -351,6 +351,11 @@ can both be exercised safely - export is read-only and a restore point is
 reversible - so two of the three unproven pieces could be closed without
 installing anything.
 
+*Update 2026-10-06: `Waypoint.Platform.Tests` now exists — see the 2026-10-06
+entry below. The no-INF export refusal, the install dry-run and the
+restore-point fail-closed path are covered; the mutating success paths remain
+unproven.*
+
 **Checked and clean:** no empty catch blocks, no `.Result` or `.Wait()`, every
 `Process.Start` in a `using`, the one `async void` is a WPF event handler where
 that is correct, and every broad catch sits on a documented boundary. Running
@@ -482,6 +487,33 @@ so the `Process.Start(UseShellExecute=true)` target cannot be steered off
 `JsonDocument` (no type deserialization), uses a static `HttpClient` with a 15s
 timeout over HTTPS. The two process-capture diffs in `WindowsDeviceBackend` and
 `CabExtractor` are the 2026-09-10 pipe-drain fix landing, not new work.
+
+## Platform test project, 2026-10-06
+
+`Waypoint.Platform` was the one layer with no test project — the layer holding
+every P/Invoke, the restore point, the driver export and the install path.
+Added `Waypoint.Platform.Tests` (net10.0, 12 tests), covering the parts that
+are safe to exercise without elevation or real hardware:
+
+- **`MockDeviceBackend` contract** (8 tests). The engine's safety behaviour is
+  only as trustworthy as the double it is verified against, and the mock had no
+  tests of its own: enumeration snapshots its input rather than aliasing it,
+  the backup / install / restore-point calls are recorded, and dry-run vs. real
+  install report the right message.
+- **`WindowsDeviceBackend` safe paths** (4 tests, guarded to Windows with
+  `OperatingSystem.IsWindows()` and inert on the Linux leg; the class is
+  `[SupportedOSPlatform("windows")]` so CA1416 is satisfied inside the
+  `Assert.Throws`/`Record.Exception` lambdas too). The export **refusal** when
+  no INF is bound (throws before pnputil), the install **dry-run** (returns
+  before pnputil), that `CreateRestorePoint` **fails closed without throwing**
+  when it cannot run — which is what makes "false blocks the batch" safe — and
+  that enumeration reads the tree without throwing.
+
+Still unproven, unchanged: the mutating success paths — a real
+`pnputil /export-driver`, a real `/add-driver /install`, and an
+actually-created restore point — need elevation and real hardware, so they are
+deliberately not asserted here (gate 1's "Still unverified" list stands). Full
+solution suite is now 174 on Windows, `-warnaserror` clean.
 
 ## Bugs left in the Python on purpose
 

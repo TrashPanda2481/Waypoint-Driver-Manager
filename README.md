@@ -89,7 +89,7 @@ Needs the .NET 10 SDK (it targets `net10.0`).
 
 ```powershell
 cd dotnet
-dotnet test                                 # 134 tests
+dotnet test                                 # 174 tests
 dotnet run --project Waypoint.Cli -- scan
 dotnet run --project Waypoint.Gui           # the window
 ```
