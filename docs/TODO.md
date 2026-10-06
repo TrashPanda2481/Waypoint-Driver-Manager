@@ -16,7 +16,7 @@ line, and has a window. What remains is a certificate anyone can trust.
 `System.Management` is neither trim- nor AOT-safe and the CLI publishes with
 Native AOT; a bulk `Win32_PnPSignedDriver` query also costs 2.4s, and
 per-device CIM property reads take minutes across the tree. CfgMgr32 does the
-whole enumeration in **781ms**. `BuildDefaultBackend()` no longer throws.
+whole enumeration in **~400ms**. `BuildDefaultBackend()` no longer throws.
 
 Validated on real Windows 11 hardware:
 - **233 devices, exact set match** against `Get-PnpDevice` — 0 missing, 0
