@@ -22,6 +22,23 @@
     <!-- WPF has no Native AOT story and its binding stack is reflection-based,
          so this one ships on the runtime while waypoint.exe stays AOT. -->
     <PublishAot>false</PublishAot>
+
+    <!-- One-file deployment. Collapse the app assemblies, the .NET + WPF
+         runtime, and the native WPF libraries into waypoint-desktop.exe so the
+         installed (Program Files) and portable layouts are just the two exes,
+         not a folder of loose dependencies. The host bootstrap (coreclr,
+         hostfxr, hostpolicy) must sit beside the exe, so bucketing those into
+         subfolders is not an option; single-file is. WPF is not safely
+         trimmable (reflection-heavy), so this is single-file, not trimmed. -->
+    <PublishSingleFile>true</PublishSingleFile>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <!-- Compression only applies to self-contained bundles; the framework-
+         dependent (requires-dotnet10) variant publishes single-file without it. -->
+    <EnableCompressionInSingleFile Condition="'$(SelfContained)' == 'true'">true</EnableCompressionInSingleFile>
+
+    <!-- Waypoint has no localization of its own; drop WPF's 13 satellite
+         resource folders (cs/de/.../zh-Hant) rather than ship unused languages. -->
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
     <!-- Releases get the real version from build-package.ps1 (-p:Version).
          0.0.0 marks a dev build to the update check. -->
     <Version>0.0.0</Version>

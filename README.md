@@ -113,10 +113,10 @@ Menu and Add/Remove Programs, and installs silently for Intune/SCCM/GPO/PDQ.
 
 | Artifact | Size | Needs |
 |---|---|---|
-| `waypoint-installer-<ver>-<rid>.msi` | 61 MB | nothing |
+| `waypoint-installer-<ver>-<rid>.msi` | 63 MB | nothing |
 | `waypoint-installer-<ver>-<rid>-requires-dotnet10.msi` | 10 MB | .NET 10 Desktop Runtime |
-| `waypoint-portable-<ver>-<rid>.zip` | 63 MB | nothing |
-| `waypoint-portable-<ver>-<rid>-requires-dotnet10.zip` | 3 MB | same runtime |
+| `waypoint-portable-<ver>-<rid>.zip` | 57 MB | nothing |
+| `waypoint-portable-<ver>-<rid>-requires-dotnet10.zip` | 3.5 MB | same runtime |
 
 WPF has no Native AOT story, so the GUI ships on the runtime and the filename
 says whether that runtime is bundled. `waypoint.exe` is Native AOT and identical

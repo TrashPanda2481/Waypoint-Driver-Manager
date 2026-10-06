@@ -58,16 +58,17 @@ GUI. Distribute as signed self-contained binaries.
   `System.Management` (WMI: `Win32_PnPEntity`, `Win32_PnPSignedDriver`).
   Install/backup primitives stay `pnputil`-based
   (`/add-driver /install`, `/export-driver`, `/enum-drivers`).
-- **GUI:** WPF, deployed **self-contained + trimmed + single-file**
-  (~20–40 MB, one signable exe, no runtime install). Windows-only, which
-  matches the real product target.
+- **GUI:** WPF, deployed **self-contained + single-file**
+  (~60 MB, one signable exe, no runtime install). Windows-only, which
+  matches the real product target. (WPF's reflection-heavy binding stack is
+  not safely trimmable, so this is single-file, not trimmed.)
 - **Distribution:** Authenticode-signed binaries (first-class in the .NET
   toolchain). GitHub Releases channel TBD (Architecture.md §6).
 
 ### Honest nuance
 
 Native AOT is **not** available for WPF today, so the GUI is a
-self-contained trimmed single-file deployment (bundles the runtime), not a
+self-contained single-file deployment (bundles the runtime), not a
 pure-AOT native image. This is still far ahead of PyInstaller on binary
 size, startup time, and — critically — AV reputation and signability.
 Native AOT is reserved for the CLI/core path.

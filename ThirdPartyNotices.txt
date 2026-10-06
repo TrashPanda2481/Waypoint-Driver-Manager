@@ -1,0 +1,58 @@
+Waypoint Driver Manager — Third-Party Notices
+=============================================
+
+Waypoint Driver Manager is licensed under GPL-3.0-or-later; see LICENSE.txt.
+This file acknowledges third-party components distributed with it.
+
+-------------------------------------------------------------------------------
+Microsoft .NET and Windows Presentation Foundation (WPF)
+-------------------------------------------------------------------------------
+The self-contained builds of Waypoint bundle the .NET 10 runtime and the
+Windows Desktop (WPF) runtime inside waypoint-desktop.exe, so the application
+runs without a separately installed .NET. (waypoint.exe is Native AOT and
+likewise carries what it needs.) These runtime components are:
+
+  Copyright (c) .NET Foundation and Contributors
+  Licensed under the MIT License.
+
+  https://github.com/dotnet/runtime
+  https://github.com/dotnet/wpf
+
+  Full upstream license and third-party notices:
+  https://github.com/dotnet/runtime/blob/main/LICENSE.TXT
+  https://github.com/dotnet/runtime/blob/main/THIRD-PARTY-NOTICES.TXT
+
+MIT License
+-----------
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+The "requires-dotnet10" builds do not bundle the runtime; they use the .NET 10
+Desktop Runtime installed separately on the machine.
+
+-------------------------------------------------------------------------------
+No other third-party code
+-------------------------------------------------------------------------------
+Waypoint's own components (CLI, GUI, core, engine, sources, platform) take no
+external NuGet dependencies. They build only against the .NET base class
+libraries and documented Windows APIs.
+
+OEM driver catalogs (Dell, Lenovo, HP) and any driver packages are fetched
+from the respective vendors at runtime, only when you opt in. That catalog
+data and those packages are the property of their vendors and are not
+redistributed with Waypoint.

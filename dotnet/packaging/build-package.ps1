@@ -26,6 +26,7 @@ $ErrorActionPreference = 'Stop'
 
 $packagingDir = $PSScriptRoot
 $dotnetDir = Split-Path $packagingDir -Parent
+$repoRoot = Split-Path $dotnetDir -Parent
 $artifacts = Join-Path $packagingDir 'artifacts'
 $cliPublishDir = Join-Path $dotnetDir "Waypoint.Cli\bin\$Configuration\net10.0\$Runtime\publish"
 
@@ -118,6 +119,10 @@ so it still works on a machine with no runtime and no network.
         try {
             Copy-Item $cliExe (Join-Path $staging 'waypoint.exe')
             Copy-Item (Join-Path $guiDir '*') $staging -Recurse
+            # Same two text files the installed layout carries, so the portable
+            # folder is self-documenting: the two exes plus license and notices.
+            Copy-Item (Join-Path $repoRoot 'LICENSE') (Join-Path $staging 'LICENSE.txt')
+            Copy-Item (Join-Path $repoRoot 'ThirdPartyNotices.txt') (Join-Path $staging 'ThirdPartyNotices.txt')
             @"
 Waypoint Driver Manager $Version (portable)
 
@@ -157,8 +162,9 @@ https://github.com/TrashPanda2481/Waypoint-Driver-Manager
             -d "ProductVersion=$Version" `
             -d "CliExe=$cliExe" `
             -d "GuiDir=$guiDir" `
-            -d "LicenseTxt=$(Join-Path (Split-Path $dotnetDir -Parent) 'LICENSE')" `
+            -d "LicenseTxt=$(Join-Path $repoRoot 'LICENSE')" `
             -d "LicenseRtf=$(Join-Path $packagingDir 'LICENSE.rtf')" `
+            -d "ThirdPartyNotices=$(Join-Path $repoRoot 'ThirdPartyNotices.txt')" `
             -o $msiPath
         if ($LASTEXITCODE -ne 0) { throw "wix build ($v) failed with exit code $LASTEXITCODE." }
 

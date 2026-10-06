@@ -77,6 +77,12 @@
         <File Id="LicenseTxt" Name="LICENSE.txt" Source="$(var.LicenseTxt)" KeyPath="yes" />
       </Component>
 
+      <!-- Acknowledges the bundled .NET/WPF runtime (Microsoft, MIT). Same file
+           as the repo root, so an installed copy carries its own notices. -->
+      <Component Id="ThirdPartyNoticesFile" Guid="3B8252E9-18B5-43C9-B25F-F01F9446F05A">
+        <File Id="ThirdPartyNoticesTxt" Name="ThirdPartyNotices.txt" Source="$(var.ThirdPartyNotices)" KeyPath="yes" />
+      </Component>
+
       <!-- System PATH so `waypoint` resolves in any new shell. Part="last" appends
            rather than replacing; Permanent="no" takes it back out on uninstall. -->
       <Component Id="PathEntry" Guid="7E4B1A96-2C3D-4F58-9B01-6D5A8C2F41E7">

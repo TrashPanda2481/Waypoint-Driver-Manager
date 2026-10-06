@@ -322,11 +322,13 @@ docs/                   # this file, ADRs, INSTALL, TODO
   (.NET 8 until 2026-09-29, see [`ADR-0002`](ADR-0002-dotnet8-to-dotnet10.md).)
   Core + CLI are Native-AOT-friendly (small, dependency-free native exe for
   the automation use case).
-- **GUI:** WPF, deployed self-contained + trimmed + single-file (one signable
-  exe, no runtime install). GUI-first per requirements. Windows-only, matching
-  the real product target. (WPF is not Native-AOT-compatible today, so the GUI
-  bundles the runtime rather than being a pure AOT image; still far ahead of
-  the prior PyInstaller path on size, startup, and AV reputation.)
+- **GUI:** WPF, deployed self-contained + single-file (one signable exe, no
+  runtime install, no loose runtime DLLs beside it). GUI-first per requirements.
+  Windows-only, matching the real product target. (WPF is not Native-AOT-
+  compatible today, so the GUI bundles the runtime rather than being a pure AOT
+  image, and its reflection-heavy binding stack is not safely trimmable — so
+  this is single-file, not trimmed. Still far ahead of the prior PyInstaller
+  path on size, startup, and AV reputation.)
 - **Windows device layer:** CfgMgr32 (Configuration Manager) P/Invoke for the
   whole device-tree enumeration and the installed-driver / signature reads —
   deliberately **not** WMI / `System.Management`, which is neither trim- nor
@@ -434,10 +436,11 @@ is the GUI, and `waypoint-installer-*` is whatever ships them onto a machine —
 the format is an implementation detail of delivery, not part of the identity.
 
 ```
-C:\Program Files\Waypoint\
-  waypoint.exe            CLI, Native AOT                ~3 MB   (on PATH)
-  waypoint-desktop.exe    GUI, WPF self-contained        ~30 MB  (Start Menu)
+C:\Program Files\Waypoint\                               just these files, no loose DLLs
+  waypoint.exe            CLI, Native AOT single-file        ~7.7 MB  (on PATH)
+  waypoint-desktop.exe    GUI, WPF self-contained single-file ~61 MB  (Start Menu)
   LICENSE.txt
+  ThirdPartyNotices.txt
 
 C:\ProgramData\Waypoint\                                 survives uninstall
   cache\

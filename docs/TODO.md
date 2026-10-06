@@ -120,6 +120,11 @@ bundled build is ~150 files of .NET and a hand-maintained list would rot on
 every SDK bump. `Exclude` is not an attribute in WiX 5, so `build-package.ps1`
 clears PDBs out of the staging directory before harvesting.
 
+*Update 2026-10-06: the GUI now publishes single-file, so the harvest resolves
+to one file (`waypoint-desktop.exe`); the glob still earns its place by not
+needing a code change if that ever expands. See the 2026-10-06 deployment-layout
+entry below.*
+
 Two signing fixes went with it. `Directory.Build.targets` matched only
 `OutputType == Exe`, so the GUI — a `WinExe` — would have shipped unsigned.
 And `MajorUpgrade` now sets `AllowSameVersionUpgrades`, so switching between
@@ -514,6 +519,34 @@ Still unproven, unchanged: the mutating success paths — a real
 actually-created restore point — need elevation and real hardware, so they are
 deliberately not asserted here (gate 1's "Still unverified" list stands). Full
 solution suite is now 174 on Windows, `-warnaserror` clean.
+
+## Deployment layout, 2026-10-06
+
+The installed (Program Files) and portable folders were a sprawl: the GUI
+published as ~150 loose runtime DLLs plus 13 WPF satellite-language folders
+(`cs de es fr it ja ko pl pt-BR ru tr zh-Hans zh-Hant`). Two settings on
+`Waypoint.Gui` fix it idiomatically, without fighting the loader:
+
+- **`PublishSingleFile` + `IncludeNativeLibrariesForSelfExtract`** collapse the
+  app assemblies, the .NET + WPF runtime, and the native WPF libraries into
+  `waypoint-desktop.exe`. (The host bootstrap — coreclr/hostfxr/hostpolicy —
+  must sit beside the exe, so bucketing those into subfolders is impossible;
+  single-file is the only clean route. `EnableCompressionInSingleFile` is gated
+  to self-contained, since it is invalid framework-dependent.)
+- **`SatelliteResourceLanguages=en`** drops all 13 unused language folders.
+
+Result, both shapes: a flat folder of `waypoint.exe`, `waypoint-desktop.exe`,
+`LICENSE.txt`, `ThirdPartyNotices.txt` (portable adds `README.txt`) — no loose
+DLLs, no language folders. `ThirdPartyNotices.txt` is new (repo root, installed
+by the MSI and shipped in the zip): the app takes no NuGet dependencies, so it
+only acknowledges the bundled .NET/WPF runtime (Microsoft, MIT).
+
+WPF is **not** trimmed (its binding stack is reflection-heavy and not
+trim-safe), so this is single-file, not trimmed — the docs that said "trimmed"
+were corrected. Verified: the single-file GUI launches (real window), both
+variants build, and the portable zip extracts to five files. Measured sizes:
+bundled MSI ~63 MB / zip ~57 MB (was ~63), requires-dotnet10 MSI ~10 MB /
+zip ~3.5 MB.
 
 ## Bugs left in the Python on purpose
 
