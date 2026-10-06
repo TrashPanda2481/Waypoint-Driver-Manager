@@ -80,7 +80,7 @@ dotnet/
   Waypoint.Gui/        # WPF window: triage tree + installed-vs-candidate card
   *.Tests/             # xUnit, incl. real trimmed vendor catalog fixtures
   packaging/           # WiX installer + build script
-docs/                  # architecture, ADR, install, TODO
+docs/                  # architecture, ADRs (0001-0003), install, TODO
 ```
 
 ## Build

@@ -51,106 +51,120 @@ Instead of one monolithic offline archive, Waypoint uses a **pluggable source
 model**. Each source implements the same interface and returns structured,
 versioned candidate metadata — never a blind archive to extract-and-hope:
 
-```
-DriverSource.search(hwids: list[str]) -> list[DriverCandidate]
+```csharp
+// Waypoint.Core/Sources.cs
+public interface IDriverSource
+{
+    string SourceId { get; }
+    IReadOnlyList<DriverCandidate> Search(IReadOnlyList<string> hwids);        // metadata only — must not download
+    Task<string> FetchAsync(DriverCandidate c, string destDir, CancellationToken ct = default); // throws on hash mismatch
+}
 
-DriverCandidate:
-  hwid, class_guid, version, driver_date, publisher,
-  signature_type (whql | attestation | test_signed | unsigned),
-  sha256, size_bytes, source_id, source_url, download_uri
+// Waypoint.Core/Models.cs
+public sealed record DriverCandidate(
+    string Hwid, string ClassGuid, string Version, DateOnly? DriverDate, string Publisher,
+    SignatureType SignatureType,   // Unsigned | TestSigned | Attestation | Whql — declared weakest-first, so default() == Unsigned
+    string Sha256, long SizeBytes, string SourceId, string SourceUrl, string DownloadUri);
 ```
 
-Planned sources (each independently toggle-able):
+Sources (each independently toggle-able):
 - **Windows Update Catalog** — via `Microsoft.Update.Session` COM search
   (`IsInstalled=0 and Type='Driver'`), the same official channel Windows
   Update itself uses. [Microsoft Q&A](https://learn.microsoft.com/en-ca/answers/questions/5656657/microsoft-update-catalog-searching-for-firmware-up)
+  **Status: not yet available in the shipped build.** The port
+  (`Waypoint.Sources/WindowsUpdateCatalogSource.cs`) carries the WUA COM
+  interface declarations but is dead code under Native AOT: `PublishAot` sets
+  `BuiltInComInterop.IsSupported=false`, so `[ComImport]` activation throws,
+  and it is excluded from `EngineFactory.BuildDefaultSources()` rather than
+  reporting a failed source on every scan. Reaching Windows Update needs a
+  `ComWrappers` / `[GeneratedComInterface]` rewrite. The only *working* Windows
+  Update source today is the one on the `python-reference` branch. This is the
+  subject of [ADR-0003](ADR-0003-driver-sourcing.md) (driver-sourcing strategy,
+  Proposed); see also `TODO.md`.
 - **OEM vendor catalogs** — implemented for Dell, Lenovo, and (scoped down)
   HP. Verified by downloading and inspecting each vendor's real published
   feed (2026-08-30), not assumed from documentation:
-  - **Dell per-device catalog** (`sources/oem/dell_catalog.py`,
+  - **Dell per-device catalog** (`Waypoint.Sources/Oem/DellCatalogSource.cs`,
     `DellCatalogSource`) — [`CatalogPC.cab`](https://downloads.dell.com/catalog/CatalogPC.cab),
     the same feed Dell Command | Update and SCCM third-party-update
     workflows consume. Genuinely per-hardware-ID: each driver component
     lists PCI `vendorID`/`deviceID`/`subVendorID`/`subDeviceID` pairs,
-    matched into the same `DriverSource.search(hwids)` interface every
+    matched into the same `IDriverSource.Search(hwids)` interface every
     other source implements. Only MD5 is published per-component (no
-    SHA-256) — `search()` honestly returns `sha256=""`, and `fetch()`
+    SHA-256) — `Search()` honestly returns `Sha256 = ""`, and `FetchAsync()`
     verifies against the published MD5 before computing and returning a
     real SHA-256 of the verified bytes.
-  - **Dell driver-pack catalog** (`sources/oem/dell_driverpack.py`,
+  - **Dell driver-pack catalog** (`Waypoint.Sources/Oem/DellDriverPackSource.cs`,
     `DellDriverPackSource`) — [`DriverPackCatalog.cab`](https://downloads.dell.com/catalog/DriverPackCatalog.cab),
     keyed by Dell's SMBIOS `systemID`, not by hardware ID — a different
-    shape (see `ModelDriverPackSource` below), matching how MDT/SCCM
+    shape (see `IModelDriverPackSource` below), matching how MDT/SCCM
     driver-pack injection actually works. Publishes real SHA-256 per
     package.
-  - **Lenovo driver-pack catalog** (`sources/oem/lenovo_driverpack.py`,
+  - **Lenovo driver-pack catalog** (`Waypoint.Sources/Oem/LenovoDriverPackSource.cs`,
     `LenovoDriverPackSource`) — [`catalogv2.xml`](https://download.lenovo.com/cdrt/td/catalogv2.xml),
     keyed by the 4-character machine-type prefix read from a real
     system's SMBIOS product name. Its `crc` attribute is actually a
-    SHA-256 digest (64 hex chars) despite the name — reported honestly as
-    `hash_algorithm="sha256"`, not taken at face value as a CRC32.
-  - **HP platform support list** (`sources/oem/hp_platform.py`,
+    SHA-256 digest (64 hex chars) despite the name — reported honestly in
+    the candidate's `Sha256` field, not taken at face value as a CRC32.
+  - **HP platform support list** (`Waypoint.Sources/Oem/HpPlatformCatalogSource.cs`,
     `HpPlatformCatalogSource`) — [`platformList.cab`](https://hpia.hpcloud.hp.com/ref/platformList.cab),
     **deliberately scoped down**: only answers "is this SystemID a known
-    HP platform, and for which OS versions" — not a `DriverSource` or
-    `ModelDriverPackSource`. HP's actual per-update applicability feed
+    HP platform, and for which OS versions" — not an `IDriverSource` or
+    `IModelDriverPackSource`. HP's actual per-update applicability feed
     ([`HpCatalogForSms.latest.cab`](https://hpia.hpcloud.hp.com/downloads/sccmcatalog/HpCatalogForSms.latest.cab))
     turned out to be a WSUS Software Distribution Package (SDP) format —
     applicability is expressed as arbitrary WQL (`bar:WmiQuery` against
     `Win32_ComputerSystem`/`Win32_BaseBoard`), not a flat HWID/model list.
     Building a WQL evaluator to fake per-device matching on top of that
     was judged out of scope and dishonest to attempt partially, so
-    `hp_platform.py` explicitly does not try — see its module docstring.
-  - **New protocol for model-keyed sources** (`sources/oem/model_pack.py`,
-    `ModelDriverPackSource` + `DriverPack`) — Dell's and Lenovo's
+    `HpPlatformCatalogSource` explicitly does not try — see its type docstring.
+  - **Separate interface for model-keyed sources** (`Waypoint.Core/Sources.cs`,
+    `IModelDriverPackSource` + the `DriverPack` record) — Dell's and Lenovo's
     driver-pack catalogs answer "what's the one bundle for this system
     model" rather than "what candidates exist for this hardware ID",
-    which doesn't fit `DriverSource`. Modeled as its own small protocol
-    rather than stretching `DriverSource` to cover a shape it wasn't
+    which doesn't fit `IDriverSource`. Modeled as its own small interface
+    rather than stretching `IDriverSource` to cover a shape it wasn't
     designed for.
-  - Not included in `build_default_sources()` — OEM catalog refresh is
-    real, sizeable network I/O (Dell's `CatalogPC.xml` alone is ~57MB
-    uncompressed) that shouldn't fire on every default scan. Exposed
-    instead through an explicit opt-in, `engine/factory.py`'s
-    `build_oem_sources()`.
-  - **CLI wiring (2026-08-30):** `waypoint --oem scan`/`plan` now calls
-    `build_oem_sources()` and adds the result to the engine's source list.
-    Only wires in `DellCatalogSource` (the only OEM source that
-    implements the `DriverSource` shape today — see the model-keyed note
-    above for why Lenovo/Dell-driverpack/HP aren't included here). The
-    CLI calls `.refresh(force=False)` once per invocation by default, so
-    the first `--oem` run against a given `--cache-dir` pays the ~57MB
-    download but every subsequent run against the same `--cache-dir`
-    reuses the on-disk `CatalogPC.xml` instead of re-downloading it.
-  - **GUI wiring (2026-08-30):** `gui/app.py`'s `MainWindow` now has an
-    "Include OEM catalogs" checkbox, unchecked (off) by default — the
-    GUI equivalent of `--oem`. When checked, `gui/workers.py`'s
-    `ScanWorker` builds and refreshes the Dell source on the background
-    QThread (not the UI thread) before calling `engine.scan()`, so a
-    first-time ~57MB download can't freeze the window the way it would
-    if it ran synchronously from the button click. The OEM source is
-    merged into `engine.sources` only for that one scan and restored
-    afterward in a `finally` block, so unchecking the box before the
-    next scan genuinely takes effect and repeated scans with the box
-    left checked never duplicate the source. The OEM cache directory is
-    inferred from whichever `LocalCacheSource` the engine already has
-    (`MainWindow._oem_cache_dir()`), so GUI and CLI share one cache root
-    when both are pointed at the same `--cache-dir`/default location.
-  - **Force-refresh flag (2026-08-30):** CLI `--force-oem-refresh` and
-    the GUI's "Force refresh (ignore cached catalog)" checkbox both call
-    `.refresh(force=True)` instead of `force=False`, re-downloading the
-    catalog even when a cached copy exists. Both are no-ops without
-    `--oem`/the OEM checkbox also being set: the CLI prints a warning to
-    stderr (`--force-oem-refresh has no effect without --oem`) and
-    continues rather than erroring; the GUI checkbox is disabled
-    (greyed out) and automatically unchecked whenever the OEM checkbox
-    is off, so it can't be left checked in a state where it would
-    silently do nothing. Routine scans/fleet checks should leave this
-    off — it exists for cases where the cached catalog might be stale
-    (e.g. a scheduled job that explicitly wants fresh Dell data), not as
-    a default.
-  - **Live-network validation (2026-08-30, manual, not part of the
-    automated suite):** `DellCatalogSource.refresh(force=True)` run against
+  - Not included in `EngineFactory.BuildDefaultSources()` — OEM catalog
+    refresh is real, sizeable network I/O (Dell's `CatalogPC.xml` alone is
+    ~57MB uncompressed) that shouldn't fire on every default scan. Exposed
+    instead through an explicit opt-in, `Waypoint.Engine/EngineFactory.cs`'s
+    `BuildOemSources()` (and `BuildOemModelPackSources()` for the model-keyed
+    catalogs).
+  - **Opt-in wiring.** OEM catalogs never load on a default scan. `waypoint
+    --oem scan`/`plan` adds `EngineFactory.BuildOemSources()` to the engine's
+    source list; today that is `DellCatalogSource`, the only OEM source with
+    the `IDriverSource` shape (see the model-keyed note above for why the
+    others aren't). The model-keyed catalogs are reached through a separate
+    verb, `waypoint driverpack`, backed by `BuildOemModelPackSources()`. Each
+    invocation refreshes once: the first `--oem` run against a given
+    `--cache-dir` pays the ~57MB Dell download, later runs against the same
+    `--cache-dir` reuse the on-disk `CatalogPC.xml`.
+  - **GUI opt-in.** `Waypoint.Gui/MainWindow.xaml.cs` carries an "Include OEM
+    catalogs" checkbox, off by default — the GUI equivalent of `--oem`. The
+    scan runs on a background task (`ScanRunner`, via `Task.Run`), so a
+    first-time ~57MB download can't freeze the window. When OEM is enabled the
+    scan builds a *second* engine for that one run rather than pushing a source
+    onto the live engine and stripping it afterward, so there is no
+    duplicate-source hazard and unchecking the box simply takes effect on the
+    next scan. GUI and CLI share one cache root when pointed at the same
+    location.
+  - **Force refresh.** CLI `--force-oem-refresh` and the GUI's "Force refresh
+    (ignore cached catalog)" checkbox re-download the catalog even when a
+    cached copy exists. On `scan`/`plan` the flag is a no-op without `--oem`
+    (the CLI warns to stderr; the GUI checkbox is disabled and unchecked
+    whenever OEM is off); on `driverpack`, which always refreshes a model
+    catalog, it is honoured. Routine scans should leave it off — it exists for
+    a stale cache (e.g. a scheduled job wanting fresh vendor data), not as a
+    default.
+  - **Live-network validation of the OEM pipelines (2026-08-30, manual,
+    Python-era, not part of the automated suite).** These runs validated the
+    download → extract → parse → match → fetch → verify pipeline against the
+    real vendor services on the original Python implementation; the .NET CAB
+    path was re-validated separately against real vendor cabs (see `TODO.md`,
+    "Model-keyed driver packs"). The vendor-data findings below — hashes,
+    counts, spot-checks — are what those runs recorded and still hold.
+    `DellCatalogSource.refresh(force=True)` run against
     the real `https://downloads.dell.com/catalog/CatalogPC.cab` —
     downloaded, `cabextract`-ed, and parsed in ~1.5s; produced 8,655
     distinct hardware IDs / 159,338 total candidates from the real 57.6MB
@@ -241,33 +255,48 @@ Layered, testable, scriptable — designed to be dropped into an IT toolchain
 not just double-clicked by one technician at a time.
 
 ```
-waypoint/
-  core/        # pure logic: device enumeration abstraction, HWID matching,
-               # candidate ranking — no I/O side effects, fully unit-testable
-  sources/     # DriverSource plugin interface + implementations
-               # (windows_update.py, local_cache.py, oem/dell_catalog.py)
-               # plus the model-keyed OEM protocol under sources/oem/
-               # (model_pack.py, dell_driverpack.py, lenovo_driverpack.py,
-               # hp_platform.py)
-  engine/      # orchestration: scan -> plan -> backup -> install -> verify
-               # -> rollback. Owns all side effects and the audit log.
-  platform/    # OS-specific backends (win_devices.py via SetupAPI/WMI,
-               # linux_devices.py via pyudev) behind one interface
-  cli/         # scriptable entry point: JSON in/out, exit codes, --dry-run
-  gui/         # PySide6 presentation layer, consumes engine + core only
-  docs/        # this file, ADRs, manifest schema
+dotnet/                 # the .NET solution (Waypoint.sln)
+  Waypoint.Core/        # pure logic: models, HWID matching, candidate ranking,
+                        # and the IDriverSource / IModelDriverPackSource
+                        # contracts — no I/O side effects, fully unit-testable
+  Waypoint.Sources/     # IDriverSource implementations: LocalCacheSource,
+                        # WindowsUpdateCatalogSource (AOT-blocked, see §3.2),
+                        # and Oem/ (DellCatalogSource, DellDriverPackSource,
+                        # LenovoDriverPackSource, HpPlatformCatalogSource,
+                        # CabExtractor)
+  Waypoint.Engine/      # orchestration: scan -> plan -> backup -> install ->
+                        # verify -> rollback. EngineFactory, AuditLog. Owns
+                        # all side effects.
+  Waypoint.Platform/    # IDeviceBackend behind one interface: MockDeviceBackend
+                        # and WindowsDeviceBackend (Windows/ — CfgMgr32 P/Invoke,
+                        # driver signature, restore point, SMBIOS). Windows-first,
+                        # no Linux backend (see §4 and ADR-0001).
+  Waypoint.Cli/         # scriptable entry point: scan / plan / apply /
+                        # driverpack, JSON in/out, contract exit codes,
+                        # --dry-run default
+  Waypoint.Gui/         # WPF presentation layer, consumes engine + core only
+  *.Tests/              # xUnit, incl. real trimmed vendor catalog fixtures
+  packaging/            # WiX installer + build script
+docs/                   # this file, ADRs, INSTALL, TODO
 ```
 
 - **Structured audit log** (JSON Lines, append-only) of every scan, plan,
   and action — required for any real IT toolchain integration and for
   post-incident review (something SDI has no equivalent of).
-- **Versioned manifest schema** (JSON Schema-validated) replaces ad-hoc
-  index files — one documented format for what a "candidate" and a
-  "session plan" look like.
+- **Typed JSON models, not ad-hoc index files** — candidates and session
+  plans are strongly-typed records serialized through System.Text.Json
+  (`Waypoint.Core/Json.cs`, `Waypoint.Cli/CliJson.cs`), and the local cache is
+  a content-addressed `manifest.json` (a list of `DriverCandidate` records
+  keyed by SHA-256, `Waypoint.Sources/LocalCacheSource.cs`) rather than a
+  filename/folder convention. A published, schema-validated on-disk format is
+  a design goal, not yet a guarantee.
 - **CLI-first automation surface**: `waypoint scan --json`,
-  `waypoint plan --json`, `waypoint apply --plan plan.json --dry-run`,
-  well-defined exit codes (0 = clean, 1 = action needed, 2 = error) so it
-  slots into scripts and RMM tooling without scraping GUI output.
+  `waypoint plan --json`, `waypoint apply` (dry-run by default, `--apply` to
+  act), `waypoint driverpack --json`, with well-defined exit codes
+  (0 = clean, 1 = action needed, 2 = error) so it slots into scripts and RMM
+  tooling without scraping GUI output. Plan-file replay (`apply` from a saved
+  plan) is out of scope — a plan on disk carries no live `Device` handles to
+  install onto (see `TODO.md`).
 - **GUI is a client of the engine**, not the source of truth — the same
   engine call path backs both the GUI button and the CLI command, so
   behavior can't drift between "what the button does" and "what the script
@@ -276,14 +305,18 @@ waypoint/
 
 ## 4. Platform & Stack
 
-> **Language migration in progress (2026-09-04).** The stack below is the
-> **target** stack. Waypoint is being reimplemented in C# / .NET 8; the
-> original Python 3.12+ implementation remains authoritative and runnable
-> until each module has a validated .NET replacement. Rationale, alternatives,
-> and the phased migration plan are in
-> [`ADR-0001-language-migration-python-to-dotnet.md`](ADR-0001-language-migration-python-to-dotnet.md).
-> Priority driving the change: a small, signable, AV-clean native binary —
-> a trust requirement, not a cosmetic one, for a driver tool (see §1).
+> **Implementation: C# / .NET 10, Windows-first.** Waypoint began as Python
+> 3.12 and was reimplemented in C# / .NET; that reimplementation is now the
+> product and lives in `dotnet/` on `main`. The priority behind the change was
+> a small, signable, AV-clean native binary — a trust requirement, not a
+> cosmetic one, for a driver tool (see §1). The original Python tree is
+> preserved, unmaintained, on the `python-reference` branch; it remains the
+> only working Windows Update Catalog source until that is ported (see §3.2
+> and ADR-0003). Decision records:
+> [`ADR-0001`](ADR-0001-language-migration-python-to-dotnet.md) (language
+> choice, alternatives, and the deliberate behavioural divergences from the
+> Python) and [`ADR-0002`](ADR-0002-dotnet8-to-dotnet10.md) (.NET 8 → 10). The
+> stack below reflects what ships today.
 
 - **Language:** C# / .NET 10 for `core`/`engine`/`sources`/`cli`. Windows-first.
   (.NET 8 until 2026-09-29, see [`ADR-0002`](ADR-0002-dotnet8-to-dotnet10.md).)
@@ -294,9 +327,13 @@ waypoint/
   the real product target. (WPF is not Native-AOT-compatible today, so the GUI
   bundles the runtime rather than being a pure AOT image; still far ahead of
   the prior PyInstaller path on size, startup, and AV reputation.)
-- **Windows device layer:** P/Invoke to SetupAPI/CfgMgr32 and
-  `System.Management` (WMI: `Win32_PnPEntity`, `Win32_PnPSignedDriver`) —
-  first-class native interop, no shim layer.
+- **Windows device layer:** CfgMgr32 (Configuration Manager) P/Invoke for the
+  whole device-tree enumeration and the installed-driver / signature reads —
+  deliberately **not** WMI / `System.Management`, which is neither trim- nor
+  AOT-safe and is far slower (a bulk `Win32_PnPSignedDriver` query alone costs
+  ~2.4s, where CfgMgr32 does the full tree in well under a second). SMBIOS
+  model data is read via `GetSystemFirmwareTable`, also to stay AOT-clean. See
+  `TODO.md` ("Windows device backend") for the real-hardware validation record.
 - **Windows install/backup primitives:** `pnputil /add-driver ... /install`,
   `pnputil /export-driver`, `pnputil /enum-drivers`
   ([Microsoft Learn — PnPUtil syntax](https://learn.microsoft.com/en-us/windows-hardware/drivers/devtest/pnputil-command-syntax)).
@@ -324,34 +361,52 @@ waypoint/
 
 ## 6. Open Decisions / To Revisit
 
+### Decision records (ADRs)
+
+Significant decisions are captured as numbered ADRs under `docs/`. This
+section tracks the still-open questions; the ADRs record the settled ones.
+
+- [`ADR-0001`](ADR-0001-language-migration-python-to-dotnet.md) — Migrate
+  implementation language Python → C# / .NET (Accepted, 2026-09-04).
+- [`ADR-0002`](ADR-0002-dotnet8-to-dotnet10.md) — Move runtime .NET 8 → 10 for
+  LTS support (Accepted, 2026-09-30).
+- [`ADR-0003`](ADR-0003-driver-sourcing.md) — Driver-sourcing strategy:
+  Windows Update + a daily signed metadata index, no hosted binaries
+  (**Proposed**, 2026-09-30).
+
+### Open questions
+
 - ~~Exact OEM catalogs to integrate first~~ — RESOLVED (2026-08-30): Dell's
-  per-device `CatalogPC.cab` is genuinely HWID-keyed and now implemented as
-  a full `DriverSource`; Dell/Lenovo driver-pack catalogs are model-keyed
-  and implemented via the new `ModelDriverPackSource` protocol; HP's real
+  per-device `CatalogPC.cab` is genuinely HWID-keyed and implemented as
+  a full `IDriverSource`; Dell/Lenovo driver-pack catalogs are model-keyed
+  and implemented via the `IModelDriverPackSource` interface; HP's real
   per-update feed is WSUS SDP/WQL-based and was judged too complex to fake
   honestly, so HP support is scoped to platform-list lookup only. See
   section 3.2 for details and citations.
 - Whether/how to expose HP per-device driver matching if a future WQL
   evaluator is judged worth building — not attempted this pass.
 - Whether to add a scheduled/background catalog refresh for the OEM
-  sources (currently caller-triggered only via `.refresh()`).
-- ~~GUI settings toggle for `build_oem_sources()`~~ — RESOLVED (2026-08-30):
-  `gui/app.py` now has an "Include OEM catalogs" checkbox, off by
-  default, wired through `gui/workers.py`'s `ScanWorker`. See section
-  3.2 for details.
+  sources (currently caller-triggered only).
+- ~~GUI settings toggle for the OEM sources~~ — RESOLVED (2026-08-30, carried
+  into the .NET GUI): `Waypoint.Gui/MainWindow.xaml.cs` has an "Include OEM
+  catalogs" checkbox, off by default, run on the background scan task
+  (`ScanRunner`). See section 3.2 for details.
 - ~~Whether a `--force-oem-refresh` (or similar) CLI flag is worth
   adding~~ — RESOLVED (2026-08-30): added. See section 3.2 for details
   (CLI `--force-oem-refresh` and the GUI's "Force refresh (ignore cached
   catalog)" checkbox, both no-ops without `--oem`/the OEM checkbox).
-- ~~Implementation language~~ — RE-EVALUATED and CHANGED (2026-09-04):
-  migrating Python → C# / .NET 8, Windows-first, WPF GUI, signed
-  self-contained binaries. Driven by a "trust/clean-binary is the top
-  priority" call for a driver tool. Full rationale, alternatives (Rust/Go/
-  C++/stay-on-Python), and the phased migration plan in
-  [`ADR-0001-language-migration-python-to-dotnet.md`](ADR-0001-language-migration-python-to-dotnet.md).
+- ~~Implementation language~~ — RESOLVED and DONE: reimplemented Python →
+  C# / .NET, Windows-first, WPF GUI, signed self-contained binaries, driven by
+  a "trust/clean-binary is the top priority" call for a driver tool. The .NET
+  tree is now the product (`main`); Python is preserved unmaintained on
+  `python-reference`. Rationale, alternatives (Rust/Go/C++/stay-on-Python) and
+  the deliberate behavioural divergences:
+  [`ADR-0001`](ADR-0001-language-migration-python-to-dotnet.md) (language,
+  2026-09-04). Runtime later moved .NET 8 → 10 for LTS support:
+  [`ADR-0002`](ADR-0002-dotnet8-to-dotnet10.md) (2026-09-29).
 - Linux device-layer scope is moot under the .NET rewrite: the Windows-first
-  target drops the Linux parity backend (was `platform/linux.py`). Revisit
-  only if a genuine cross-platform requirement returns.
+  target drops the Linux parity backend (was `platform/linux.py` in the Python
+  tree). Revisit only if a genuine cross-platform requirement returns.
 - ~~Distribution channel for the compiled Windows binary~~ — RESOLVED
   (2026-09-06): ship **both** shapes from one build
   (`dotnet/packaging/build-package.ps1`), matching how SDI-world tools are
