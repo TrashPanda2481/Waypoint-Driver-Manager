@@ -41,6 +41,23 @@ Take the big one if you are handing this to someone else or putting it on a
 machine with no network — a fresh install with no NIC driver cannot go and fetch
 a runtime. Take the small one for your own machine if you already have .NET 10.
 
+**Not sure if you have it?** Check for the .NET 10 Desktop Runtime -- the one
+the window needs -- from any terminal:
+
+```powershell
+dotnet --list-runtimes | Select-String "Microsoft.WindowsDesktop.App 10\."
+```
+
+- A line comes back: you have it. A `requires-dotnet10` build will run.
+- Nothing prints, or `dotnet` is not recognized: you do not have it. Take a
+  bundled build (no "requires" in the name), or install the
+  [.NET 10 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/10.0)
+  (x64) first, then either build works.
+
+The base runtime is not enough on its own: the window is WPF and needs the
+**Desktop** runtime specifically, which is what the check above matches. The
+command line never needs it -- `waypoint.exe` runs on a bare machine regardless.
+
 **Installer or portable?** The installer puts `waypoint` on PATH for every shell
 and adds Start Menu entries. The portable zip touches nothing outside its folder.
 
