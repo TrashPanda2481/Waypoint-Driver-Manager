@@ -31,8 +31,8 @@ It reads your real device tree. It **cannot install a driver for you yet.**
   behind SDI's ticket #108.
 - `scan` / `plan` / `apply` / `driverpack` with JSON output and contract exit codes
   (0 clean, 1 action needed, 2 error). `apply` is a dry run unless `--apply`.
-- Signature policy gate, backup-before-replace, restore point required before
-  a batch, append-only JSON Lines audit log.
+- Signature policy gate, and an append-only JSON Lines audit log of every scan
+  and decision.
 - A window that groups devices by tier and PnP setup class, and compares the
   installed driver against the candidate field by field before anything runs.
 - Ships as a signed MSI or portable zip, each in a bundled-runtime and a
@@ -45,7 +45,9 @@ It reads your real device tree. It **cannot install a driver for you yet.**
 - **No driver sources for a generic machine.** Every device reports
   `candidate_count: 0` unless you are on Dell/Lenovo/HP with `--oem`, or you
   populate the local cache yourself. Open question, not an oversight.
-- **`apply --apply` has never run** against a live driver.
+- **`apply --apply` has never run** against a live driver. Its safety steps —
+  backup-before-replace, a restore point before a batch — are enforced and
+  tested on their fail-closed paths, but no real mutation has happened yet.
 - **Self-signed.** SmartScreen and AV reputation are unvalidated.
 
 Full list and the remaining cutover gates: [`docs/TODO.md`](docs/TODO.md).
@@ -113,10 +115,10 @@ Menu and Add/Remove Programs, and installs silently for Intune/SCCM/GPO/PDQ.
 
 | Artifact | Size | Needs |
 |---|---|---|
-| `waypoint-installer-<ver>-<rid>.msi` | 63 MB | nothing |
+| `waypoint-installer-<ver>-<rid>.msi` | 61 MB | nothing |
 | `waypoint-installer-<ver>-<rid>-requires-dotnet10.msi` | 10 MB | .NET 10 Desktop Runtime |
-| `waypoint-portable-<ver>-<rid>.zip` | 57 MB | nothing |
-| `waypoint-portable-<ver>-<rid>-requires-dotnet10.zip` | 3.5 MB | same runtime |
+| `waypoint-portable-<ver>-<rid>.zip` | 63 MB | nothing |
+| `waypoint-portable-<ver>-<rid>-requires-dotnet10.zip` | 3.3 MB | same runtime |
 
 WPF has no Native AOT story, so the GUI ships on the runtime and the filename
 says whether that runtime is bundled. `waypoint.exe` is Native AOT and identical
@@ -160,9 +162,9 @@ thumbprint change.
 
 ## The Python implementation
 
-Waypoint began as Python 3.12 and was reimplemented in C#/.NET (8, now 10) for a small,
-signable, AV-clean native binary. Rationale, alternatives and the phased plan
-are in [`ADR-0001`](docs/ADR-0001-language-migration-python-to-dotnet.md),
+Waypoint began as Python 3.12 and was reimplemented in C#/.NET (8, now 10) for
+a small, signable, AV-clean native binary. Rationale, alternatives and the
+phased plan are in [`ADR-0001`](docs/ADR-0001-language-migration-python-to-dotnet.md),
 including the deliberate behavioural divergences from the original.
 
 The Python tree is preserved on the **`python-reference`** branch. It remains

@@ -545,8 +545,9 @@ WPF is **not** trimmed (its binding stack is reflection-heavy and not
 trim-safe), so this is single-file, not trimmed — the docs that said "trimmed"
 were corrected. Verified: the single-file GUI launches (real window), both
 variants build, and the portable zip extracts to five files. Measured sizes:
-bundled MSI ~63 MB / zip ~57 MB (was ~63), requires-dotnet10 MSI ~10 MB /
-zip ~3.5 MB.
+bundled MSI ~61 MB / zip ~63 MB, requires-dotnet10 MSI ~10 MB / zip ~3.3 MB
+(the shipped v0.2.2-alpha.1 assets). Single-file flattened the layout and file
+count, not the compressed artifact size.
 
 ## Bugs left in the Python on purpose
 
